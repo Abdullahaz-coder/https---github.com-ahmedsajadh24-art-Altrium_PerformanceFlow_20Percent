@@ -1,0 +1,1268 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+Self Assessment | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     STUDIO HEADER
+====================================== -->
+<div
+    id="assessmentWorkspace"
+
+    data-review-id="{{ review['id'] }}"
+
+    data-evidence-count="{{ evidence_files|length }}"
+
+    data-assessment-status="{{ self_assessment['status'] }}"
+></div>
+
+<section class="assessment-studio-header">
+
+
+    <div>
+
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="back-link"
+        >
+            ← Flowboard
+        </a>
+
+
+        <span class="eyebrow">
+            SELF-ASSESSMENT STUDIO
+        </span>
+
+
+        <h1>
+            {{ review["cycle_name"] }}
+        </h1>
+
+
+        <p>
+            Reflect on your performance against the
+            baseline agreed for this review cycle.
+        </p>
+
+
+    </div>
+
+
+
+    <div class="assessment-studio-state">
+
+
+        <span>
+            ASSESSMENT STATE
+        </span>
+
+
+        <strong>
+            {{ self_assessment["status"] }}
+        </strong>
+
+
+        <small>
+            {{ baseline_items|length }}
+            baseline item(s)
+        </small>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     REVIEW IDENTITY STRIP
+====================================== -->
+
+<section class="assessment-context-strip">
+
+
+    <div>
+
+        <span>
+            REVIEW SUBJECT
+        </span>
+
+        <strong>
+            {{ review["employee_name_snapshot"] }}
+        </strong>
+
+        <small>
+            {{ review["employee_code_snapshot"] }}
+        </small>
+
+    </div>
+
+
+    <div>
+
+        <span>
+            ROLE
+        </span>
+
+        <strong>
+            {{ review["job_title_snapshot"] }}
+        </strong>
+
+        <small>
+            {{ review["department_snapshot"] }}
+        </small>
+
+    </div>
+
+
+    <div>
+
+        <span>
+            REVIEW PERIOD
+        </span>
+
+        <strong>
+            {{ review["start_date"] }}
+            →
+            {{ review["end_date"] }}
+        </strong>
+
+        <small>
+            Frozen review baseline
+        </small>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     STUDIO INTRO
+====================================== -->
+
+<section class="assessment-studio-intro">
+
+
+    <div class="studio-orbit">
+
+        <span>
+            {{ baseline_items|length }}
+        </span>
+
+    </div>
+
+
+    <div>
+
+        <span class="section-label">
+            YOUR REFLECTION SPACE
+        </span>
+
+
+        <h2>
+            Assess the work, not just the score.
+        </h2>
+
+
+        <p>
+            Each item below comes from the performance
+            baseline that was locked when this review
+            cycle became active.
+        </p>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     BASELINE ASSESSMENT ITEMS
+====================================== -->
+
+<section class="assessment-baseline">
+
+
+    {% for item in baseline_items %}
+
+
+        <article class="assessment-item-card">
+
+
+            <!-- ITEM IDENTITY -->
+
+            <div class="assessment-item-identity">
+
+
+                <div
+                    class="
+                    assessment-type
+                    assessment-type-{{ item['item_type']|lower }}
+                    "
+                >
+
+                    {{ "%02d"|format(loop.index) }}
+
+                </div>
+
+
+                <div>
+
+
+                    <span>
+                        {{ item["item_type"]|upper }}
+                    </span>
+
+
+                    <h3>
+                        {{ item["title"] }}
+                    </h3>
+
+
+                    {% if item["description"] %}
+
+                        <p>
+                            {{ item["description"] }}
+                        </p>
+
+                    {% endif %}
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- BASELINE SIGNALS -->
+
+            {% if item["target"] or item["due_date"] %}
+
+                <div class="assessment-baseline-signals">
+
+
+                    {% if item["target"] %}
+
+                        <div>
+
+                            <span>
+                                TARGET
+                            </span>
+
+                            <strong>
+                                {{ item["target"] }}
+                            </strong>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if item["due_date"] %}
+
+                        <div>
+
+                            <span>
+                                DUE DATE
+                            </span>
+
+                            <strong>
+                                {{ item["due_date"] }}
+                            </strong>
+
+                        </div>
+
+                    {% endif %}
+
+
+                </div>
+
+            {% endif %}
+
+
+
+            <!-- RATING -->
+
+            <div class="assessment-rating-block">
+
+
+                <div>
+
+                    <span class="section-label">
+                        SELF RATING
+                    </span>
+
+                    <strong>
+                        How would you assess your performance?
+                    </strong>
+
+                </div>
+
+
+
+                <div class="rating-scale">
+
+
+                    {% for rating in range(1, 6) %}
+
+                        <button
+                            type="button"
+                            class="rating-point
+
+                            {% if item['rating'] == rating %}
+                                selected
+                            {% endif %}
+                            "
+
+                            data-rating="{{ rating }}"
+                            data-item="{{ item['review_plan_item_id'] }}"
+
+                            {% if self_assessment["status"] == "Submitted" %}
+                                disabled
+                            {% endif %}
+                        >
+
+                            <strong>
+                                {{ rating }}
+                            </strong>
+
+
+                            <span>
+
+                                {% if rating == 1 %}
+                                    Improvement
+
+                                {% elif rating == 2 %}
+                                    Developing
+
+                                {% elif rating == 3 %}
+                                    Meets
+
+                                {% elif rating == 4 %}
+                                    Exceeds
+
+                                {% elif rating == 5 %}
+                                    Exceptional
+
+                                {% endif %}
+
+                            </span>
+
+
+                        </button>
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- REFLECTION -->
+
+            <div class="assessment-reflection">
+
+
+                <label
+                    for="reflection-{{ item['review_plan_item_id'] }}"
+                >
+                    Your reflection
+                </label>
+
+
+                <textarea
+                    id="reflection-{{ item['review_plan_item_id'] }}"
+
+                    class="assessment-item-reflection"
+
+                    data-item="{{ item['review_plan_item_id'] }}"
+
+                    rows="5"
+
+                    {% if self_assessment["status"] == "Submitted" %}
+                        readonly
+                    {% endif %}
+
+                    placeholder="Describe what you achieved, what changed, and what evidence supports your reflection..."
+                >{{ item["response_text"] or "" }}</textarea>
+
+
+                <div class="reflection-footer">
+
+                    <span>
+                        Focus on outcomes, examples and learning.
+                    </span>
+
+                    <span>
+                        Draft
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+        </article>
+
+
+    {% endfor %}
+
+
+</section>
+
+
+<!-- =====================================
+     OVERALL REFLECTION
+====================================== -->
+
+<section class="overall-reflection-panel">
+
+    <div class="overall-reflection-heading">
+
+        <div>
+
+            <span class="eyebrow">
+                REVIEW REFLECTION
+            </span>
+
+            <h2>
+                Step back and reflect
+            </h2>
+
+            <p>
+                Summarise your overall performance,
+                achievements, challenges and support needs
+                for this review period.
+            </p>
+
+        </div>
+
+        <div class="
+            reflection-state
+            {% if self_assessment['status'] == 'Submitted' %}
+                submitted
+            {% endif %}
+        ">
+
+            {% if self_assessment["status"] == "Submitted" %}
+                SUBMITTED
+            {% else %}
+                DRAFT
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="overall-reflection-grid">
+
+        <!-- OVERALL SUMMARY -->
+
+        <div class="reflection-field reflection-field-wide">
+
+            <label for="overallSummary">
+                Overall Performance Summary
+            </label>
+
+            <span>
+                How would you summarise your performance
+                during this review period?
+            </span>
+
+            <textarea
+                id="overallSummary"
+                rows="5"
+
+                {% if self_assessment["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+
+                placeholder="Give a concise overview of your performance..."
+            >{{ self_assessment["overall_summary"] or "" }}</textarea>
+        </div>
+
+
+        <!-- KEY ACHIEVEMENTS -->
+
+        <div class="reflection-field">
+
+            <label for="keyAchievements">
+                Key Achievements
+            </label>
+
+            <span>
+                Highlight important outcomes or contributions.
+            </span>
+
+            <textarea
+                id="keyAchievements"
+                rows="6"
+
+                {% if self_assessment["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+
+                placeholder="What are you most proud of achieving?"
+            >{{ self_assessment["key_achievements"] or "" }}</textarea>
+
+        </div>
+
+
+        <!-- CHALLENGES -->
+
+        <div class="reflection-field">
+
+            <label for="challenges">
+                Challenges
+            </label>
+
+            <span>
+                Describe blockers, difficulties or lessons learned.
+            </span>
+
+            <textarea
+                id="challenges"
+                rows="6"
+
+                {% if self_assessment["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+
+                placeholder="What challenges affected your performance?"
+            >{{ self_assessment["challenges"] or "" }}</textarea>
+
+        </div>
+
+
+        <!-- SUPPORT NEEDED -->
+
+        <div class="reflection-field reflection-field-wide">
+
+            <label for="supportNeeded">
+                Support & Development Needs
+            </label>
+
+            <span>
+                Identify training, resources, coaching or support
+                that could help your development.
+            </span>
+
+            <textarea
+                id="supportNeeded"
+                rows="5"
+
+                {% if self_assessment["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+
+                placeholder="What support would help you perform or develop further?"
+            >{{ self_assessment["support_needed"] or "" }}</textarea>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================
+     EVIDENCE VAULT
+====================================== -->
+
+<section class="evidence-vault">
+
+
+    <!-- VAULT HEADER -->
+
+    <div class="evidence-vault-header">
+
+
+        <div>
+
+            <span class="eyebrow">
+                EVIDENCE VAULT
+            </span>
+
+
+            <h2>
+                Support your reflection
+            </h2>
+
+
+            <p>
+                Attach documents or images that demonstrate
+                outcomes, achievements or progress during
+                this review period.
+            </p>
+
+        </div>
+
+
+        <div class="vault-counter">
+
+            <strong>
+                {{ evidence_files|length }}
+            </strong>
+
+            <span>
+                evidence file(s)
+            </span>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =====================================
+         UPLOAD BAY
+    ====================================== -->
+
+    {% if self_assessment["status"] == "Draft" %}
+
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+            action="{{ url_for(
+                'upload_self_assessment_evidence',
+                employee_review_id=review['id']
+            ) }}"
+            class="evidence-upload-bay"
+            id="evidenceUploadForm"
+        >
+
+
+            <div class="evidence-upload-symbol">
+                +
+            </div>
+
+
+
+            <div class="evidence-upload-content">
+
+
+                <strong>
+                    Add supporting evidence
+                </strong>
+
+
+                <p>
+                    PDF, PNG, JPG, DOCX or XLSX
+                    • maximum 10 MB
+                </p>
+
+
+
+                <div class="evidence-upload-controls">
+
+
+                    <select
+                        name="review_plan_item_id"
+                        id="evidenceLinkItem"
+                    >
+
+                        <option value="">
+                            General assessment evidence
+                        </option>
+
+
+                        {% for item in baseline_items %}
+
+                            <option
+                                value="{{ item['review_plan_item_id'] }}"
+                            >
+
+                                {{ item["item_type"] }}
+                                —
+                                {{ item["title"] }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+
+
+                    <label class="evidence-file-picker">
+
+                        <input
+                            type="file"
+                            name="evidence_file"
+                            id="evidenceFileInput"
+                            accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx"
+                            hidden
+                        >
+
+                        Choose File
+
+                    </label>
+
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                        id="uploadEvidenceButton"
+                        disabled
+                    >
+                        Add to Vault
+                    </button>
+
+
+                </div>
+
+
+
+                <div
+                    class="selected-evidence-file"
+                    id="selectedEvidenceFile"
+                >
+                    No file selected
+                </div>
+
+
+            </div>
+
+
+        </form>
+
+
+    {% endif %}
+
+
+
+    <!-- =====================================
+         VAULT CONTENTS
+    ====================================== -->
+
+    {% if evidence_files %}
+
+
+        <div class="evidence-file-grid">
+
+
+            {% for evidence in evidence_files %}
+
+
+                <article class="evidence-file-card">
+
+
+                    <div class="evidence-file-icon">
+
+
+                        {% if evidence["mime_type"]
+                              and "pdf" in evidence["mime_type"] %}
+
+                            PDF
+
+                        {% elif evidence["mime_type"]
+                              and "image" in evidence["mime_type"] %}
+
+                            IMG
+
+                        {% else %}
+
+                            DOC
+
+                        {% endif %}
+
+
+                    </div>
+
+
+
+                    <div class="evidence-file-info">
+
+
+                        <strong>
+                            {{ evidence["original_file_name"] }}
+                        </strong>
+
+
+
+                        {% if evidence["linked_item_title"] %}
+
+                            <span>
+
+                                {{ evidence["linked_item_type"] }}
+                                •
+
+                                {{ evidence["linked_item_title"] }}
+
+                            </span>
+
+
+                        {% else %}
+
+                            <span>
+                                General assessment evidence
+                            </span>
+
+                        {% endif %}
+
+
+
+                        <small>
+
+                            {{ "%.1f"|format(
+                                evidence["file_size"] / 1024
+                            ) }}
+                            KB
+
+                        </small>
+
+
+                    </div>
+
+
+
+                    <div class="evidence-file-actions">
+
+
+                        <a
+                            href="{{ url_for(
+                                'download_self_assessment_evidence',
+                                employee_review_id=review['id'],
+                                evidence_id=evidence['id']
+                            ) }}"
+                            class="evidence-view-link"
+                        >
+                            Download
+                        </a>
+
+
+
+                        {% if self_assessment["status"] == "Draft" %}
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'remove_self_assessment_evidence',
+                                    employee_review_id=review['id'],
+                                    evidence_id=evidence['id']
+                                ) }}"
+                                class="remove-evidence-form"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="remove-evidence-button"
+                                >
+                                    Remove
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                </article>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    {% else %}
+
+
+        <div class="evidence-vault-empty">
+
+
+            <span>
+                ◇
+            </span>
+
+
+            <strong>
+                Vault is empty
+            </strong>
+
+
+            <p>
+                Add evidence where it strengthens your
+                performance reflection. Evidence is helpful,
+                but not every review item requires an attachment.
+            </p>
+
+
+        </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+<!-- =====================================
+     STUDIO DOCK
+====================================== -->
+
+{% if self_assessment["status"] == "Draft" %}
+
+<section class="assessment-studio-dock">
+
+
+    <div>
+
+        <span>
+            DRAFT MODE
+        </span>
+
+        <strong id="draftSaveStatus">
+            Your responses are still editable.
+        </strong>
+
+    </div>
+
+
+
+    <div class="assessment-dock-actions">
+
+
+        <button
+            type="button"
+            class="secondary-button"
+            id="saveAssessmentDraft"
+        >
+            Save Draft
+        </button>
+
+
+        <button
+            type="button"
+            class="primary-button"
+            id="submitAssessment"
+        >
+            Review & Submit
+        </button>
+
+
+    </div>
+
+
+</section>
+{% endif %}
+
+{% if self_assessment["status"] == "Submitted" %}
+
+
+    <section class="assessment-submitted-banner">
+
+
+        <div class="submitted-lock-icon">
+            ✓
+        </div>
+
+
+        <div>
+
+            <span>
+                SUBMISSION COMPLETE
+            </span>
+
+
+            <strong>
+                Your self-assessment is locked.
+            </strong>
+
+
+            <p>
+                It has been submitted to the review workflow
+                and your supervisor has been notified.
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="flow-primary-link"
+        >
+            Return to Flowboard →
+        </a>
+
+
+    </section>
+
+
+{% endif %}
+
+<!-- =====================================
+     SUBMISSION GATE BACKDROP
+====================================== -->
+
+<div
+    class="submission-gate-backdrop"
+    id="submissionGateBackdrop"
+></div>
+
+
+
+<!-- =====================================
+     FINAL SUBMISSION GATE
+====================================== -->
+
+<section
+    class="submission-gate"
+    id="submissionGate"
+>
+
+
+    <div class="submission-gate-header">
+
+
+        <div>
+
+            <span class="eyebrow">
+                FINAL SUBMISSION GATE
+            </span>
+
+
+            <h2>
+                Ready to submit?
+            </h2>
+
+
+            <p>
+                Review your completion status before
+                locking this self-assessment.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="submission-gate-close"
+            id="closeSubmissionGate"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- COMPLETION SCORE -->
+
+    <div class="submission-readiness">
+
+
+        <div class="submission-score">
+
+            <strong id="submissionScore">
+                0%
+            </strong>
+
+            <span>
+                READY
+            </span>
+
+        </div>
+
+
+        <div>
+
+            <span class="section-label">
+                COMPLETION CHECK
+            </span>
+
+            <h3 id="submissionReadinessTitle">
+                Checking your assessment...
+            </h3>
+
+            <p id="submissionReadinessMessage">
+                Complete the required areas before submission.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- CHECKS -->
+
+    <div class="submission-check-grid">
+
+
+        <article
+            class="submission-check"
+            id="baselineSubmissionCheck"
+        >
+
+            <span class="submission-check-icon">
+                ◇
+            </span>
+
+
+            <div>
+
+                <small>
+                    BASELINE RESPONSES
+                </small>
+
+                <strong id="baselineCheckText">
+                    Checking...
+                </strong>
+
+            </div>
+
+        </article>
+
+
+
+        <article
+            class="submission-check"
+            id="summarySubmissionCheck"
+        >
+
+            <span class="submission-check-icon">
+                ◇
+            </span>
+
+
+            <div>
+
+                <small>
+                    OVERALL SUMMARY
+                </small>
+
+                <strong id="summaryCheckText">
+                    Checking...
+                </strong>
+
+            </div>
+
+        </article>
+
+
+
+        <article
+            class="submission-check"
+            id="evidenceSubmissionCheck"
+        >
+
+            <span class="submission-check-icon">
+                ◇
+            </span>
+
+
+            <div>
+
+                <small>
+                    SUPPORTING EVIDENCE
+                </small>
+
+                <strong id="evidenceCheckText">
+                    Checking...
+                </strong>
+
+            </div>
+
+        </article>
+
+
+    </div>
+
+
+
+    <!-- LOCK WARNING -->
+
+    <div class="submission-lock-warning">
+
+
+        <span>
+            🔒
+        </span>
+
+
+        <div>
+
+            <strong>
+                Submission locks your assessment
+            </strong>
+
+
+            <p>
+                Ratings, reflections and evidence cannot
+                be changed after submission unless a formal
+                revision workflow is opened.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- ACTIONS -->
+
+    <div class="submission-gate-actions">
+
+
+        <button
+            type="button"
+            class="secondary-button"
+            id="returnToAssessment"
+        >
+            Continue Editing
+        </button>
+
+
+        <button
+            type="button"
+            class="primary-button"
+            id="confirmAssessmentSubmission"
+            disabled
+        >
+            Submit & Lock
+        </button>
+
+
+    </div>
+
+
+</section>
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/self_assessment.js'
+    ) }}"
+></script>
+
+
+{% endblock %}

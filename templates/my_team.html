@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+My Team | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     PAGE HEADER
+====================================== -->
+
+<section class="team-page-header">
+
+
+    <div>
+
+        <span class="eyebrow">
+            SUPERVISOR WORKSPACE
+        </span>
+
+        <h1>
+            My Team
+        </h1>
+
+        <p>
+            Manage responsibilities, expectations, KPIs and
+            performance goals for your assigned employees.
+        </p>
+
+    </div>
+
+
+    <div class="team-count">
+
+        <span>
+            TEAM MEMBERS
+        </span>
+
+        <strong>
+            {{ team_members|length }}
+        </strong>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     TEAM MEMBERS
+====================================== -->
+
+{% if team_members %}
+
+
+<div class="team-grid">
+
+
+    {% for employee in team_members %}
+
+
+    <article class="team-card">
+
+
+        <!-- EMPLOYEE -->
+
+        <div class="team-card-header">
+
+
+            <div class="team-person">
+
+
+                <div class="team-avatar">
+
+                    {{ employee["full_name"][0] }}
+
+                </div>
+
+
+                <div>
+
+                    <h2>
+                        {{ employee["full_name"] }}
+                    </h2>
+
+                    <p>
+                        {{ employee["job_title"] }}
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <span class="status-badge active-status">
+
+                {{ employee["status"] }}
+
+            </span>
+
+
+        </div>
+
+
+
+        <!-- EMPLOYEE INFORMATION -->
+
+        <div class="team-meta">
+
+
+            <div>
+
+                <span>
+                    EMPLOYEE ID
+                </span>
+
+                <strong>
+                    {{ employee["employee_code"] }}
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    DEPARTMENT
+                </span>
+
+                <strong>
+                    {{ employee["department"] }}
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- PERFORMANCE SETUP -->
+
+        <div class="performance-setup">
+
+
+            <div class="setup-heading">
+
+
+                <div>
+
+                    <span class="section-label">
+                        PERFORMANCE SETUP
+                    </span>
+
+                    <h3>
+                        Profile configuration
+                    </h3>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="performance-counts">
+
+
+                <div class="performance-count">
+
+                    <strong>
+                        {{ employee["responsibility_count"] }}
+                    </strong>
+
+                    <span>
+                        Responsibilities
+                    </span>
+
+                </div>
+
+
+                <div class="performance-count">
+
+                    <strong>
+                        {{ employee["expectation_count"] }}
+                    </strong>
+
+                    <span>
+                        Expectations
+                    </span>
+
+                </div>
+
+
+                <div class="performance-count">
+
+                    <strong>
+                        {{ employee["kpi_count"] }}
+                    </strong>
+
+                    <span>
+                        KPIs
+                    </span>
+
+                </div>
+
+
+                <div class="performance-count">
+
+                    <strong>
+                        {{ employee["goal_count"] }}
+                    </strong>
+
+                    <span>
+                        Goals
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ACTION -->
+
+        <div class="team-card-footer">
+
+
+            <a
+                href="{{ url_for('manage_performance', employee_id=employee['id']) }}"
+                class="manage-performance-button"
+            >
+
+                Manage Performance
+
+                <span>
+                →
+                </span>
+
+            </a>
+
+
+        </div>
+
+
+    </article>
+
+
+    {% endfor %}
+
+
+</div>
+
+
+
+{% else %}
+
+
+<!-- =====================================
+     EMPTY STATE
+====================================== -->
+
+<section class="team-empty-state">
+
+
+    <div class="team-empty-icon">
+        ♙
+    </div>
+
+
+    <span class="section-label">
+        NO TEAM MEMBERS
+    </span>
+
+
+    <h2>
+        No employees are assigned to you yet
+    </h2>
+
+
+    <p>
+        Employees will appear here once HR assigns
+        you as their supervisor.
+    </p>
+
+
+</section>
+
+
+{% endif %}
+
+
+{% endblock %}

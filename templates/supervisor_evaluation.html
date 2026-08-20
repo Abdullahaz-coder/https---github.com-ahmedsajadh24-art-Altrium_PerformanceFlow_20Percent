@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Supervisor Evaluation | Altrium PerformanceFlow
+{% endblock %}
+
+
+{% block content %}
+
+
+<div
+    id="supervisorEvaluationWorkspace"
+    data-review-id="{{ review['employee_review_id'] }}"
+    data-evaluation-id="{{ review['supervisor_evaluation_id'] }}"
+    data-status="{{ review['evaluation_status'] }}"
+></div>
+
+
+<!-- =====================================================
+     HEADER
+====================================================== -->
+
+<section class="supervisor-evaluation-header">
+
+    <div>
+
+        <a href="{{ url_for('dashboard') }}" class="back-link">
+            ← Flowboard
+        </a>
+
+        <span class="eyebrow">
+            SUPERVISOR EVALUATION
+        </span>
+
+        <h1>
+            {{ review["employee_name_snapshot"] }}
+        </h1>
+
+        <p>
+            Form a balanced evaluation using the locked performance
+            baseline, employee reflection and confidential peer evidence.
+        </p>
+
+    </div>
+
+    <div class="supervisor-evaluation-state">
+
+        <span>
+            EVALUATION STATE
+        </span>
+
+        <strong>
+            {{ review["evaluation_status"] }}
+        </strong>
+
+        <small>
+            {{ baseline_items|length }} performance item(s)
+        </small>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     DECISION CHANNEL
+====================================================== -->
+
+<section class="supervisor-decision-channel">
+
+    <div class="supervisor-channel-symbol">
+        ◈
+    </div>
+
+    <div>
+        <span>
+            CONTROLLED EVALUATION CHANNEL
+        </span>
+
+        <strong>
+            Assess the complete performance picture.
+        </strong>
+
+        <p>
+            Peer identities remain confidential. Use the combined evidence
+            to make your own fair, specific and supportable judgment.
+        </p>
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     REVIEW CONTEXT
+====================================================== -->
+
+<section class="supervisor-review-context">
+
+    <div>
+        <span>EMPLOYEE</span>
+        <strong>{{ review["employee_name_snapshot"] }}</strong>
+        <small>{{ review["employee_code_snapshot"] }}</small>
+    </div>
+
+    <div>
+        <span>ROLE</span>
+        <strong>{{ review["job_title_snapshot"] }}</strong>
+        <small>{{ review["department_snapshot"] }}</small>
+    </div>
+
+    <div>
+        <span>REVIEW WINDOW</span>
+        <strong>
+            {{ review["start_date"] }} → {{ review["end_date"] }}
+        </strong>
+        <small>{{ review["cycle_name"] }}</small>
+    </div>
+
+    <div>
+        <span>EVIDENCE COVERAGE</span>
+        <strong>
+            {{ peer_progress["submitted_reviewers"] or 0 }} peer reviews
+        </strong>
+        <small>
+            {{ self_assessment["evidence_count"] if self_assessment else 0 }} file(s) attached
+        </small>
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     EVIDENCE OVERVIEW
+====================================================== -->
+
+<section class="supervisor-evidence-overview">
+
+    <article class="supervisor-evidence-panel employee-evidence-panel">
+
+        <div class="supervisor-panel-heading">
+            <div>
+                <span class="section-label">EMPLOYEE VOICE</span>
+                <h2>Self-assessment overview</h2>
+            </div>
+
+            <span class="supervisor-source-badge">
+                SUBMITTED
+            </span>
+        </div>
+
+        {% if self_assessment %}
+
+            <div class="supervisor-overview-field">
+                <span>OVERALL PERFORMANCE SUMMARY</span>
+                <p>
+                    {{ self_assessment["overall_summary"] or "No summary provided." }}
+                </p>
+            </div>
+
+            <div class="supervisor-overview-grid">
+                <div>
+                    <span>KEY ACHIEVEMENTS</span>
+                    <p>{{ self_assessment["key_achievements"] or "Not provided." }}</p>
+                </div>
+
+                <div>
+                    <span>CHALLENGES</span>
+                    <p>{{ self_assessment["challenges"] or "Not provided." }}</p>
+                </div>
+
+                <div>
+                    <span>SUPPORT NEEDED</span>
+                    <p>{{ self_assessment["support_needed"] or "Not provided." }}</p>
+                </div>
+            </div>
+
+        {% else %}
+
+            <p class="supervisor-empty-evidence">
+                No submitted self-assessment is available.
+            </p>
+
+        {% endif %}
+
+    </article>
+
+
+    <article class="supervisor-evidence-panel peer-evidence-panel">
+
+        <div class="supervisor-panel-heading">
+            <div>
+                <span class="section-label">CONFIDENTIAL SIGNAL</span>
+                <h2>Peer perspective overview</h2>
+            </div>
+
+            <span class="supervisor-source-badge peer-source-badge">
+                {{ peer_overviews|length }} SOURCES
+            </span>
+        </div>
+
+        <div class="supervisor-peer-overviews">
+
+            {% for peer in peer_overviews %}
+
+                <div class="supervisor-peer-overview">
+
+                    <strong>
+                        Anonymous Peer {{ loop.index }}
+                    </strong>
+
+                    <div>
+                        <span>STRENGTHS</span>
+                        <p>{{ peer["strengths"] or "Not provided." }}</p>
+                    </div>
+
+                    <div>
+                        <span>DEVELOPMENT</span>
+                        <p>{{ peer["development_feedback"] or "Not provided." }}</p>
+                    </div>
+
+                    <div>
+                        <span>COLLABORATION</span>
+                        <p>{{ peer["collaboration_feedback"] or "Not provided." }}</p>
+                    </div>
+
+                    <div>
+                        <span>OVERALL COMMENT</span>
+                        <p>{{ peer["overall_comment"] or "Not provided." }}</p>
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                <p class="supervisor-empty-evidence">
+                    No submitted peer perspectives are available.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     ITEM EVALUATIONS
+====================================================== -->
+
+<section class="supervisor-evaluation-intro">
+
+    <div class="supervisor-evaluation-orbit">
+        {{ baseline_items|length }}
+    </div>
+
+    <div>
+        <span class="section-label">LOCKED REVIEW BASELINE</span>
+        <h2>Evaluate each performance commitment.</h2>
+        <p>
+            Compare the available evidence, then record your independent
+            rating and the reasoning that supports it.
+        </p>
+    </div>
+
+</section>
+
+
+<section class="supervisor-evaluation-baseline">
+
+    {% for item in baseline_items %}
+
+        <article class="supervisor-evaluation-item">
+
+            <div class="supervisor-item-header">
+
+                <div class="supervisor-item-number">
+                    {{ "%02d"|format(loop.index) }}
+                </div>
+
+                <div>
+                    <span>{{ item["item_type"]|upper }}</span>
+                    <h3>{{ item["title"] }}</h3>
+
+                    {% if item["description"] %}
+                        <p>{{ item["description"] }}</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+
+            {% if item["target"] or item["due_date"] %}
+
+                <div class="supervisor-baseline-context">
+
+                    {% if item["target"] %}
+                        <div>
+                            <span>TARGET</span>
+                            <strong>{{ item["target"] }}</strong>
+                        </div>
+                    {% endif %}
+
+                    {% if item["due_date"] %}
+                        <div>
+                            <span>DUE DATE</span>
+                            <strong>{{ item["due_date"] }}</strong>
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+
+            <div class="supervisor-evidence-lenses">
+
+                <section class="supervisor-evidence-lens self-lens">
+                    <div class="supervisor-lens-heading">
+                        <span>EMPLOYEE REFLECTION</span>
+                        <strong>
+                            Self-rating {{ item["self_rating"] or "—" }}/5
+                        </strong>
+                    </div>
+
+                    <p>
+                        {{ item["self_reflection"] or "No reflection provided." }}
+                    </p>
+                </section>
+
+
+                <section class="supervisor-evidence-lens peer-lens">
+                    <div class="supervisor-lens-heading">
+                        <span>PEER SIGNAL</span>
+                        <strong>
+                            Average {{ item["peer_average_rating"] or "—" }}/5
+                        </strong>
+                    </div>
+
+                    <div class="supervisor-item-peer-list">
+
+                        {% for feedback in peer_feedback_map.get(item["review_plan_item_id"], []) %}
+
+                            <div>
+                                <span>
+                                    Anonymous Peer {{ loop.index }} · {{ feedback["rating"] }}/5
+                                </span>
+                                <p>
+                                    {{ feedback["feedback_text"] or "No written feedback." }}
+                                </p>
+                            </div>
+
+                        {% else %}
+
+                            <p>No peer feedback is available for this item.</p>
+
+                        {% endfor %}
+
+                    </div>
+                </section>
+
+            </div>
+
+
+            <div class="supervisor-judgment-panel">
+
+                <div class="supervisor-judgment-heading">
+                    <div>
+                        <span class="section-label">YOUR JUDGMENT</span>
+                        <strong>Supervisor performance rating</strong>
+                        <small>Select the rating supported by the complete evidence.</small>
+                    </div>
+                </div>
+
+                <div class="supervisor-rating-scale">
+
+                    {% for rating in range(1, 6) %}
+
+                        <button
+                            type="button"
+                            class="supervisor-rating-point {% if item['supervisor_rating'] == rating %}selected{% endif %}"
+                            data-rating="{{ rating }}"
+                            data-item="{{ item['review_plan_item_id'] }}"
+                            {% if review["evaluation_status"] == "Submitted" %}disabled{% endif %}
+                        >
+                            <strong>{{ rating }}</strong>
+                            <span>
+                                {% if rating == 1 %}Below
+                                {% elif rating == 2 %}Developing
+                                {% elif rating == 3 %}Effective
+                                {% elif rating == 4 %}Strong
+                                {% else %}Exceptional
+                                {% endif %}
+                            </span>
+                        </button>
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="supervisor-item-comment">
+                    <label for="supervisorEvaluation-{{ item['review_plan_item_id'] }}">
+                        Evaluation rationale
+                    </label>
+                    <span>
+                        Explain the evidence, impact and development context behind your rating.
+                    </span>
+                    <textarea
+                        id="supervisorEvaluation-{{ item['review_plan_item_id'] }}"
+                        class="supervisor-item-evaluation"
+                        data-item="{{ item['review_plan_item_id'] }}"
+                        rows="5"
+                        placeholder="Record your evaluation of this performance commitment..."
+                        {% if review["evaluation_status"] == "Submitted" %}readonly{% endif %}
+                    >{{ item["evaluation_text"] or "" }}</textarea>
+                </div>
+
+            </div>
+
+        </article>
+
+    {% endfor %}
+
+</section>
+
+
+<!-- =====================================================
+     OVERALL EVALUATION
+====================================================== -->
+
+<section class="supervisor-overall-evaluation">
+
+    <div class="supervisor-overall-header">
+        <div>
+            <span class="eyebrow">FINAL EVALUATION</span>
+            <h2>Overall performance decision</h2>
+            <p>
+                Consolidate your item-level judgments into a clear outcome
+                and practical development direction.
+            </p>
+        </div>
+
+        <span class="supervisor-draft-indicator">
+            {{ review["evaluation_status"]|upper }}
+        </span>
+    </div>
+
+
+    <div class="supervisor-overall-decision-row">
+
+        <div class="supervisor-overall-rating-field">
+            <label>Overall performance rating</label>
+
+            <div class="supervisor-overall-rating-scale">
+                {% for rating in range(1, 6) %}
+                    <button
+                        type="button"
+                        class="supervisor-overall-rating {% if review['overall_rating'] == rating %}selected{% endif %}"
+                        data-rating="{{ rating }}"
+                        {% if review["evaluation_status"] == "Submitted" %}disabled{% endif %}
+                    >
+                        {{ rating }}
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="supervisor-recommendation-field">
+            <label for="supervisorRecommendation">
+                Performance recommendation
+            </label>
+
+            <select
+                id="supervisorRecommendation"
+                {% if review["evaluation_status"] == "Submitted" %}disabled{% endif %}
+            >
+                <option value="">Select recommendation</option>
+
+                {% for option in recommendation_options %}
+                    <option
+                        value="{{ option }}"
+                        {% if review["recommendation"] == option %}selected{% endif %}
+                    >
+                        {{ option }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+    </div>
+
+
+    <div class="supervisor-overall-grid">
+
+        <div class="supervisor-overall-field supervisor-overall-field-wide">
+            <label for="supervisorPerformanceSummary">
+                Performance Summary
+            </label>
+            <span>Summarize performance, outcomes and overall impact.</span>
+            <textarea
+                id="supervisorPerformanceSummary"
+                rows="6"
+                placeholder="Provide a balanced performance summary..."
+                {% if review["evaluation_status"] == "Submitted" %}readonly{% endif %}
+            >{{ review["performance_summary"] or "" }}</textarea>
+        </div>
+
+        <div class="supervisor-overall-field">
+            <label for="supervisorKeyStrengths">Key Strengths</label>
+            <span>Identify the capabilities and contributions to reinforce.</span>
+            <textarea
+                id="supervisorKeyStrengths"
+                rows="5"
+                placeholder="Describe the employee's strongest contributions..."
+                {% if review["evaluation_status"] == "Submitted" %}readonly{% endif %}
+            >{{ review["key_strengths"] or "" }}</textarea>
+        </div>
+
+        <div class="supervisor-overall-field">
+            <label for="supervisorDevelopmentPriorities">Development Priorities</label>
+            <span>Define the most important areas for growth.</span>
+            <textarea
+                id="supervisorDevelopmentPriorities"
+                rows="5"
+                placeholder="Describe focused development priorities..."
+                {% if review["evaluation_status"] == "Submitted" %}readonly{% endif %}
+            >{{ review["development_priorities"] or "" }}</textarea>
+        </div>
+
+        <div class="supervisor-overall-field supervisor-overall-field-wide">
+            <label for="supervisorSupportPlan">Support & Action Plan</label>
+            <span>Record the coaching, resources or follow-up actions required.</span>
+            <textarea
+                id="supervisorSupportPlan"
+                rows="5"
+                placeholder="Define the support and next-step action plan..."
+                {% if review["evaluation_status"] == "Submitted" %}readonly{% endif %}
+            >{{ review["support_plan"] or "" }}</textarea>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     WORKSPACE ACTIONS
+====================================================== -->
+
+{% if review["evaluation_status"] == "Draft" %}
+
+    <section class="supervisor-evaluation-dock">
+
+        <div>
+            <span>CONTROLLED DRAFT</span>
+            <strong id="supervisorDraftStatus">
+                Your evaluation is still editable.
+            </strong>
+        </div>
+
+        <div class="supervisor-evaluation-dock-actions">
+            <button
+                type="button"
+                class="secondary-button"
+                id="saveSupervisorEvaluation"
+            >
+                Save Draft
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                id="reviewSupervisorEvaluation"
+            >
+                Review & Submit
+            </button>
+        </div>
+
+    </section>
+
+{% else %}
+
+    <section class="supervisor-evaluation-submitted">
+        <div class="supervisor-submitted-icon">✓</div>
+
+        <div>
+            <span>EVALUATION SUBMITTED</span>
+            <strong>Your supervisor evaluation is locked.</strong>
+            <p>
+                The review has moved to management approval preparation.
+            </p>
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="flow-primary-link">
+            Return to Flowboard →
+        </a>
+    </section>
+
+{% endif %}
+
+
+<!-- =====================================================
+     SUBMISSION GATE
+====================================================== -->
+
+{% if review["evaluation_status"] == "Draft" %}
+
+    <div
+        class="submission-gate-backdrop"
+        id="supervisorSubmissionGateBackdrop"
+    ></div>
+
+    <section
+        class="submission-gate"
+        id="supervisorSubmissionGate"
+    >
+
+        <div class="submission-gate-header">
+            <div>
+                <span class="eyebrow">FINAL SUBMISSION GATE</span>
+                <h2>Submit supervisor evaluation?</h2>
+                <p>
+                    Confirm that every judgment is complete before locking
+                    the evaluation and moving the review forward.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="submission-gate-close"
+                id="closeSupervisorSubmissionGate"
+                aria-label="Close submission gate"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="submission-readiness">
+            <div class="submission-score">
+                <strong id="supervisorSubmissionScore">0%</strong>
+                <span>READY</span>
+            </div>
+
+            <div>
+                <span class="section-label">COMPLETION CHECK</span>
+                <h3 id="supervisorSubmissionReadinessTitle">
+                    Checking your evaluation...
+                </h3>
+                <p id="supervisorSubmissionReadinessMessage">
+                    Complete all required judgments before submission.
+                </p>
+            </div>
+        </div>
+
+        <div class="submission-check-grid">
+            <article class="submission-check" id="supervisorItemSubmissionCheck">
+                <span class="submission-check-icon">◇</span>
+                <div>
+                    <small>ITEM EVALUATIONS</small>
+                    <strong id="supervisorItemCheckText">Checking...</strong>
+                </div>
+            </article>
+
+            <article class="submission-check" id="supervisorOverallSubmissionCheck">
+                <span class="submission-check-icon">◇</span>
+                <div>
+                    <small>OVERALL EVALUATION</small>
+                    <strong id="supervisorOverallCheckText">Checking...</strong>
+                </div>
+            </article>
+
+            <article class="submission-check" id="supervisorDecisionSubmissionCheck">
+                <span class="submission-check-icon">◇</span>
+                <div>
+                    <small>FINAL DECISION</small>
+                    <strong id="supervisorDecisionCheckText">Checking...</strong>
+                </div>
+            </article>
+        </div>
+
+        <div class="submission-lock-warning">
+            <span>🔒</span>
+            <div>
+                <strong>Submission permanently locks this evaluation</strong>
+                <p>
+                    Ratings, rationale and the overall recommendation cannot
+                    be changed after submission without a formal revision flow.
+                </p>
+            </div>
+        </div>
+
+        <div class="submission-gate-actions">
+            <button
+                type="button"
+                class="secondary-button"
+                id="returnToSupervisorEvaluation"
+            >
+                Continue Editing
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                id="confirmSupervisorSubmission"
+                disabled
+            >
+                Submit & Lock
+            </button>
+        </div>
+
+    </section>
+
+{% endif %}
+
+
+<script
+    src="{{ url_for('static', filename='js/supervisor_evaluation.js') }}"
+></script>
+
+
+{% endblock %}

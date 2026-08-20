@@ -1,0 +1,871 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+{{ employee["full_name"] }} | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     PROFILE HEADER
+====================================== -->
+
+<section class="profile-page-header">
+
+
+    <div class="profile-header-left">
+
+
+        <a
+            href="{{ url_for('employees') }}"
+            class="back-link"
+        >
+            ← Employees
+        </a>
+
+
+        <div class="profile-identity">
+
+
+            <div class="large-avatar">
+
+                {{ employee["full_name"][0] }}
+
+            </div>
+
+
+            <div>
+
+
+                <span class="eyebrow">
+                    EMPLOYEE PROFILE
+                </span>
+
+
+                <h1>
+                    {{ employee["full_name"] }}
+                </h1>
+
+
+                <p>
+
+                    {{ employee["job_title"] }}
+
+                    <span>•</span>
+
+                    {{ employee["department"] }}
+
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="profile-header-actions">
+
+
+        <span class="profile-status">
+
+            {{ employee["status"] }}
+
+        </span>
+
+
+        <button
+            type="button"
+            class="primary-button"
+            id="editProfileButton"
+        >
+            Edit Profile
+        </button>
+
+
+    </div>
+
+
+</section>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="page-alert {{ category }}">
+
+                <span>
+
+                    {% if category == "success" %}
+                        ✓
+                    {% else %}
+                        !
+                    {% endif %}
+
+                </span>
+
+                <p>
+                    {{ message }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- =====================================
+     PROFILE OVERVIEW
+====================================== -->
+
+<div class="profile-layout">
+
+
+
+    <!-- LEFT SIDE -->
+
+    <div class="profile-main-column">
+
+
+
+        <!-- EMPLOYMENT INFORMATION -->
+
+        <section class="profile-card">
+
+
+            <div class="profile-card-heading">
+
+
+                <div>
+
+                    <span class="section-label">
+                        EMPLOYMENT
+                    </span>
+
+
+                    <h2>
+                        Employment Information
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="profile-detail-grid">
+
+
+
+                <div class="profile-detail">
+
+                    <span>
+                        Employee ID
+                    </span>
+
+                    <strong class="employee-code">
+                        {{ employee["employee_code"] }}
+                    </strong>
+
+                </div>
+
+
+
+                <div class="profile-detail">
+
+                    <span>
+                        Department
+                    </span>
+
+                    <strong>
+                        {{ employee["department"] }}
+                    </strong>
+
+                </div>
+
+
+
+                <div class="profile-detail">
+
+                    <span>
+                        Job Title
+                    </span>
+
+                    <strong>
+                        {{ employee["job_title"] }}
+                    </strong>
+
+                </div>
+
+
+
+                <div class="profile-detail">
+
+                    <span>
+                        Hire Date
+                    </span>
+
+                    <strong>
+                        {{ employee["hire_date"] }}
+                    </strong>
+
+                </div>
+
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- PERFORMANCE PROFILE -->
+
+        <section class="profile-card">
+
+
+            <div class="profile-card-heading">
+
+
+                <div>
+
+                    <span class="section-label">
+                        PERFORMANCE
+                    </span>
+
+
+                    <h2>
+                        Performance Profile
+                    </h2>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="profile-placeholder">
+
+
+                <div class="profile-placeholder-icon">
+                    ◎
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        No performance goals yet
+                    </strong>
+
+
+                    <p>
+                        Responsibilities, expectations, KPIs and
+                        performance goals will appear here once
+                        they are created by the supervisor.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+    </div>
+
+
+
+    <!-- RIGHT SIDE -->
+
+    <aside class="profile-side-column">
+
+
+
+        <!-- ACCOUNT INFORMATION -->
+
+        <section class="profile-card">
+
+
+            <span class="section-label">
+                ACCOUNT
+            </span>
+
+
+            <h2>
+                Account Details
+            </h2>
+
+
+
+            <div class="side-detail">
+
+
+                <span>
+                    Work Email
+                </span>
+
+
+                <strong>
+                    {{ employee["email"] }}
+                </strong>
+
+
+            </div>
+
+
+
+            <div class="side-detail">
+
+
+                <span>
+                    Account Role
+                </span>
+
+
+                <strong>
+                    Employee
+                </strong>
+
+
+            </div>
+
+
+
+            <div class="side-detail">
+
+
+                <span>
+                    Status
+                </span>
+
+
+                <strong class="status-text">
+                    {{ employee["status"] }}
+                </strong>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- SUPERVISOR -->
+
+        <section class="profile-card">
+
+
+            <span class="section-label">
+                REPORTING
+            </span>
+
+
+            <h2>
+                Supervisor
+            </h2>
+
+
+
+            {% if employee["supervisor_name"] %}
+
+
+                <div class="supervisor-person">
+
+
+                    <div class="supervisor-avatar">
+
+                        {{ employee["supervisor_name"][0] }}
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            {{ employee["supervisor_name"] }}
+                        </strong>
+
+
+                        <span>
+                            Assigned Supervisor
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <div class="no-supervisor">
+
+
+                    <div>
+                        !
+                    </div>
+
+
+                    <strong>
+                        Not assigned
+                    </strong>
+
+
+                    <p>
+                        A supervisor has not been assigned
+                        to this employee yet.
+                    </p>
+
+
+                </div>
+
+
+            {% endif %}
+
+
+        </section>
+
+
+
+        <!-- REVIEW STATUS -->
+
+        <section class="profile-card">
+
+
+            <span class="section-label">
+                REVIEW
+            </span>
+
+
+            <h2>
+                Current Review
+            </h2>
+
+
+
+            <div class="no-review">
+
+
+                <span>
+                    No active review cycle
+                </span>
+
+
+                <p>
+                    Review information will appear here when
+                    this employee is assigned to a cycle.
+                </p>
+
+
+            </div>
+
+
+        </section>
+
+
+    </aside>
+
+
+</div>
+
+<!-- =====================================
+     EDIT PROFILE BACKDROP
+====================================== -->
+
+<div
+    class="drawer-backdrop"
+    id="editDrawerBackdrop"
+></div>
+
+
+
+<!-- =====================================
+     EDIT EMPLOYEE DRAWER
+====================================== -->
+
+<aside
+    class="employee-drawer"
+    id="editEmployeeDrawer"
+>
+
+
+    <!-- HEADER -->
+
+    <div class="drawer-header">
+
+
+        <div>
+
+            <span class="section-label">
+                EDIT EMPLOYEE
+            </span>
+
+            <h2>
+                Update Performance Profile
+            </h2>
+
+            <p>
+                Update the employee's personal and
+                organisational information.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="drawer-close"
+            id="closeEditDrawer"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- FORM -->
+
+    <form
+        class="employee-form"
+        id="editEmployeeForm"
+        method="POST"
+        action="{{ url_for('edit_employee', employee_id=employee['id']) }}"
+        novalidate
+    >
+
+
+        <!-- BASIC INFORMATION -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    01
+                </span>
+
+                <div>
+
+                    <strong>
+                        Basic Information
+                    </strong>
+
+                    <small>
+                        Identity and contact information
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label for="editFullName">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="editFullName"
+                    name="full_name"
+                    value="{{ employee['full_name'] }}"
+                >
+
+            </div>
+
+
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="editEmployeeCode">
+                        Employee ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editEmployeeCode"
+                        name="employee_code"
+                        value="{{ employee['employee_code'] }}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editHireDate">
+                        Hire Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="editHireDate"
+                        name="hire_date"
+                        value="{{ employee['hire_date'] }}"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label for="editEmail">
+                    Work Email
+                </label>
+
+                <input
+                    type="email"
+                    id="editEmail"
+                    name="email"
+                    value="{{ employee['email'] }}"
+                >
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- JOB INFORMATION -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    02
+                </span>
+
+                <div>
+
+                    <strong>
+                        Job Information
+                    </strong>
+
+                    <small>
+                        Role and reporting information
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="editDepartment">
+                        Department
+                    </label>
+
+                    <select
+                        id="editDepartment"
+                        name="department"
+                    >
+
+                        <option
+                            value="Human Resources"
+                            {% if employee["department"] == "Human Resources" %}
+                                selected
+                            {% endif %}
+                        >
+                            Human Resources
+                        </option>
+
+
+                        <option
+                            value="Information Technology"
+                            {% if employee["department"] == "Information Technology" %}
+                                selected
+                            {% endif %}
+                        >
+                            Information Technology
+                        </option>
+
+
+                        <option
+                            value="Finance"
+                            {% if employee["department"] == "Finance" %}
+                                selected
+                            {% endif %}
+                        >
+                            Finance
+                        </option>
+
+
+                        <option
+                            value="Operations"
+                            {% if employee["department"] == "Operations" %}
+                                selected
+                            {% endif %}
+                        >
+                            Operations
+                        </option>
+
+
+                        <option
+                            value="Marketing"
+                            {% if employee["department"] == "Marketing" %}
+                                selected
+                            {% endif %}
+                        >
+                            Marketing
+                        </option>
+
+
+                        <option
+                            value="Sales"
+                            {% if employee["department"] == "Sales" %}
+                                selected
+                            {% endif %}
+                        >
+                            Sales
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="editJobTitle">
+                        Job Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editJobTitle"
+                        name="job_title"
+                        value="{{ employee['job_title'] }}"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label for="editSupervisor">
+                    Supervisor
+                </label>
+
+                <select
+                    id="editSupervisor"
+                    name="supervisor_id"
+                >
+
+                    <option value="">
+                        Not assigned yet
+                    </option>
+
+
+                    {% for supervisor in supervisors %}
+
+                        <option
+                            value="{{ supervisor['id'] }}"
+
+                            {% if employee["supervisor_id"] == supervisor["id"] %}
+                                selected
+                            {% endif %}
+                        >
+
+                            {{ supervisor["full_name"] }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ACTIONS -->
+
+        <div class="drawer-actions">
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="cancelEditButton"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+                id="saveProfileButton"
+            >
+                Save Changes
+            </button>
+
+
+        </div>
+
+
+    </form>
+
+
+</aside>
+
+
+
+<script
+    src="{{ url_for('static', filename='js/employee_profile.js') }}"
+></script>
+
+{% endblock %}

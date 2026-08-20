@@ -1,0 +1,740 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+Peer Matchboard | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div
+    id="peerMatchboard"
+    data-cycle-id="{{ cycle['id'] }}"
+></div>
+
+
+
+<!-- =====================================================
+     HEADER
+====================================================== -->
+
+<section class="peer-matchboard-hero">
+
+
+    <div>
+
+
+        <a
+            href="{{ url_for(
+                'review_cycle_workspace',
+                cycle_id=cycle['id']
+            ) }}"
+            class="back-link"
+        >
+            ← Review Workspace
+        </a>
+
+
+        <span class="eyebrow">
+            PEER MATCHBOARD
+        </span>
+
+
+        <h1>
+            {{ cycle["cycle_name"] }}
+        </h1>
+
+
+        <p>
+            Build balanced peer coverage for employees
+            who have completed their self-assessment.
+        </p>
+
+
+    </div>
+
+
+
+    <div class="matchboard-live-context">
+
+
+        <span class="command-live-dot"></span>
+
+
+        <div>
+
+            <small>
+                ASSIGNMENT MODE
+            </small>
+
+
+            <strong>
+                {{ cycle["status"] }}
+            </strong>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     RULE STRIP
+====================================================== -->
+
+<section class="peer-rule-strip">
+
+
+    <div>
+
+        <span>
+            COVERAGE
+        </span>
+
+        <strong>
+            Up to 2 reviewers
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span>
+            ELIGIBILITY
+        </span>
+
+        <strong>
+            Active employees
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span>
+            PRIVACY
+        </span>
+
+        <strong>
+            Reviewer identity protected
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span>
+            ACTIVATION RULE
+        </span>
+
+        <strong>
+            Self-assessment submitted
+        </strong>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     MATCHBOARD GRID
+====================================================== -->
+
+<section class="peer-match-grid">
+
+
+    <!-- =============================================
+         REVIEW SUBJECTS
+    ============================================== -->
+
+    <div class="peer-subject-panel">
+
+
+        <div class="peer-panel-heading">
+
+
+            <div>
+
+                <span class="section-label">
+                    REVIEW SUBJECTS
+                </span>
+
+
+                <h2>
+                    Peer coverage
+                </h2>
+
+            </div>
+
+
+            <strong>
+                {{ subjects|length }}
+            </strong>
+
+
+        </div>
+
+
+
+        <div class="peer-subject-list">
+
+
+            {% for subject in subjects %}
+
+
+                {% set subject_assignments =
+                    assignment_map.get(
+                        subject["employee_review_id"],
+                        []
+                    )
+                %}
+
+
+                <article
+                    class="peer-subject-card
+
+                    {% if subject['self_assessment_status'] != 'Submitted' %}
+                        locked
+                    {% endif %}
+                    "
+
+                    data-review-id="{{ subject['employee_review_id'] }}"
+
+                    data-employee-user-id="{{ subject['employee_user_id'] }}"
+
+                    data-subject-name="{{ subject['employee_name_snapshot'] }}"
+
+                    data-department="{{ subject['department_snapshot'] or '' }}"
+                >
+
+
+                    <div class="peer-subject-top">
+
+
+                        <div class="peer-subject-identity">
+
+
+                            <div class="peer-avatar">
+
+                                {{ subject["employee_name_snapshot"][0] }}
+
+                            </div>
+
+
+                            <div>
+
+
+                                <span>
+                                    {{ subject["employee_code_snapshot"] }}
+                                </span>
+
+
+                                <h3>
+                                    {{ subject["employee_name_snapshot"] }}
+                                </h3>
+
+
+                                <p>
+                                    {{ subject["job_title_snapshot"] }}
+                                    ·
+                                    {{ subject["department_snapshot"] }}
+                                </p>
+
+
+                            </div>
+
+
+                        </div>
+
+
+
+                        <div
+                            class="
+                            coverage-meter
+
+                            {% if subject['peer_count'] >= 2 %}
+                                complete
+
+                            {% elif subject['peer_count'] == 1 %}
+                                partial
+
+                            {% endif %}
+                            "
+                        >
+
+                            <strong
+                                class="coverage-count"
+                            >
+                                {{ subject["peer_count"] }}/2
+                            </strong>
+
+                            <span>
+                                PEER COVERAGE
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- =================================
+                         READINESS
+                    ================================== -->
+
+                    <div class="peer-readiness-row">
+
+
+                        {% if subject["self_assessment_status"] == "Submitted" %}
+
+                            <span class="peer-ready">
+                                ✓ Self assessment submitted
+                            </span>
+
+                        {% else %}
+
+                            <span class="peer-blocked">
+                                ! Waiting for self assessment
+                            </span>
+
+                        {% endif %}
+
+
+                        <span>
+                            {{ subject["review_status"] }}
+                        </span>
+
+
+                    </div>
+
+
+
+                    <!-- =================================
+                         CURRENT REVIEWERS
+                    ================================== -->
+
+                    <div
+                        class="assigned-peer-list"
+                    >
+
+
+                        {% if subject_assignments %}
+
+
+                            {% for assignment in subject_assignments %}
+
+
+                                <div class="assigned-peer-chip">
+
+
+                                    <div>
+
+                                        <span>
+                                            {{ assignment["reviewer_name"][0] }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <section>
+
+                                        <strong>
+                                            {{ assignment["reviewer_name"] }}
+                                        </strong>
+
+
+                                        <small>
+                                            {{ assignment["reviewer_department"] }}
+                                            ·
+                                            {{ assignment["status"] }}
+                                        </small>
+
+                                    </section>
+
+
+                                    {% if assignment["status"] == "Assigned" %}
+
+                                        <button
+                                            type="button"
+
+                                            class="remove-peer-button"
+
+                                            data-review-id="{{ subject['employee_review_id'] }}"
+
+                                            data-assignment-id="{{ assignment['id'] }}"
+
+                                            data-reviewer-name="{{ assignment['reviewer_name'] }}"
+                                        >
+                                            ×
+                                        </button>
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                            {% endfor %}
+
+
+                        {% else %}
+
+
+                            <div class="peer-slot-empty">
+
+                                No peer reviewers assigned yet.
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+
+                    <!-- =================================
+                         ASSIGN CONTROL
+                    ================================== -->
+
+                    {% if
+                        subject["self_assessment_status"]
+                        == "Submitted"
+
+                        and
+
+                        subject["peer_count"] < 2
+                    %}
+
+
+                        <button
+                            type="button"
+                            class="open-peer-selector"
+
+                            data-review-id="{{ subject['employee_review_id'] }}"
+
+                            data-subject-name="{{ subject['employee_name_snapshot'] }}"
+
+                            data-employee-user-id="{{ subject['employee_user_id'] }}"
+
+                            data-department="{{ subject['department_snapshot'] or '' }}"
+                        >
+                            + Add Peer Reviewer
+                        </button>
+
+
+                    {% elif subject["peer_count"] >= 2 %}
+
+
+                        <div class="coverage-complete-message">
+
+                            ✓ Peer coverage complete
+
+                        </div>
+
+
+                    {% endif %}
+
+
+                </article>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =============================================
+         MATCHBOARD INTELLIGENCE
+    ============================================== -->
+
+    <aside class="peer-match-intelligence">
+
+
+        <span class="section-label">
+            MATCHING PRINCIPLES
+        </span>
+
+
+        <h2>
+            Better peers,
+            better context.
+        </h2>
+
+
+        <p>
+            Peer reviewers should have enough working
+            context to provide useful feedback without
+            creating unnecessary conflicts.
+        </p>
+
+
+
+        <div class="match-principle">
+
+
+            <span>
+                01
+            </span>
+
+
+            <div>
+
+                <strong>
+                    Working context
+                </strong>
+
+                <p>
+                    Prefer colleagues who regularly work
+                    with the review subject.
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="match-principle">
+
+
+            <span>
+                02
+            </span>
+
+
+            <div>
+
+                <strong>
+                    Useful perspective
+                </strong>
+
+                <p>
+                    Cross-team feedback can be valuable
+                    where collaboration exists.
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="match-principle">
+
+
+            <span>
+                03
+            </span>
+
+
+            <div>
+
+                <strong>
+                    Confidential process
+                </strong>
+
+                <p>
+                    Employees are informed that peer review
+                    has started, but reviewer identities
+                    are not exposed to them.
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+    </aside>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     REVIEWER SELECTOR
+====================================================== -->
+
+<div
+    class="peer-selector-backdrop"
+    id="peerSelectorBackdrop"
+></div>
+
+
+
+<aside
+    class="peer-selector"
+    id="peerSelector"
+>
+
+
+    <div class="peer-selector-header">
+
+
+        <div>
+
+            <span class="eyebrow">
+                REVIEWER SELECTOR
+            </span>
+
+
+            <h2 id="peerSelectorTitle">
+                Choose colleague
+            </h2>
+
+
+            <p id="peerSelectorDescription">
+                Select a suitable peer reviewer.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="closePeerSelector"
+            class="peer-selector-close"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <div class="peer-selector-search">
+
+
+        <input
+            type="text"
+            id="peerCandidateSearch"
+            placeholder="Search colleague, department or role..."
+        >
+
+
+    </div>
+
+
+
+    <div
+        class="peer-candidate-list"
+        id="peerCandidateList"
+    >
+
+
+        {% for candidate in candidates %}
+
+
+            <article
+                class="peer-candidate-card"
+
+                data-user-id="{{ candidate['user_id'] }}"
+
+                data-name="{{ candidate['full_name']|lower }}"
+
+                data-department="{{ (candidate['department'] or '')|lower }}"
+
+                data-role="{{ (candidate['job_title'] or '')|lower }}"
+            >
+
+
+                <div class="candidate-avatar">
+
+                    {{ candidate["full_name"][0] }}
+
+                </div>
+
+
+                <div class="candidate-content">
+
+
+                    <strong>
+                        {{ candidate["full_name"] }}
+                    </strong>
+
+
+                    <span>
+                        {{ candidate["job_title"] }}
+                    </span>
+
+
+                    <small>
+
+                        {{ candidate["department"] }}
+
+                        ·
+
+                        {{ candidate["employee_code"] }}
+
+                    </small>
+
+
+                </div>
+
+
+
+                <div class="candidate-match-note">
+                </div>
+
+
+
+                <button
+                    type="button"
+                    class="assign-peer-button"
+
+                    data-user-id="{{ candidate['user_id'] }}"
+
+                    data-name="{{ candidate['full_name'] }}"
+                >
+                    Assign →
+                </button>
+
+
+            </article>
+
+
+        {% endfor %}
+
+
+    </div>
+
+
+</aside>
+
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/peer_matchboard.js'
+    ) }}"
+></script>
+
+
+{% endblock %}

@@ -1,0 +1,1023 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+Peer Review | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div
+    id="peerReviewWorkspace"
+
+    data-review-id="{{ assignment['employee_review_id'] }}"
+
+    data-peer-review-id="{{ peer_review['id'] }}"
+
+    data-status="{{ peer_review['status'] }}"
+>
+</div>
+
+
+
+<!-- =====================================================
+     PEER REVIEW HEADER
+====================================================== -->
+
+<section class="peer-review-header">
+
+
+    <div>
+
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="back-link"
+        >
+            ← Flowboard
+        </a>
+
+
+        <span class="eyebrow">
+            CONFIDENTIAL PEER REVIEW
+        </span>
+
+
+        <h1>
+            {{ assignment["employee_name_snapshot"] }}
+        </h1>
+
+
+        <p>
+            Provide a balanced assessment based on your
+            direct working experience with this colleague.
+        </p>
+
+
+    </div>
+
+
+
+    <div class="peer-review-state">
+
+
+        <span>
+            YOUR REVIEW
+        </span>
+
+
+        <strong>
+            {{ peer_review["status"] }}
+        </strong>
+
+
+        <small>
+            {{ baseline_items|length }}
+            performance item(s)
+        </small>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     CONFIDENTIALITY BAR
+====================================================== -->
+
+<section class="peer-confidentiality-bar">
+
+
+    <div class="peer-confidentiality-symbol">
+        ◇
+    </div>
+
+
+    <div>
+
+        <span>
+            CONFIDENTIAL REVIEW CHANNEL
+        </span>
+
+
+        <strong>
+            Give constructive, evidence-based feedback.
+        </strong>
+
+
+        <p>
+            Your feedback forms part of the formal review
+            process. The employee does not see reviewer
+            identities through their review workspace.
+        </p>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     SUBJECT CONTEXT
+====================================================== -->
+
+<section class="peer-subject-context">
+
+
+    <div>
+
+        <span>
+            REVIEW SUBJECT
+        </span>
+
+
+        <strong>
+            {{ assignment["employee_name_snapshot"] }}
+        </strong>
+
+
+        <small>
+            {{ assignment["employee_code_snapshot"] }}
+        </small>
+
+    </div>
+
+
+
+    <div>
+
+        <span>
+            ROLE
+        </span>
+
+
+        <strong>
+            {{ assignment["job_title_snapshot"] }}
+        </strong>
+
+
+        <small>
+            {{ assignment["department_snapshot"] }}
+        </small>
+
+    </div>
+
+
+
+    <div>
+
+        <span>
+            REVIEW WINDOW
+        </span>
+
+
+        <strong>
+            {{ assignment["start_date"] }}
+            →
+            {{ assignment["end_date"] }}
+        </strong>
+
+
+        <small>
+            {{ assignment["cycle_name"] }}
+        </small>
+
+    </div>
+
+
+
+    <div>
+
+        <span>
+            PEER COVERAGE
+        </span>
+
+
+        <strong>
+            {{ reviewer_progress["submitted_reviewers"] or 0 }}
+            /
+            {{ reviewer_progress["total_reviewers"] or 0 }}
+            submitted
+        </strong>
+
+
+        <small>
+            Confidential reviewers
+        </small>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     REVIEW ORIENTATION
+====================================================== -->
+
+<section class="peer-review-orientation">
+
+
+    <div class="peer-review-orbit">
+
+        {{ baseline_items|length }}
+
+    </div>
+
+
+    <div>
+
+        <span class="section-label">
+            REVIEW BASELINE
+        </span>
+
+
+        <h2>
+            Review what you have observed.
+        </h2>
+
+
+        <p>
+            These performance areas were frozen when the
+            review cycle became active. Rate only areas where
+            you have enough working context to provide useful
+            feedback.
+        </p>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     PERFORMANCE ITEMS
+====================================================== -->
+
+<section class="peer-review-baseline">
+
+
+    {% for item in baseline_items %}
+
+
+        <article class="peer-review-item">
+
+
+            <!-- =========================================
+                 ITEM HEADER
+            ========================================== -->
+
+            <div class="peer-review-item-header">
+
+
+                <div
+                    class="
+                        peer-review-item-number
+                        peer-type-{{ item['item_type']|lower }}
+                    "
+                >
+
+                    {{ "%02d"|format(loop.index) }}
+
+                </div>
+
+
+
+                <div>
+
+
+                    <span>
+                        {{ item["item_type"]|upper }}
+                    </span>
+
+
+                    <h3>
+                        {{ item["title"] }}
+                    </h3>
+
+
+                    {% if item["description"] %}
+
+                        <p>
+                            {{ item["description"] }}
+                        </p>
+
+                    {% endif %}
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =========================================
+                 PERFORMANCE CONTEXT
+            ========================================== -->
+
+            {% if item["target"] or item["due_date"] %}
+
+
+                <div class="peer-baseline-context">
+
+
+                    {% if item["target"] %}
+
+                        <div>
+
+                            <span>
+                                TARGET
+                            </span>
+
+
+                            <strong>
+                                {{ item["target"] }}
+                            </strong>
+
+                        </div>
+
+                    {% endif %}
+
+
+
+                    {% if item["due_date"] %}
+
+                        <div>
+
+                            <span>
+                                DUE DATE
+                            </span>
+
+
+                            <strong>
+                                {{ item["due_date"] }}
+                            </strong>
+
+                        </div>
+
+                    {% endif %}
+
+
+                </div>
+
+
+            {% endif %}
+
+
+
+            <!-- =========================================
+                 PEER RATING
+            ========================================== -->
+
+            <div class="peer-rating-section">
+
+
+                <div>
+
+
+                    <span class="section-label">
+                        YOUR OBSERVATION
+                    </span>
+
+
+                    <strong>
+                        How consistently has this been demonstrated?
+                    </strong>
+
+
+                    <small>
+                        Choose the rating that best reflects
+                        what you have personally observed.
+                    </small>
+
+
+                </div>
+
+
+
+                <div class="peer-rating-scale">
+
+
+                    {% for rating in range(1, 6) %}
+
+
+                        <button
+                            type="button"
+
+                            class="
+                                peer-rating-point
+
+                                {% if item['rating'] == rating %}
+                                    selected
+                                {% endif %}
+                            "
+
+                            data-rating="{{ rating }}"
+
+                            data-item="{{ item['review_plan_item_id'] }}"
+
+                            {% if peer_review["status"] == "Submitted" %}
+                                disabled
+                            {% endif %}
+                        >
+
+
+                            <strong>
+                                {{ rating }}
+                            </strong>
+
+
+                            <span>
+
+                                {% if rating == 1 %}
+
+                                    Limited
+
+                                {% elif rating == 2 %}
+
+                                    Developing
+
+                                {% elif rating == 3 %}
+
+                                    Consistent
+
+                                {% elif rating == 4 %}
+
+                                    Strong
+
+                                {% elif rating == 5 %}
+
+                                    Exceptional
+
+                                {% endif %}
+
+                            </span>
+
+
+                        </button>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =========================================
+                 FEEDBACK
+            ========================================== -->
+
+            <div class="peer-feedback-field">
+
+
+                <label
+                    for="peerFeedback-{{ item['review_plan_item_id'] }}"
+                >
+                    Your feedback
+                </label>
+
+
+                <span>
+                    Use specific observations or examples
+                    where possible.
+                </span>
+
+
+                <textarea
+                    id="peerFeedback-{{ item['review_plan_item_id'] }}"
+
+                    class="peer-item-feedback"
+
+                    data-item="{{ item['review_plan_item_id'] }}"
+
+                    rows="5"
+
+                    placeholder="Describe what you have observed and why it is relevant..."
+
+                    {% if peer_review["status"] == "Submitted" %}
+                        readonly
+                    {% endif %}
+                >{{ item["feedback_text"] or "" }}</textarea>
+
+
+            </div>
+
+
+        </article>
+
+
+    {% endfor %}
+
+
+</section>
+
+
+
+<!-- =====================================================
+     OVERALL PEER PERSPECTIVE
+====================================================== -->
+
+<section class="peer-overall-panel">
+
+
+    <div class="peer-overall-header">
+
+
+        <div>
+
+            <span class="eyebrow">
+                PEER PERSPECTIVE
+            </span>
+
+
+            <h2>
+                Overall feedback
+            </h2>
+
+
+            <p>
+                Add broader observations that may not belong
+                to a single performance item.
+            </p>
+
+        </div>
+
+
+        <span class="peer-draft-indicator">
+
+            {% if peer_review["status"] == "Submitted" %}
+
+                SUBMITTED
+
+            {% else %}
+
+                DRAFT
+
+            {% endif %}
+
+        </span>
+
+
+    </div>
+
+
+
+    <div class="peer-overall-grid">
+
+
+        <!-- STRENGTHS -->
+
+        <div class="peer-overall-field">
+
+
+            <label for="peerStrengths">
+                Observed Strengths
+            </label>
+
+
+            <span>
+                What does this colleague consistently do well?
+            </span>
+
+
+            <textarea
+                id="peerStrengths"
+                rows="5"
+
+                placeholder="Describe key strengths you have observed..."
+
+                {% if peer_review["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+            >{{ peer_review["strengths"] or "" }}</textarea>
+
+
+        </div>
+
+
+
+        <!-- DEVELOPMENT -->
+
+        <div class="peer-overall-field">
+
+
+            <label for="peerDevelopmentFeedback">
+                Development Feedback
+            </label>
+
+
+            <span>
+                Where could this colleague improve or develop?
+            </span>
+
+
+            <textarea
+                id="peerDevelopmentFeedback"
+                rows="5"
+
+                placeholder="Provide constructive development feedback..."
+
+                {% if peer_review["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+            >{{ peer_review["development_feedback"] or "" }}</textarea>
+
+
+        </div>
+
+
+
+        <!-- COLLABORATION -->
+
+        <div class="peer-overall-field">
+
+
+            <label for="peerCollaborationFeedback">
+                Collaboration & Teamwork
+            </label>
+
+
+            <span>
+                How effectively do they work with others?
+            </span>
+
+
+            <textarea
+                id="peerCollaborationFeedback"
+                rows="5"
+
+                placeholder="Describe collaboration or teamwork observations..."
+
+                {% if peer_review["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+            >{{ peer_review["collaboration_feedback"] or "" }}</textarea>
+
+
+        </div>
+
+
+
+        <!-- OVERALL COMMENT -->
+
+        <div class="peer-overall-field">
+
+
+            <label for="peerOverallComment">
+                Overall Comment
+            </label>
+
+
+            <span>
+                Add any final context that would help the review.
+            </span>
+
+
+            <textarea
+                id="peerOverallComment"
+                rows="5"
+
+                placeholder="Add any final comments..."
+
+                {% if peer_review["status"] == "Submitted" %}
+                    readonly
+                {% endif %}
+            >{{ peer_review["overall_comment"] or "" }}</textarea>
+
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================================
+     WORKSPACE DOCK
+====================================================== -->
+
+{% if peer_review["status"] == "Draft" %}
+
+
+    <section class="peer-review-dock">
+
+
+        <div>
+
+            <span>
+                CONFIDENTIAL DRAFT
+            </span>
+
+
+            <strong id="peerDraftStatus">
+                Your feedback is still editable.
+            </strong>
+
+        </div>
+
+
+
+        <div class="peer-review-dock-actions">
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="savePeerReviewDraft"
+            >
+                Save Draft
+            </button>
+
+
+            <button
+                type="button"
+                class="primary-button"
+                id="submitPeerReview"
+            >
+                Review & Submit
+            </button>
+
+
+        </div>
+
+
+    </section>
+
+
+{% else %}
+
+
+    <section class="peer-review-submitted">
+
+
+        <div class="peer-submitted-icon">
+            ✓
+        </div>
+
+
+        <div>
+
+            <span>
+                FEEDBACK SUBMITTED
+            </span>
+
+
+            <strong>
+                Your peer review is locked.
+            </strong>
+
+
+            <p>
+                The feedback has been returned to the
+                confidential performance review workflow.
+            </p>
+
+        </div>
+
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="flow-primary-link"
+        >
+            Return to Flowboard →
+        </a>
+
+
+    </section>
+
+
+{% endif %}
+
+
+
+{% if peer_review["status"] == "Draft" %}
+
+
+<!-- =====================================================
+     PEER REVIEW SUBMISSION GATE
+====================================================== -->
+
+<div
+    class="submission-gate-backdrop"
+    id="peerSubmissionGateBackdrop"
+></div>
+
+
+<section
+    class="submission-gate"
+    id="peerSubmissionGate"
+>
+
+
+    <div class="submission-gate-header">
+
+
+        <div>
+
+            <span class="eyebrow">
+                FINAL SUBMISSION GATE
+            </span>
+
+
+            <h2>
+                Submit confidential peer feedback?
+            </h2>
+
+
+            <p>
+                Confirm that every observation is complete
+                before locking this peer review.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="submission-gate-close"
+            id="closePeerSubmissionGate"
+            aria-label="Close submission gate"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+    <div class="submission-readiness">
+
+
+        <div class="submission-score">
+
+            <strong id="peerSubmissionScore">
+                0%
+            </strong>
+
+            <span>
+                READY
+            </span>
+
+        </div>
+
+
+        <div>
+
+            <span class="section-label">
+                COMPLETION CHECK
+            </span>
+
+            <h3 id="peerSubmissionReadinessTitle">
+                Checking your peer review...
+            </h3>
+
+            <p id="peerSubmissionReadinessMessage">
+                Complete all required feedback before submission.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <div
+        class="submission-check-grid peer-submission-check-grid"
+    >
+
+
+        <article
+            class="submission-check"
+            id="peerItemSubmissionCheck"
+        >
+
+            <span class="submission-check-icon">
+                ◇
+            </span>
+
+            <div>
+
+                <small>
+                    ITEM FEEDBACK
+                </small>
+
+                <strong id="peerItemCheckText">
+                    Checking...
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article
+            class="submission-check"
+            id="peerOverallSubmissionCheck"
+        >
+
+            <span class="submission-check-icon">
+                ◇
+            </span>
+
+            <div>
+
+                <small>
+                    OVERALL FEEDBACK
+                </small>
+
+                <strong id="peerOverallCheckText">
+                    Checking...
+                </strong>
+
+            </div>
+
+        </article>
+
+
+    </div>
+
+
+    <div class="submission-lock-warning">
+
+        <span>
+            🔒
+        </span>
+
+        <div>
+
+            <strong>
+                Submission permanently locks your review
+            </strong>
+
+            <p>
+                Ratings and written feedback cannot be changed
+                after submission. Your identity remains hidden
+                from the employee review workspace.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="submission-gate-actions">
+
+
+        <button
+            type="button"
+            class="secondary-button"
+            id="returnToPeerReview"
+        >
+            Continue Editing
+        </button>
+
+
+        <button
+            type="button"
+            class="primary-button"
+            id="confirmPeerReviewSubmission"
+            disabled
+        >
+            Submit & Lock
+        </button>
+
+
+    </div>
+
+
+</section>
+
+
+{% endif %}
+
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/peer_review.js'
+    ) }}"
+></script>
+
+
+{% endblock %}

@@ -1,0 +1,1166 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+Review Cycles | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     PROGRAM HEADER
+====================================== -->
+
+<section class="cycle-program-header">
+
+
+    <div>
+
+
+        <span class="eyebrow">
+            PERFORMANCE OPERATIONS
+        </span>
+
+
+        <h1>
+            Review Program
+        </h1>
+
+
+        <p>
+            Configure and oversee the organisation's
+            annual performance review rhythm.
+        </p>
+
+
+    </div>
+
+
+
+    <!-- YEAR SELECTOR -->
+
+    <form
+        method="GET"
+        action="{{ url_for('review_cycles') }}"
+        class="program-year-selector"
+    >
+
+
+        <span>
+            PROGRAM YEAR
+        </span>
+
+
+        <select
+            name="year"
+            onchange="this.form.submit()"
+        >
+
+
+            {% for year in available_years %}
+
+                <option
+                    value="{{ year }}"
+
+                    {% if year == selected_year %}
+                        selected
+                    {% endif %}
+                >
+
+                    {{ year }}
+
+                </option>
+
+            {% endfor %}
+
+
+        </select>
+
+
+    </form>
+
+
+</section>
+
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="page-alert {{ category }}">
+
+                <span>
+
+                    {% if category == "success" %}
+                        ✓
+                    {% else %}
+                        !
+                    {% endif %}
+
+                </span>
+
+                <p>
+                    {{ message }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+<!-- =====================================
+     YEAR COMMAND STRIP
+====================================== -->
+
+<section class="year-command-strip">
+
+
+    <div class="year-identity">
+
+
+        <span>
+            {{ selected_year }}
+        </span>
+
+
+        <div>
+
+            <strong>
+                Annual Review Program
+            </strong>
+
+
+            <p>
+                Three review windows across one
+                performance year.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="program-stat">
+
+
+        <span>
+            CYCLES
+        </span>
+
+
+        <strong>
+
+            {{ cycle_map|length }} / 3
+
+        </strong>
+
+
+        <small>
+            configured
+        </small>
+
+
+    </div>
+
+
+
+    <div class="program-stat">
+
+
+        <span>
+            PROGRAM STATE
+        </span>
+
+
+        <strong>
+
+            {% if cycle_map|length == 3 %}
+
+                Configured
+
+            {% elif cycle_map|length > 0 %}
+
+                In Setup
+
+            {% else %}
+
+                Not Started
+
+            {% endif %}
+
+        </strong>
+
+
+        <small>
+            {{ selected_year }}
+        </small>
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     ANNUAL FLOW
+====================================== -->
+
+<section class="annual-cycle-flow">
+
+
+    <div class="annual-flow-line"></div>
+
+
+
+    <!-- =====================================
+         CYCLE 01
+    ====================================== -->
+
+    {% set cycle = cycle_map.get(1) %}
+
+
+    <article
+        class="cycle-node
+        {% if cycle %}
+            configured
+        {% else %}
+            unconfigured
+        {% endif %}"
+    >
+
+
+        <div class="cycle-marker">
+            01
+        </div>
+
+
+
+        <div class="cycle-node-card">
+
+
+            <div class="cycle-card-top">
+
+
+                <div>
+
+                    <span class="cycle-kicker">
+                        REVIEW WINDOW 01
+                    </span>
+
+
+                    <h2>
+
+                        {% if cycle %}
+
+                            {{ cycle["cycle_name"] }}
+
+                        {% else %}
+
+                            Cycle 01
+
+                        {% endif %}
+
+                    </h2>
+
+                </div>
+
+
+
+                {% if cycle %}
+
+                    <span
+                        class="cycle-status
+                        cycle-status-{{ cycle['status']|lower }}"
+                    >
+                        {{ cycle["status"] }}
+                    </span>
+
+                {% else %}
+
+                    <span class="cycle-status cycle-status-empty">
+                        Not configured
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+
+            {% if cycle %}
+
+
+                <div class="cycle-date-band">
+
+
+                    <div>
+
+                        <span>
+                            START
+                        </span>
+
+                        <strong>
+                            {{ cycle["start_date"] }}
+                        </strong>
+
+                    </div>
+
+
+                    <span class="cycle-date-arrow">
+                        →
+                    </span>
+
+
+                    <div>
+
+                        <span>
+                            END
+                        </span>
+
+                        <strong>
+                            {{ cycle["end_date"] }}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="cycle-card-footer">
+
+
+                    <div class="cycle-people">
+
+                        <strong>
+                            {{ cycle["employee_count"] }}
+                        </strong>
+
+                        <span>
+                            employees assigned
+                        </span>
+
+                    </div>
+
+
+                    <a
+                        href="{{ url_for(
+                            'review_cycle_workspace',
+                            cycle_id=cycle['id']
+                        ) }}"
+                        class="cycle-open-button"
+                    >
+                        Open Cycle
+
+                        <span>
+                            →
+                        </span>
+                    </a>
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <div class="cycle-empty-body">
+
+
+                    <p>
+                        This review window has not
+                        been configured yet.
+                    </p>
+
+
+                    <button
+                        type="button"
+                        class="cycle-configure-button"
+                        data-cycle-number="1"
+                    >
+                        + Configure Cycle
+                    </button>
+
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+    </article>
+
+
+
+    <!-- =====================================
+         CYCLE 02
+    ====================================== -->
+
+    {% set cycle = cycle_map.get(2) %}
+
+
+    <article
+        class="cycle-node
+        {% if cycle %}
+            configured
+        {% else %}
+            unconfigured
+        {% endif %}"
+    >
+
+
+        <div class="cycle-marker">
+            02
+        </div>
+
+
+
+        <div class="cycle-node-card">
+
+
+            <div class="cycle-card-top">
+
+
+                <div>
+
+                    <span class="cycle-kicker">
+                        REVIEW WINDOW 02
+                    </span>
+
+
+                    <h2>
+
+                        {% if cycle %}
+
+                            {{ cycle["cycle_name"] }}
+
+                        {% else %}
+
+                            Cycle 02
+
+                        {% endif %}
+
+                    </h2>
+
+                </div>
+
+
+
+                {% if cycle %}
+
+                    <span
+                        class="cycle-status
+                        cycle-status-{{ cycle['status']|lower }}"
+                    >
+                        {{ cycle["status"] }}
+                    </span>
+
+                {% else %}
+
+                    <span class="cycle-status cycle-status-empty">
+                        Not configured
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+
+            {% if cycle %}
+
+
+                <div class="cycle-date-band">
+
+
+                    <div>
+
+                        <span>
+                            START
+                        </span>
+
+                        <strong>
+                            {{ cycle["start_date"] }}
+                        </strong>
+
+                    </div>
+
+
+                    <span class="cycle-date-arrow">
+                        →
+                    </span>
+
+
+                    <div>
+
+                        <span>
+                            END
+                        </span>
+
+                        <strong>
+                            {{ cycle["end_date"] }}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="cycle-card-footer">
+
+
+                    <div class="cycle-people">
+
+                        <strong>
+                            {{ cycle["employee_count"] }}
+                        </strong>
+
+                        <span>
+                            employees assigned
+                        </span>
+
+                    </div>
+
+
+                    <a
+                        href="{{ url_for(
+                            'review_cycle_workspace',
+                            cycle_id=cycle['id']
+                        ) }}"
+                        class="cycle-open-button"
+                    >
+                        Open Cycle
+
+                        <span>
+                            →
+                        </span>
+                    </a>
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <div class="cycle-empty-body">
+
+
+                    <p>
+                        This review window has not
+                        been configured yet.
+                    </p>
+
+
+                    <button
+                        type="button"
+                        class="cycle-configure-button"
+                        data-cycle-number="2"
+                    >
+                        + Configure Cycle
+                    </button>
+
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+    </article>
+
+
+
+    <!-- =====================================
+         CYCLE 03
+    ====================================== -->
+
+    {% set cycle = cycle_map.get(3) %}
+
+
+    <article
+        class="cycle-node
+        {% if cycle %}
+            configured
+        {% else %}
+            unconfigured
+        {% endif %}"
+    >
+
+
+        <div class="cycle-marker">
+            03
+        </div>
+
+
+
+        <div class="cycle-node-card">
+
+
+            <div class="cycle-card-top">
+
+
+                <div>
+
+                    <span class="cycle-kicker">
+                        REVIEW WINDOW 03
+                    </span>
+
+
+                    <h2>
+
+                        {% if cycle %}
+
+                            {{ cycle["cycle_name"] }}
+
+                        {% else %}
+
+                            Cycle 03
+
+                        {% endif %}
+
+                    </h2>
+
+                </div>
+
+
+
+                {% if cycle %}
+
+                    <span
+                        class="cycle-status
+                        cycle-status-{{ cycle['status']|lower }}"
+                    >
+                        {{ cycle["status"] }}
+                    </span>
+
+                {% else %}
+
+                    <span class="cycle-status cycle-status-empty">
+                        Not configured
+                    </span>
+
+                {% endif %}
+
+
+            </div>
+
+
+
+            {% if cycle %}
+
+
+                <div class="cycle-date-band">
+
+
+                    <div>
+
+                        <span>
+                            START
+                        </span>
+
+                        <strong>
+                            {{ cycle["start_date"] }}
+                        </strong>
+
+                    </div>
+
+
+                    <span class="cycle-date-arrow">
+                        →
+                    </span>
+
+
+                    <div>
+
+                        <span>
+                            END
+                        </span>
+
+                        <strong>
+                            {{ cycle["end_date"] }}
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="cycle-card-footer">
+
+
+                    <div class="cycle-people">
+
+                        <strong>
+                            {{ cycle["employee_count"] }}
+                        </strong>
+
+                        <span>
+                            employees assigned
+                        </span>
+
+                    </div>
+
+
+                    <a
+                        href="{{ url_for(
+                            'review_cycle_workspace',
+                            cycle_id=cycle['id']
+                        ) }}"
+                        class="cycle-open-button"
+                    >
+                        Open Cycle
+
+                        <span>
+                            →
+                        </span>
+                    </a>
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <div class="cycle-empty-body">
+
+
+                    <p>
+                        This review window has not
+                        been configured yet.
+                    </p>
+
+
+                    <button
+                        type="button"
+                        class="cycle-configure-button"
+                        data-cycle-number="3"
+                    >
+                        + Configure Cycle
+                    </button>
+
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+    </article>
+
+
+</section>
+
+
+
+<!-- =====================================
+     PROGRAM NOTE
+====================================== -->
+
+<section class="cycle-program-note">
+
+
+    <span>
+        PROGRAM PRINCIPLE
+    </span>
+
+
+    <p>
+        Employees may participate in different review
+        windows depending on business scheduling.
+        Review assignments are managed independently
+        for each cycle.
+    </p>
+
+
+</section>
+
+
+<!-- =====================================
+     CYCLE SETUP BACKDROP
+====================================== -->
+
+<div
+    class="drawer-backdrop"
+    id="cycleSetupBackdrop"
+></div>
+
+
+
+<!-- =====================================
+     CYCLE SETUP DRAWER
+====================================== -->
+
+<aside
+    class="employee-drawer cycle-setup-drawer"
+    id="cycleSetupDrawer"
+>
+
+
+    <!-- HEADER -->
+
+    <div class="drawer-header">
+
+
+        <div>
+
+            <span class="section-label">
+                REVIEW PROGRAM SETUP
+            </span>
+
+
+            <h2 id="cycleSetupTitle">
+                Configure Cycle
+            </h2>
+
+
+            <p>
+                Define this review window before
+                assigning employees to it.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="drawer-close"
+            id="closeCycleSetup"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- FORM -->
+
+    <form
+        method="POST"
+        action="{{ url_for('add_review_cycle') }}"
+        class="employee-form"
+        id="cycleSetupForm"
+        novalidate
+    >
+
+
+        <!-- HIDDEN PROGRAM VALUES -->
+
+        <input
+            type="hidden"
+            name="cycle_year"
+            value="{{ selected_year }}"
+        >
+
+
+        <input
+            type="hidden"
+            name="cycle_number"
+            id="cycleNumberInput"
+        >
+
+
+
+        <!-- =====================================
+             REVIEW WINDOW IDENTITY
+        ====================================== -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+
+                <span>
+                    01
+                </span>
+
+
+                <div>
+
+                    <strong>
+                        Review Window
+                    </strong>
+
+                    <small>
+                        Identify this review cycle
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="cycle-setup-context">
+
+
+                <span>
+                    PROGRAM YEAR
+                </span>
+
+
+                <strong>
+                    {{ selected_year }}
+                </strong>
+
+
+                <span class="cycle-context-divider">
+                    /
+                </span>
+
+
+                <span>
+                    WINDOW
+                </span>
+
+
+                <strong id="cycleWindowDisplay">
+                    —
+                </strong>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+
+                <label for="cycleName">
+                    Cycle Name
+                </label>
+
+
+                <input
+                    type="text"
+                    id="cycleName"
+                    name="cycle_name"
+                    placeholder="e.g. First Review Window"
+                >
+
+
+                <small class="field-help">
+                    Use a clear internal name that HR
+                    and managers will recognise.
+                </small>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =====================================
+             REVIEW PERIOD
+        ====================================== -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+
+                <span>
+                    02
+                </span>
+
+
+                <div>
+
+                    <strong>
+                        Review Period
+                    </strong>
+
+                    <small>
+                        Define when this cycle operates
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="cycleStartDate">
+                        Start Date
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="cycleStartDate"
+                        name="start_date"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="cycleEndDate">
+                        End Date
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="cycleEndDate"
+                        name="end_date"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- =====================================
+             INITIAL STATE
+        ====================================== -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+
+                <span>
+                    03
+                </span>
+
+
+                <div>
+
+                    <strong>
+                        Initial State
+                    </strong>
+
+                    <small>
+                        New cycles begin in preparation
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="cycle-draft-state">
+
+
+                <div class="draft-state-icon">
+                    D
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Draft
+                    </strong>
+
+
+                    <p>
+                        Employee assignments and review
+                        preparation can still be changed.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ACTIONS -->
+
+        <div class="drawer-actions">
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="cancelCycleSetup"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+                id="createCycleButton"
+            >
+                Create Draft Cycle
+            </button>
+
+
+        </div>
+
+
+    </form>
+
+
+</aside>
+
+
+
+<script
+    src="{{ url_for('static', filename='js/review_cycles.js') }}"
+></script>
+
+
+{% endblock %}

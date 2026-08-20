@@ -1,0 +1,1329 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+{{ cycle["cycle_name"] }} | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     CYCLE HEADER
+====================================== -->
+
+<section class="cycle-workspace-header">
+
+
+    <div>
+
+
+        <a
+            href="{{ url_for(
+                'review_cycles',
+                year=cycle['cycle_year']
+            ) }}"
+            class="back-link"
+        >
+            ← Review Program
+        </a>
+
+
+        <span class="eyebrow">
+            REVIEW WINDOW {{ "%02d"|format(cycle["cycle_number"]) }}
+        </span>
+
+
+        <h1>
+            {{ cycle["cycle_name"] }}
+        </h1>
+
+
+        <p>
+            {{ cycle["cycle_year"] }}
+            performance review programme
+        </p>
+
+
+    </div>
+
+
+
+    <div class="cycle-workspace-state">
+
+        <span>
+            CYCLE STATUS
+        </span>
+
+        <strong>
+            {{ cycle["status"] }}
+        </strong>
+
+
+        {% if cycle["status"] == "Draft" %}
+
+            <button
+                type="button"
+                class="edit-cycle-config-button"
+                id="openCycleEdit"
+            >
+                Edit Configuration
+            </button>
+
+        {% endif %}
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     FLASH MESSAGES
+====================================== -->
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="page-alert {{ category }}">
+
+                <span>
+
+                    {% if category == "success" %}
+                        ✓
+                    {% else %}
+                        !
+                    {% endif %}
+
+                </span>
+
+                <p>
+                    {{ message }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- =====================================
+     CYCLE CONTROL STRIP
+====================================== -->
+
+<section class="cycle-control-strip">
+
+
+    <div class="cycle-control-period">
+
+
+        <span>
+            REVIEW PERIOD
+        </span>
+
+
+        <strong>
+            {{ cycle["start_date"] }}
+            →
+            {{ cycle["end_date"] }}
+        </strong>
+
+
+    </div>
+
+
+
+    <div class="cycle-control-stat">
+
+        <span>
+            ASSIGNED
+        </span>
+
+        <strong>
+            {{ assigned_employees|length }}
+        </strong>
+
+        <small>
+            employees
+        </small>
+
+    </div>
+
+
+
+    <div class="cycle-control-stat">
+
+        <span>
+            AVAILABLE
+        </span>
+
+        <strong>
+            {{ eligible_employees|length }}
+        </strong>
+
+        <small>
+            this year
+        </small>
+
+    </div>
+
+
+</section>
+
+
+<!-- =====================================
+     CYCLE LAUNCH GATE
+====================================== -->
+
+<section class="cycle-launch-gate">
+
+
+    <!-- =====================================
+         LEFT SIDE - WORKFLOW READINESS
+    ====================================== -->
+
+    <div class="launch-gate-main">
+
+
+        <div class="launch-gate-heading">
+
+
+            <div>
+
+                <span class="section-label">
+                    CYCLE LAUNCH GATE
+                </span>
+
+
+                <h2>
+
+                    {% if cycle["status"] == "Draft" %}
+
+                        Scheduling Readiness
+
+                    {% elif cycle["status"] == "Scheduled" %}
+
+                        Activation Readiness
+
+                    {% elif cycle["status"] == "Active" %}
+
+                        Review In Progress
+
+                    {% elif cycle["status"] == "Closed" %}
+
+                        Cycle Completed
+
+                    {% endif %}
+
+                </h2>
+
+            </div>
+
+
+
+            <!-- STATUS BADGE -->
+
+            {% if cycle["status"] == "Draft" %}
+
+
+                {% if cycle_readiness["can_schedule"] %}
+
+                    <span class="launch-state clear">
+                        Clear to Schedule
+                    </span>
+
+                {% else %}
+
+                    <span class="launch-state blocked">
+                        Action Required
+                    </span>
+
+                {% endif %}
+
+
+
+            {% elif cycle["status"] == "Scheduled" %}
+
+
+                {% if activation_readiness["can_activate"] %}
+
+                    <span class="launch-state clear">
+                        Ready to Activate
+                    </span>
+
+                {% else %}
+
+                    <span class="launch-state blocked">
+                        Action Required
+                    </span>
+
+                {% endif %}
+
+
+
+            {% else %}
+
+                <span class="launch-state scheduled">
+                    {{ cycle["status"] }}
+                </span>
+
+            {% endif %}
+
+
+        </div>
+
+
+
+        <!-- =====================================
+             DRAFT STATE
+        ====================================== -->
+
+        {% if cycle["status"] == "Draft" %}
+
+
+            <!-- BLOCKERS -->
+
+            {% if cycle_readiness["blockers"] %}
+
+
+                <div class="readiness-group blocker-group">
+
+
+                    <span class="readiness-group-label">
+                        BLOCKERS
+                    </span>
+
+
+                    {% for blocker in cycle_readiness["blockers"] %}
+
+
+                        <div class="readiness-check blocker">
+
+                            <span>
+                                !
+                            </span>
+
+
+                            <p>
+                                {{ blocker }}
+                            </p>
+
+                        </div>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            {% endif %}
+
+
+
+            <!-- WARNINGS -->
+
+            {% if cycle_readiness["warnings"] %}
+
+
+                <div class="readiness-group warning-group">
+
+
+                    <span class="readiness-group-label">
+                        ADVISORY
+                    </span>
+
+
+                    {% for warning in cycle_readiness["warnings"] %}
+
+
+                        <div class="readiness-check warning">
+
+                            <span>
+                                i
+                            </span>
+
+
+                            <p>
+                                {{ warning }}
+                            </p>
+
+                        </div>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            {% endif %}
+
+
+
+            <!-- READY -->
+
+            {% if cycle_readiness["can_schedule"] %}
+
+
+                <div class="readiness-check success">
+
+                    <span>
+                        ✓
+                    </span>
+
+
+                    <p>
+                        Required cycle configuration checks
+                        have been completed.
+                    </p>
+
+                </div>
+
+
+            {% endif %}
+
+
+
+        <!-- =====================================
+             SCHEDULED STATE
+        ====================================== -->
+
+        {% elif cycle["status"] == "Scheduled" %}
+
+
+            {% if activation_readiness["blockers"] %}
+
+
+                <div class="readiness-group blocker-group">
+
+
+                    <span class="readiness-group-label">
+                        ACTIVATION BLOCKERS
+                    </span>
+
+
+                    {% for blocker in activation_readiness["blockers"] %}
+
+
+                        <div class="readiness-check blocker">
+
+                            <span>
+                                !
+                            </span>
+
+
+                            <p>
+                                {{ blocker }}
+                            </p>
+
+                        </div>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+            {% else %}
+
+
+                <div class="readiness-check success">
+
+                    <span>
+                        ✓
+                    </span>
+
+
+                    <p>
+                        The review cohort and employee
+                        performance baselines are ready
+                        for activation.
+                    </p>
+
+                </div>
+
+
+            {% endif %}
+
+
+
+        <!-- =====================================
+             ACTIVE STATE
+        ====================================== -->
+
+        {% elif cycle["status"] == "Active" %}
+
+
+            <div class="readiness-check success">
+
+                <span>
+                    ✓
+                </span>
+
+
+                <p>
+                    The review cycle is active.
+                    Employee review cases have been created
+                    and their performance baselines are locked.
+                </p>
+
+            </div>
+
+
+
+        <!-- =====================================
+             CLOSED STATE
+        ====================================== -->
+
+        {% elif cycle["status"] == "Closed" %}
+
+
+            <div class="readiness-check success">
+
+                <span>
+                    ✓
+                </span>
+
+
+                <p>
+                    This review cycle has been completed
+                    and retained as a historical record.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+
+    <!-- =====================================
+         RIGHT SIDE - WORKFLOW ACTION
+    ====================================== -->
+
+    <div class="launch-gate-action">
+
+
+        <!-- =====================================
+            DRAFT → SCHEDULED
+        ====================================== -->
+
+        {% if cycle["status"] == "Draft" %}
+
+            <span>
+                NEXT WORKFLOW STATE
+            </span>
+
+            <strong>
+                Scheduled
+            </strong>
+
+            <p>
+                Scheduling locks the current employee
+                cohort for review preparation.
+            </p>
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'schedule_review_cycle',
+                    cycle_id=cycle['id']
+                ) }}"
+                id="scheduleCycleForm"
+            >
+
+                <button
+                    type="submit"
+                    class="schedule-cycle-button"
+
+                    {% if not cycle_readiness["can_schedule"] %}
+                        disabled
+                    {% endif %}
+                >
+
+                    Schedule Cycle
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+
+        <!-- =====================================
+            SCHEDULED → ACTIVE
+        ====================================== -->
+
+        {% elif cycle["status"] == "Scheduled" %}
+
+            <span>
+                NEXT WORKFLOW STATE
+            </span>
+
+            <strong>
+                Active
+            </strong>
+
+            <p>
+                Activating the cycle creates each
+                employee's review case and freezes
+                their current Performance Blueprint.
+            </p>
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'activate_review_cycle',
+                    cycle_id=cycle['id']
+                ) }}"
+                id="activateCycleForm"
+            >
+
+                <button
+                    type="submit"
+                    class="schedule-cycle-button"
+
+                    {% if not activation_readiness["can_activate"] %}
+                        disabled
+                    {% endif %}
+                >
+
+                    Activate Review Cycle
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'return_cycle_to_draft',
+                    cycle_id=cycle['id']
+                ) }}"
+                id="returnCycleToDraftForm"
+            >
+
+                <button
+                    type="submit"
+                    class="return-draft-button"
+                >
+                    ← Return to Draft
+                </button>
+
+            </form>
+
+
+        <<!-- =====================================
+            ACTIVE
+        ====================================== -->
+
+        {% elif cycle["status"] == "Active" %}
+
+            <span>
+                CURRENT STATE
+            </span>
+
+            <strong>
+                Active
+            </strong>
+
+            <p>
+                Employee reviews are now running
+                against their locked performance
+                baselines.
+            </p>
+
+
+            <!-- =====================================
+                PEER MATCHBOARD
+            ====================================== -->
+
+            <a
+                href="{{ url_for(
+                    'peer_matchboard',
+                    cycle_id=cycle['id']
+                ) }}"
+                class="peer-matchboard-launch"
+            >
+
+                <span>
+                    ◎
+                </span>
+
+                Peer Matchboard →
+
+            </a>
+
+
+        <!-- =====================================
+            CLOSED
+        ====================================== -->
+
+        {% elif cycle["status"] == "Closed" %}
+
+            <span>
+                CURRENT STATE
+            </span>
+
+            <strong>
+                Closed
+            </strong>
+
+            <p>
+                The review cycle is complete
+                and its records are retained
+                as historical review records.
+            </p>
+
+        {% endif %}
+
+
+    </div>
+
+
+</section>
+
+<!-- =====================================
+     WORKSPACE GRID
+====================================== -->
+
+<div class="cycle-workspace-grid">
+
+
+    <!-- =====================================
+         ASSIGNED COHORT
+    ====================================== -->
+
+    <section class="cycle-cohort-panel">
+
+
+        <div class="cycle-panel-heading">
+
+
+            <div>
+
+                <span class="section-label">
+                    REVIEW COHORT
+                </span>
+
+                <h2>
+                    Assigned Employees
+                </h2>
+
+            </div>
+
+
+            <span class="cohort-count">
+                {{ assigned_employees|length }}
+            </span>
+
+
+        </div>
+
+
+
+        {% if assigned_employees %}
+
+
+            <div class="assigned-cohort-list">
+
+
+                {% for employee in assigned_employees %}
+
+
+                    <article class="assigned-cohort-member">
+
+
+                        <div class="cohort-avatar">
+
+                            {{ employee["full_name"][0]|upper }}
+
+                        </div>
+
+
+
+                        <div class="cohort-person">
+
+
+                            <strong>
+                                {{ employee["full_name"] }}
+                            </strong>
+
+
+                            <span>
+                                {{ employee["employee_code"] }}
+                                •
+                                {{ employee["job_title"] }}
+                            </span>
+
+
+                            <small>
+
+                                {{ employee["department"] }}
+
+                                {% if employee["supervisor_name"] %}
+
+                                    • Supervisor:
+                                    {{ employee["supervisor_name"] }}
+
+                                {% endif %}
+
+                            </small>
+
+
+                        </div>
+
+
+
+                        {% if cycle["status"] == "Draft" %}
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'remove_cycle_employee',
+                                    cycle_id=cycle['id'],
+                                    assignment_id=employee['assignment_id']
+                                ) }}"
+                                class="remove-cycle-assignment-form"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="cohort-remove-button"
+                                >
+                                    Remove
+                                </button>
+
+                            </form>
+
+                        {% endif %}
+
+
+                    </article>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="cycle-panel-empty">
+
+                <div>
+                    0
+                </div>
+
+                <strong>
+                    No employees assigned
+                </strong>
+
+                <p>
+                    Build the review cohort using
+                    the employee pool on the right.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         EMPLOYEE POOL
+    ====================================== -->
+
+    <section class="cycle-pool-panel">
+
+
+        <div class="cycle-panel-heading">
+
+
+            <div>
+
+                <span class="section-label">
+                    ELIGIBLE POOL
+                </span>
+
+                <h2>
+                    Add Employees
+                </h2>
+
+            </div>
+
+
+            <span class="cohort-count">
+                {{ eligible_employees|length }}
+            </span>
+
+
+        </div>
+
+
+
+        {% if cycle["status"] != "Draft" %}
+
+
+            <div class="cycle-locked-message">
+
+                <strong>
+                    Cohort locked
+                </strong>
+
+                <p>
+                    Employee assignments cannot be changed
+                    after the cycle leaves Draft.
+                </p>
+
+            </div>
+
+
+        {% elif eligible_employees %}
+
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'assign_cycle_employees',
+                    cycle_id=cycle['id']
+                ) }}"
+                id="cycleAssignmentForm"
+            >
+
+
+                <div class="pool-toolbar">
+
+
+                    <input
+                        type="search"
+                        id="cycleEmployeeSearch"
+                        placeholder="Search employees..."
+                    >
+
+
+                    <label class="pool-select-all">
+
+                        <input
+                            type="checkbox"
+                            id="selectAllCycleEmployees"
+                        >
+
+                        Select all
+
+                    </label>
+
+
+                </div>
+
+
+
+                <div
+                    class="eligible-employee-list"
+                    id="eligibleEmployeeList"
+                >
+
+
+                    {% for employee in eligible_employees %}
+
+
+                        <label
+                            class="eligible-employee"
+                            data-search="{{ (
+                                employee['full_name']
+                                ~ ' '
+                                ~ employee['employee_code']
+                                ~ ' '
+                                ~ employee['department']
+                                ~ ' '
+                                ~ employee['job_title']
+                            )|lower }}"
+                        >
+
+
+                            <input
+                                type="checkbox"
+                                name="employee_ids"
+                                value="{{ employee['id'] }}"
+                                class="cycle-employee-checkbox"
+                            >
+
+
+
+                            <div class="eligible-avatar">
+
+                                {{ employee["full_name"][0]|upper }}
+
+                            </div>
+
+
+
+                            <div class="eligible-person">
+
+
+                                <strong>
+                                    {{ employee["full_name"] }}
+                                </strong>
+
+
+                                <span>
+
+                                    {{ employee["employee_code"] }}
+
+                                    •
+
+                                    {{ employee["job_title"] }}
+
+                                </span>
+
+
+                                <small>
+
+                                    {{ employee["department"] }}
+
+                                    {% if employee["supervisor_name"] %}
+
+                                        •
+                                        {{ employee["supervisor_name"] }}
+
+                                    {% endif %}
+
+                                </small>
+
+
+                            </div>
+
+
+                        </label>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+
+                <div class="pool-action-bar">
+
+
+                    <div>
+
+                        <strong id="selectedEmployeeCount">
+                            0
+                        </strong>
+
+                        <span>
+                            selected
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                        id="assignEmployeesButton"
+                        disabled
+                    >
+                        Assign to Cycle
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+
+        {% else %}
+
+
+            <div class="cycle-panel-empty">
+
+                <div>
+                    ✓
+                </div>
+
+                <strong>
+                    No eligible employees
+                </strong>
+
+                <p>
+                    All active employees are already assigned
+                    to a review window for {{ cycle["cycle_year"] }}.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+</div>
+
+<!-- =====================================
+     EDIT CYCLE BACKDROP
+====================================== -->
+
+<div
+    class="drawer-backdrop"
+    id="cycleEditBackdrop"
+></div>
+
+
+<!-- =====================================
+     EDIT CYCLE DRAWER
+====================================== -->
+
+<aside
+    class="employee-drawer cycle-setup-drawer"
+    id="cycleEditDrawer"
+>
+
+
+    <div class="drawer-header">
+
+
+        <div>
+
+            <span class="section-label">
+                REVIEW WINDOW CONFIGURATION
+            </span>
+
+
+            <h2>
+                Edit Cycle
+            </h2>
+
+
+            <p>
+                Update the review window while
+                it remains in Draft.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="drawer-close"
+            id="closeCycleEdit"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <form
+        method="POST"
+        action="{{ url_for(
+            'edit_review_cycle',
+            cycle_id=cycle['id']
+        ) }}"
+        class="employee-form"
+        id="cycleEditForm"
+        novalidate
+    >
+
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    01
+                </span>
+
+                <div>
+
+                    <strong>
+                        Cycle Identity
+                    </strong>
+
+                    <small>
+                        Review window {{ "%02d"|format(cycle["cycle_number"]) }}
+                        • {{ cycle["cycle_year"] }}
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="editCycleName">
+                    Cycle Name
+                </label>
+
+                <input
+                    type="text"
+                    id="editCycleName"
+                    name="cycle_name"
+                    value="{{ cycle['cycle_name'] }}"
+                >
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    02
+                </span>
+
+                <div>
+
+                    <strong>
+                        Review Period
+                    </strong>
+
+                    <small>
+                        Adjust the operating window
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="editCycleStart">
+                        Start Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="editCycleStart"
+                        name="start_date"
+                        value="{{ cycle['start_date'] }}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="editCycleEnd">
+                        End Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="editCycleEnd"
+                        name="end_date"
+                        value="{{ cycle['end_date'] }}"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="cycle-edit-notice">
+
+            <strong>
+                Draft configuration
+            </strong>
+
+            <p>
+                Changes to the review window will
+                be recorded in the cycle audit history.
+            </p>
+
+        </div>
+
+
+
+        <div class="drawer-actions">
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="cancelCycleEdit"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+                id="saveCycleEdit"
+            >
+                Save Changes
+            </button>
+
+
+        </div>
+
+
+    </form>
+
+
+</aside>
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/review_cycle_workspace.js'
+    ) }}"
+></script>
+
+
+{% endblock %}

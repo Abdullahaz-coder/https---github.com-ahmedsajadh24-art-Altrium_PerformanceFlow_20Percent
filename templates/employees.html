@@ -1,0 +1,767 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+Employees | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     PAGE INTRO
+====================================== -->
+
+<section class="employees-header">
+
+    <div>
+
+        <span class="eyebrow">
+            PEOPLE DIRECTORY
+        </span>
+
+        <h1>
+            Employee Performance Profiles
+        </h1>
+
+        <p>
+            Manage employee information and performance profiles
+            from one central workspace.
+        </p>
+
+    </div>
+
+
+    <button
+        type="button"
+        class="primary-button open-employee-drawer"
+    >
+        <span>+</span>
+        Add Employee
+    </button>
+
+</section>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div
+                class="page-alert {{ category }}"
+            >
+
+                <span>
+
+                    {% if category == "success" %}
+                        ✓
+                    {% else %}
+                        !
+                    {% endif %}
+
+                </span>
+
+
+                <p>
+                    {{ message }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- =====================================
+     TOOLBAR
+====================================== -->
+
+<section class="employee-toolbar">
+
+
+    <div class="employee-search">
+
+        <span>
+            ⌕
+        </span>
+
+        <input
+            type="text"
+            id="employeeSearch"
+            placeholder="Search employees..."
+        >
+
+    </div>
+
+
+    <div class="employee-count">
+
+        <span>
+            TOTAL EMPLOYEES
+        </span>
+
+        <strong>
+            {{ employees|length }}
+        </strong>
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =====================================
+     EMPLOYEE CONTENT
+====================================== -->
+
+<section class="employee-panel">
+
+
+    <div class="panel-heading">
+
+        <div>
+
+            <span class="section-label">
+                EMPLOYEE DIRECTORY
+            </span>
+
+            <h2>
+                Performance profiles
+            </h2>
+
+        </div>
+
+    </div>
+
+
+
+    {% if employees %}
+
+
+    <!-- =====================================
+         EMPLOYEE TABLE
+    ====================================== -->
+
+    <div class="employee-table-wrapper">
+
+        <table class="employee-table">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Employee
+                    </th>
+
+                    <th>
+                        Employee ID
+                    </th>
+
+                    <th>
+                        Department
+                    </th>
+
+                    <th>
+                        Job Title
+                    </th>
+
+                    <th>
+                        Hire Date
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+
+            <tbody>
+
+
+                {% for employee in employees %}
+
+
+                <tr>
+
+
+                    <!-- EMPLOYEE -->
+
+                    <td>
+
+                        <div class="employee-person">
+
+
+                            <div class="employee-avatar">
+
+                                {{ employee["full_name"][0] }}
+
+                            </div>
+
+
+                            <div>
+
+                                <strong>
+                                    {{ employee["full_name"] }}
+                                </strong>
+
+                                <span>
+                                    {{ employee["email"] }}
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </td>
+
+
+
+                    <!-- EMPLOYEE CODE -->
+
+                    <td>
+
+                        <span class="employee-code">
+                            {{ employee["employee_code"] }}
+                        </span>
+
+                    </td>
+
+
+
+                    <!-- DEPARTMENT -->
+
+                    <td>
+                        {{ employee["department"] }}
+                    </td>
+
+
+
+                    <!-- JOB -->
+
+                    <td>
+                        {{ employee["job_title"] }}
+                    </td>
+
+
+
+                    <!-- HIRE DATE -->
+
+                    <td>
+                        {{ employee["hire_date"] }}
+                    </td>
+
+
+
+                    <!-- STATUS -->
+
+                    <td>
+
+                        <span class="status-badge active-status">
+                            {{ employee["status"] }}
+                        </span>
+
+                    </td>
+
+
+
+                    <!-- ACTION -->
+
+                    <td>
+
+                        <a
+                            href="{{ url_for('employee_profile', employee_id=employee['id']) }}"
+                            class="table-action"
+                        >
+                            →
+                        </a>
+
+                    </td>
+
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+    </div>
+
+
+
+    {% else %}
+
+
+    <!-- =====================================
+         EMPTY STATE
+    ====================================== -->
+
+    <div class="employee-empty-state">
+
+
+        <div class="employee-empty-icon">
+            +
+        </div>
+
+
+        <span class="section-label">
+            NO EMPLOYEE PROFILES
+        </span>
+
+
+        <h2>
+            Your employee directory is empty
+        </h2>
+
+
+        <p>
+            Create the first employee performance profile
+            to start managing goals, review cycles and evaluations.
+        </p>
+
+
+        <button
+            type="button"
+            class="primary-button open-employee-drawer"
+        >
+            + Add your first employee
+        </button>
+
+
+    </div>
+
+
+    {% endif %}
+
+
+</section>
+
+<!-- =====================================
+     DRAWER BACKDROP
+====================================== -->
+
+<div
+    class="drawer-backdrop"
+    id="drawerBackdrop"
+></div>
+
+<!-- =====================================
+     ADD EMPLOYEE DRAWER
+====================================== -->
+
+<aside
+    class="employee-drawer"
+    id="employeeDrawer"
+>
+
+
+    <!-- DRAWER HEADER -->
+
+    <div class="drawer-header">
+
+
+        <div>
+
+            <span class="section-label">
+                NEW EMPLOYEE
+            </span>
+
+            <h2>
+                Create Performance Profile
+            </h2>
+
+            <p>
+                Add the employee's account and
+                performance profile information.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="drawer-close"
+            id="closeEmployeeDrawer"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- DRAWER FORM -->
+
+    <form
+        id="employeeForm"
+        class="employee-form"
+        method="POST"
+        action="{{ url_for('add_employee') }}"
+        novalidate
+    >
+
+
+        <!-- BASIC INFORMATION -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    01
+                </span>
+
+                <div>
+
+                    <strong>
+                        Basic Information
+                    </strong>
+
+                    <small>
+                        Employee identity and contact details
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- FULL NAME -->
+
+            <div class="form-group">
+
+                <label for="fullName">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="fullName"
+                    name="full_name"
+                    placeholder="e.g. Ayesha Fernando"
+                >
+
+            </div>
+
+
+
+            <!-- TWO COLUMN ROW -->
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="employeeCode">
+                        Employee ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="employeeCode"
+                        name="employee_code"
+                        placeholder="e.g. ALT001"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="hireDate">
+                        Hire Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="hireDate"
+                        name="hire_date"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- EMAIL -->
+
+            <div class="form-group">
+
+                <label for="employeeEmail">
+                    Work Email
+                </label>
+
+                <input
+                    type="email"
+                    id="employeeEmail"
+                    name="email"
+                    placeholder="name@altrium.com"
+                >
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- JOB INFORMATION -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    02
+                </span>
+
+                <div>
+
+                    <strong>
+                        Job Information
+                    </strong>
+
+                    <small>
+                        Role and organisational details
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="form-row">
+
+
+                <!-- DEPARTMENT -->
+
+                <div class="form-group">
+
+                    <label for="department">
+                        Department
+                    </label>
+
+                    <select
+                        id="department"
+                        name="department"
+                    >
+
+                        <option value="">
+                            Select department
+                        </option>
+
+                        <option value="Human Resources">
+                            Human Resources
+                        </option>
+
+                        <option value="Information Technology">
+                            Information Technology
+                        </option>
+
+                        <option value="Finance">
+                            Finance
+                        </option>
+
+                        <option value="Operations">
+                            Operations
+                        </option>
+
+                        <option value="Marketing">
+                            Marketing
+                        </option>
+
+                        <option value="Sales">
+                            Sales
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- JOB TITLE -->
+
+                <div class="form-group">
+
+                    <label for="jobTitle">
+                        Job Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="jobTitle"
+                        name="job_title"
+                        placeholder="e.g. Software Engineer"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- SUPERVISOR -->
+
+            <div class="form-group">
+
+                <label for="supervisor">
+                    Supervisor
+                </label>
+
+                <select
+                    id="supervisor"
+                    name="supervisor_id"
+                >
+
+                    <option value="">
+                        Not assigned yet
+                    </option>
+
+
+                    {% for supervisor in supervisors %}
+
+                         <option value="{{ supervisor['id'] }}">
+
+                            {{ supervisor["full_name"] }}
+
+                         </option>
+
+                     {% endfor %}
+
+                </select>
+
+
+                <small class="field-help">
+                    Supervisors will become available here
+                    once supervisor accounts exist.
+                </small>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ACCOUNT INFORMATION -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+                <span>
+                    03
+                </span>
+
+                <div>
+
+                    <strong>
+                        Account Access
+                    </strong>
+
+                    <small>
+                        Initial credentials for PerformanceFlow
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label for="temporaryPassword">
+                    Temporary Password
+                </label>
+
+                <input
+                    type="password"
+                    id="temporaryPassword"
+                    name="password"
+                    placeholder="Minimum 8 characters"
+                >
+
+
+                <small class="field-help">
+                    The employee will use this password
+                    for their first login.
+                </small>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- DRAWER ACTIONS -->
+
+        <div class="drawer-actions">
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="cancelEmployeeButton"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+                id="createEmployeeButton"
+            >
+                Create Profile
+            </button>
+
+
+        </div>
+
+
+    </form>
+
+
+</aside>
+
+<script
+    src="{{ url_for('static', filename='js/employees.js') }}"
+></script>
+
+{% endblock %}

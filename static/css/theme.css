@@ -1,0 +1,52 @@
+:root {
+
+    /* Main surfaces */
+
+    --bg-primary: #0B1020;
+    --bg-secondary: #131A2A;
+    --bg-elevated: #1A2336;
+
+    /* Structural borders */
+
+    --border-primary: #263047;
+    --border-soft: #202A3D;
+
+
+    /* Altrium brand */
+
+    --teal: #22D3C5;
+    --teal-soft: rgba(34, 211, 197, 0.10);
+
+    --violet: #8B5CF6;
+    --violet-soft: rgba(139, 92, 246, 0.10);
+
+
+    /* Typography */
+
+    --text-primary: #F2F3F8;
+    --text-secondary: #D6D8E7;
+    --text-muted: #9298AD;
+    --text-disabled: #667085;
+
+
+    /* Semantic states */
+
+    --success: #39D98A;
+    --success-soft: rgba(57, 217, 138, 0.12);
+
+    --warning: #FF9F43;
+    --warning-soft: rgba(255, 159, 67, 0.12);
+
+    --danger: #FF5C70;
+    --danger-soft: rgba(255, 92, 112, 0.12);
+
+
+    /* Brand gradient */
+
+    --brand-gradient:
+        linear-gradient(
+            135deg,
+            #22D3C5,
+            #8B5CF6
+        );
+}

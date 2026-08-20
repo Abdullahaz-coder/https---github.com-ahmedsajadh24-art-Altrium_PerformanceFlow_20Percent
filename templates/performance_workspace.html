@@ -1,0 +1,1525 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+{{ employee["full_name"] }} Performance | Altrium PerformanceFlow
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     PERFORMANCE HEADER
+====================================== -->
+
+<section class="blueprint-header">
+
+
+    <div>
+
+
+        <a
+            href="{{ url_for('my_team') }}"
+            class="back-link"
+        >
+            ← My Team
+        </a>
+
+
+        <span class="eyebrow">
+            PERFORMANCE BLUEPRINT
+        </span>
+
+
+        <h1>
+            {{ employee["full_name"] }}
+        </h1>
+
+
+        <p>
+
+            {{ employee["job_title"] }}
+
+            <span>•</span>
+
+            {{ employee["department"] }}
+
+            <span>•</span>
+
+            {{ employee["employee_code"] }}
+
+        </p>
+
+
+    </div>
+
+
+
+    <div class="blueprint-status">
+
+        <span>
+            PROFILE STATUS
+        </span>
+
+        <strong>
+            {{ employee["status"] }}
+        </strong>
+
+    </div>
+
+
+</section>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="page-alert {{ category }}">
+
+                <span>
+
+                    {% if category == "success" %}
+                        ✓
+                    {% else %}
+                        !
+                    {% endif %}
+
+                </span>
+
+                <p>
+                    {{ message }}
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- =====================================
+     BLUEPRINT INTRO
+====================================== -->
+
+<section class="blueprint-intro">
+
+
+    <div>
+
+        <span class="section-label">
+            PERFORMANCE DESIGN
+        </span>
+
+        <h2>
+            Build the employee's performance blueprint
+        </h2>
+
+        <p>
+            Define what the employee is responsible for,
+            how success is expected to look, how it will be
+            measured and what they should work towards.
+        </p>
+
+    </div>
+
+
+    <div class="blueprint-legend">
+
+        <span>
+            01 Responsibility
+        </span>
+
+        <span>
+            02 Expectation
+        </span>
+
+        <span>
+            03 KPI
+        </span>
+
+        <span>
+            04 Goal
+        </span>
+
+    </div>
+
+
+</section>
+
+<!-- =====================================
+     BLUEPRINT PULSE
+====================================== -->
+
+<section class="blueprint-pulse">
+
+
+    <div class="pulse-main">
+
+
+        <div class="pulse-heading">
+
+
+            <div>
+
+                <span class="section-label">
+                    BLUEPRINT PULSE
+                </span>
+
+                <h3>
+                    Performance Plan Coverage
+                </h3>
+
+            </div>
+
+
+            <span
+                class="plan-status
+                plan-status-{{ plan_summary['coverage_status']|lower|replace(' ', '-') }}"
+            >
+                {{ plan_summary["coverage_status"] }}
+            </span>
+
+
+        </div>
+
+
+
+        <p class="pulse-message">
+            {{ plan_summary["message"] }}
+        </p>
+
+
+    </div>
+
+
+
+    <div class="pulse-metrics">
+
+
+        <div class="pulse-metric">
+
+            <strong>
+                {{ plan_summary["responsibilities"] }}
+            </strong>
+
+            <span>
+                Responsibilities
+            </span>
+
+        </div>
+
+
+        <div class="pulse-metric">
+
+            <strong>
+                {{ plan_summary["expectations"] }}
+            </strong>
+
+            <span>
+                Expectations
+            </span>
+
+        </div>
+
+
+        <div class="pulse-metric">
+
+            <strong>
+                {{ plan_summary["kpis"] }}
+            </strong>
+
+            <span>
+                KPIs
+            </span>
+
+        </div>
+
+
+        <div class="pulse-metric">
+
+            <strong>
+                {{ plan_summary["goals"] }}
+            </strong>
+
+            <span>
+                Goals
+            </span>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+<!-- =====================================
+     BLUEPRINT LANES
+====================================== -->
+
+<!-- =====================================
+     PERFORMANCE BLUEPRINT LANES
+====================================== -->
+
+<div class="blueprint-grid">
+
+
+    <!-- =====================================
+         01 RESPONSIBILITIES
+    ====================================== -->
+
+    <section class="blueprint-lane responsibility-lane">
+
+
+        <div class="lane-header">
+
+            <div class="lane-number">
+                01
+            </div>
+
+
+            <div>
+
+                <span>
+                    FOUNDATION
+                </span>
+
+                <h2>
+                    Responsibilities
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <p class="lane-description">
+            What is this employee accountable for?
+        </p>
+
+
+
+        <div class="lane-items">
+
+
+            {% for item in performance_items %}
+
+
+                {% if item["item_type"] == "Responsibility" %}
+
+
+                    <article
+                        class="performance-item inspectable-item"
+
+                        data-id="{{ item['id'] }}"
+
+                        data-type="{{ item['item_type'] }}"
+
+                        data-title="{{ item['title']|e }}"
+
+                        data-description="{{ (item['description'] or '')|e }}"
+
+                        data-target="{{ (item['target'] or '')|e }}"
+
+                        data-due-date="{{ (item['due_date'] or '')|e }}"
+
+                        data-edit-url="{{ url_for(
+                            'edit_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-archive-url="{{ url_for(
+                            'archive_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-history-url="{{ url_for(
+                            'performance_item_history',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+                    >
+
+
+                        <strong>
+                            {{ item["title"] }}
+                        </strong>
+
+
+                        {% if item["description"] %}
+
+                            <p>
+                                {{ item["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <span class="item-inspect-hint">
+                            Inspect →
+                        </span>
+
+
+                    </article>
+
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="lane-add-button"
+            data-type="Responsibility"
+        >
+
+            <span>
+                +
+            </span>
+
+            Add Responsibility
+
+        </button>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         02 EXPECTATIONS
+    ====================================== -->
+
+    <section class="blueprint-lane expectation-lane">
+
+
+        <div class="lane-header">
+
+            <div class="lane-number">
+                02
+            </div>
+
+
+            <div>
+
+                <span>
+                    BEHAVIOUR
+                </span>
+
+                <h2>
+                    Expectations
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <p class="lane-description">
+            What standards and behaviours are expected?
+        </p>
+
+
+
+        <div class="lane-items">
+
+
+            {% for item in performance_items %}
+
+
+                {% if item["item_type"] == "Expectation" %}
+
+
+                    <article
+                        class="performance-item inspectable-item"
+
+                        data-id="{{ item['id'] }}"
+
+                        data-type="{{ item['item_type'] }}"
+
+                        data-title="{{ item['title']|e }}"
+
+                        data-description="{{ (item['description'] or '')|e }}"
+
+                        data-target="{{ (item['target'] or '')|e }}"
+
+                        data-due-date="{{ (item['due_date'] or '')|e }}"
+
+                        data-edit-url="{{ url_for(
+                            'edit_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-archive-url="{{ url_for(
+                            'archive_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-history-url="{{ url_for(
+                            'performance_item_history',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+                    >
+
+
+                        <strong>
+                            {{ item["title"] }}
+                        </strong>
+
+
+                        {% if item["description"] %}
+
+                            <p>
+                                {{ item["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <span class="item-inspect-hint">
+                            Inspect →
+                        </span>
+
+
+                    </article>
+
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="lane-add-button"
+            data-type="Expectation"
+        >
+
+            <span>
+                +
+            </span>
+
+            Add Expectation
+
+        </button>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         03 KPI
+    ====================================== -->
+
+    <section class="blueprint-lane kpi-lane">
+
+
+        <div class="lane-header">
+
+            <div class="lane-number">
+                03
+            </div>
+
+
+            <div>
+
+                <span>
+                    MEASUREMENT
+                </span>
+
+                <h2>
+                    KPIs
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <p class="lane-description">
+            How will successful performance be measured?
+        </p>
+
+
+
+        <div class="lane-items">
+
+
+            {% for item in performance_items %}
+
+
+                {% if item["item_type"] == "KPI" %}
+
+
+                    <article
+                        class="performance-item inspectable-item"
+
+                        data-id="{{ item['id'] }}"
+
+                        data-type="{{ item['item_type'] }}"
+
+                        data-title="{{ item['title']|e }}"
+
+                        data-description="{{ (item['description'] or '')|e }}"
+
+                        data-target="{{ (item['target'] or '')|e }}"
+
+                        data-due-date="{{ (item['due_date'] or '')|e }}"
+
+                        data-edit-url="{{ url_for(
+                            'edit_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-archive-url="{{ url_for(
+                            'archive_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-history-url="{{ url_for(
+                            'performance_item_history',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+                    >
+
+
+                        <strong>
+                            {{ item["title"] }}
+                        </strong>
+
+
+                        {% if item["target"] %}
+
+                            <span class="item-target">
+
+                                Target:
+                                {{ item["target"] }}
+
+                            </span>
+
+                        {% endif %}
+
+
+                        {% if item["description"] %}
+
+                            <p>
+                                {{ item["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <span class="item-inspect-hint">
+                            Inspect →
+                        </span>
+
+
+                    </article>
+
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="lane-add-button"
+            data-type="KPI"
+        >
+
+            <span>
+                +
+            </span>
+
+            Add KPI
+
+        </button>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         04 GOALS
+    ====================================== -->
+
+    <section class="blueprint-lane goal-lane">
+
+
+        <div class="lane-header">
+
+            <div class="lane-number">
+                04
+            </div>
+
+
+            <div>
+
+                <span>
+                    DIRECTION
+                </span>
+
+                <h2>
+                    Goals
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <p class="lane-description">
+            What should the employee achieve next?
+        </p>
+
+
+
+        <div class="lane-items">
+
+
+            {% for item in performance_items %}
+
+
+                {% if item["item_type"] == "Goal" %}
+
+
+                    <article
+                        class="performance-item inspectable-item"
+
+                        data-id="{{ item['id'] }}"
+
+                        data-type="{{ item['item_type'] }}"
+
+                        data-title="{{ item['title']|e }}"
+
+                        data-description="{{ (item['description'] or '')|e }}"
+
+                        data-target="{{ (item['target'] or '')|e }}"
+
+                        data-due-date="{{ (item['due_date'] or '')|e }}"
+
+                        data-edit-url="{{ url_for(
+                            'edit_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-archive-url="{{ url_for(
+                            'archive_performance_item',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+
+                        data-history-url="{{ url_for(
+                            'performance_item_history',
+                            employee_id=employee['id'],
+                            item_id=item['id']
+                        ) }}"
+                    
+                    >
+
+
+                        <strong>
+                            {{ item["title"] }}
+                        </strong>
+
+
+                        {% if item["target"] %}
+
+                            <span class="item-target">
+
+                                Target:
+                                {{ item["target"] }}
+
+                            </span>
+
+                        {% endif %}
+
+
+                        {% if item["due_date"] %}
+
+                            <span class="item-date">
+
+                                Due:
+                                {{ item["due_date"] }}
+
+                            </span>
+
+                        {% endif %}
+
+
+                        {% if item["description"] %}
+
+                            <p>
+                                {{ item["description"] }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <span class="item-inspect-hint">
+                            Inspect →
+                        </span>
+
+
+                    </article>
+
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="lane-add-button"
+            data-type="Goal"
+        >
+
+            <span>
+                +
+            </span>
+
+            Add Goal
+
+        </button>
+
+
+    </section>
+
+
+</div>
+
+<!-- =====================================
+     PERFORMANCE COMPOSER BACKDROP
+====================================== -->
+
+<div
+    class="drawer-backdrop"
+    id="performanceBackdrop"
+></div>
+
+
+
+<!-- =====================================
+     PERFORMANCE COMPOSER
+====================================== -->
+
+<aside
+    class="employee-drawer performance-composer"
+    id="performanceComposer"
+>
+
+
+    <!-- HEADER -->
+
+    <div class="drawer-header">
+
+
+        <div>
+
+            <span
+                class="section-label"
+                id="composerEyebrow"
+            >
+                NEW PERFORMANCE ITEM
+            </span>
+
+
+            <h2 id="composerTitle">
+                Create Performance Item
+            </h2>
+
+
+            <p id="composerDescription">
+                Add performance information for this employee.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="drawer-close"
+            id="closePerformanceComposer"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- FORM -->
+
+    <form
+        class="employee-form"
+        id="performanceItemForm"
+        method="POST"
+        action="{{ url_for('add_performance_item', employee_id=employee['id']) }}"
+        novalidate
+    >
+
+
+        <!-- HIDDEN TYPE -->
+
+        <input
+            type="hidden"
+            id="performanceItemType"
+            name="item_type"
+        >
+
+
+
+        <!-- ITEM IDENTITY -->
+
+        <div class="form-section">
+
+
+            <div class="form-section-heading">
+
+
+                <span>
+                    01
+                </span>
+
+
+                <div>
+
+                    <strong id="itemSectionTitle">
+                        Performance Item
+                    </strong>
+
+                    <small>
+                        Define the main performance requirement
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- TITLE -->
+
+            <div class="form-group">
+
+
+                <label
+                    for="performanceTitle"
+                    id="performanceTitleLabel"
+                >
+                    Title
+                </label>
+
+
+                <input
+                    type="text"
+                    id="performanceTitle"
+                    name="title"
+                    placeholder="Enter title"
+                >
+
+
+            </div>
+
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-group">
+
+
+                <label for="performanceDescription">
+                    Description
+                </label>
+
+
+                <textarea
+                    id="performanceDescription"
+                    name="description"
+                    rows="5"
+                    placeholder="Add more detail..."
+                ></textarea>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- MEASUREMENT -->
+
+        <div
+            class="form-section"
+            id="measurementSection"
+        >
+
+
+            <div class="form-section-heading">
+
+
+                <span>
+                    02
+                </span>
+
+
+                <div>
+
+                    <strong>
+                        Measurement
+                    </strong>
+
+                    <small>
+                        Define how achievement will be measured
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+
+                <label
+                    for="performanceTarget"
+                    id="targetLabel"
+                >
+                    Target
+                </label>
+
+
+                <input
+                    type="text"
+                    id="performanceTarget"
+                    name="target"
+                    placeholder="e.g. 90%"
+                >
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- TIMELINE -->
+
+        <div
+            class="form-section"
+            id="timelineSection"
+        >
+
+
+            <div class="form-section-heading">
+
+
+                <span>
+                    03
+                </span>
+
+
+                <div>
+
+                    <strong>
+                        Timeline
+                    </strong>
+
+                    <small>
+                        Set a completion date
+                    </small>
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="form-group">
+
+
+                <label for="performanceDueDate">
+                    Due Date
+                </label>
+
+
+                <input
+                    type="date"
+                    id="performanceDueDate"
+                    name="due_date"
+                >
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- ACTIONS -->
+
+        <div class="drawer-actions">
+
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="cancelPerformanceItem"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="submit"
+                class="primary-button"
+                id="createPerformanceItem"
+            >
+                Create Item
+            </button>
+
+
+        </div>
+
+
+    </form>
+
+
+</aside>
+
+<!-- =====================================
+     INSPECTOR BACKDROP
+====================================== -->
+
+<div
+    class="drawer-backdrop"
+    id="inspectorBackdrop"
+></div>
+
+
+
+<!-- =====================================
+     PERFORMANCE INSPECTOR
+====================================== -->
+
+<aside
+    class="employee-drawer performance-inspector"
+    id="performanceInspector"
+>
+
+
+    <!-- HEADER -->
+
+    <div class="drawer-header">
+
+
+        <div>
+
+            <span
+                class="section-label"
+                id="inspectorEyebrow"
+            >
+                PERFORMANCE ITEM
+            </span>
+
+
+            <h2 id="inspectorTitle">
+                Performance Item
+            </h2>
+
+
+            <p>
+                Review the current definition,
+                update it or archive it from the active plan.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="drawer-close"
+            id="closeInspector"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- =====================================
+         CURRENT DEFINITION
+    ====================================== -->
+
+    <div class="inspector-body">
+
+
+        <div class="inspector-status-row">
+
+            <span id="inspectorType">
+                KPI
+            </span>
+
+            <span class="inspector-active">
+                Active
+            </span>
+
+        </div>
+
+
+
+        <div
+            class="inspector-detail"
+            id="inspectorDescriptionBlock"
+        >
+
+            <span>
+                DESCRIPTION
+            </span>
+
+            <p id="inspectorDescription">
+                —
+            </p>
+
+        </div>
+
+
+
+        <div
+            class="inspector-detail"
+            id="inspectorTargetBlock"
+        >
+
+            <span>
+                TARGET
+            </span>
+
+            <strong id="inspectorTarget">
+                —
+            </strong>
+
+        </div>
+
+
+
+        <div
+            class="inspector-detail"
+            id="inspectorDueDateBlock"
+        >
+
+            <span>
+                DUE DATE
+            </span>
+
+            <strong id="inspectorDueDate">
+                —
+            </strong>
+
+        </div>
+
+        <!-- =====================================
+             ACTIVITY HISTORY
+        ====================================== -->
+
+        <section class="inspector-history-section">
+
+
+            <div class="inspector-history-heading">
+
+
+                <div>
+
+                    <span class="section-label">
+                        AUDIT TRAIL
+                    </span>
+
+                    <h3>
+                        Activity History
+                    </h3>
+
+                </div>
+
+
+                <span class="history-secure-label">
+                    Recorded
+                </span>
+
+
+            </div>
+
+
+
+            <div
+                class="history-timeline"
+                id="performanceHistoryTimeline"
+            >
+
+
+                <div class="history-loading">
+
+                    <span class="history-loading-dot"></span>
+
+                    Loading activity...
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+        <!-- =====================================
+             EDIT BUTTON
+        ====================================== -->
+
+        <button
+            type="button"
+            class="inspector-edit-button"
+            id="showInspectorEdit"
+        >
+            Edit Item
+        </button>
+
+
+
+        <!-- =====================================
+             EDIT FORM
+        ====================================== -->
+
+        <form
+            method="POST"
+            id="inspectorEditForm"
+            class="inspector-edit-form"
+            novalidate
+        >
+
+
+            <div class="form-section">
+
+
+                <div class="form-section-heading">
+
+                    <span>
+                        ✎
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Update Definition
+                        </strong>
+
+                        <small>
+                            Changes will be recorded in history
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="inspectorEditTitle">
+                        Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="inspectorEditTitle"
+                        name="title"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label for="inspectorEditDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="inspectorEditDescription"
+                        name="description"
+                        rows="5"
+                    ></textarea>
+
+                </div>
+
+
+
+                <div
+                    class="form-group"
+                    id="inspectorEditTargetGroup"
+                >
+
+                    <label for="inspectorEditTarget">
+                        Target
+                    </label>
+
+                    <input
+                        type="text"
+                        id="inspectorEditTarget"
+                        name="target"
+                    >
+
+                </div>
+
+
+
+                <div
+                    class="form-group"
+                    id="inspectorEditDateGroup"
+                >
+
+                    <label for="inspectorEditDueDate">
+                        Due Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="inspectorEditDueDate"
+                        name="due_date"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="inspector-edit-actions">
+
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    id="cancelInspectorEdit"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                    id="saveInspectorItem"
+                >
+                    Save Changes
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+
+        <!-- =====================================
+             ARCHIVE AREA
+        ====================================== -->
+
+        <div class="inspector-archive-zone">
+
+
+            <div>
+
+                <strong>
+                    Remove from active plan
+                </strong>
+
+                <p>
+                    Archive this item without deleting
+                    its performance history.
+                </p>
+
+            </div>
+
+
+            <form
+                method="POST"
+                id="archivePerformanceForm"
+            >
+
+                <button
+                    type="submit"
+                    class="archive-item-button"
+                >
+                    Archive Item
+                </button>
+
+            </form>
+
+
+        </div>
+
+
+    </div>
+
+
+</aside>
+
+<script
+    src="{{ url_for('static', filename='js/performance_workspace.js') }}"
+></script>
+
+{% endblock %}

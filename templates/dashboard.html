@@ -1,0 +1,1856 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Flowboard | Altrium PerformanceFlow
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =====================================
+     FLOWBOARD HERO
+====================================== -->
+
+<section class="flowboard-hero">
+
+
+    <div class="flowboard-welcome">
+
+
+        <span class="eyebrow">
+            PERFORMANCE FLOWBOARD
+        </span>
+
+
+        <h1>
+            Good to see you,
+            {{ user_name.split(" ")[0] }}.
+        </h1>
+
+
+        <p>
+
+            {% if user_role == "HR" %}
+
+                Keep the organisation's review programme
+                moving and surface anything requiring attention.
+
+            {% elif user_role == "Supervisor" %}
+
+                Stay ahead of your team's performance
+                reviews and upcoming responsibilities.
+
+            {% else %}
+
+                Follow your review journey and complete
+                the actions that move your performance cycle forward.
+
+            {% endif %}
+
+        </p>
+
+
+    </div>
+
+
+
+    <!-- LIVE CONTEXT -->
+
+    <div class="flowboard-live-card">
+
+
+        <div class="live-card-heading">
+
+            <span class="live-dot"></span>
+
+            <span>
+                LIVE CONTEXT
+            </span>
+
+        </div>
+
+
+        {% if user_role == "HR" %}
+
+
+            {% if current_active_cycle %}
+
+                <strong>
+                    {{ current_active_cycle["cycle_name"] }}
+                </strong>
+
+                <small>
+                    Review Window
+                    {{ "%02d"|format(current_active_cycle["cycle_number"]) }}
+                </small>
+
+            {% else %}
+
+                <strong>
+                    No Active Program
+                </strong>
+
+                <small>
+                    Review operations waiting
+                </small>
+
+            {% endif %}
+
+
+
+        {% elif user_role == "Supervisor" %}
+
+
+            <strong>
+                {{ supervisor_active_reviews }}
+                Live Reviews
+            </strong>
+
+            <small>
+                {{ supervisor_team_count }}
+                team member(s)
+            </small>
+
+
+
+        {% elif user_role == "Employee" %}
+
+
+            {% if current_review %}
+
+                <strong>
+                    {{ current_review["cycle_name"] }}
+                </strong>
+
+                <small>
+                    {{ current_review["review_status"] }}
+                </small>
+
+            {% else %}
+
+                <strong>
+                    No Active Review
+                </strong>
+
+                <small>
+                    Nothing currently assigned
+                </small>
+
+            {% endif %}
+
+
+        {% endif %}
+
+
+    </div>
+
+
+</section>
+
+
+
+<!-- =========================================================
+     HR FLOWBOARD
+========================================================= -->
+
+{% if user_role == "HR" %}
+
+
+    <!-- =====================================
+         REVIEW JOURNEY
+    ====================================== -->
+
+    <section class="flow-section">
+
+
+        <div class="flow-section-heading">
+
+
+            <div>
+
+                <span class="section-label">
+                    ORGANISATION REVIEW JOURNEY
+                </span>
+
+                <h2>
+                    Current performance cycle
+                </h2>
+
+            </div>
+
+
+            {% if current_active_cycle %}
+
+                <span class="flow-live-badge">
+
+                    <span></span>
+
+                    Active
+
+                </span>
+
+            {% endif %}
+
+
+        </div>
+
+
+
+        {% if current_active_cycle %}
+
+
+            <div class="review-journey-rail">
+
+
+                <article class="journey-stage complete">
+
+                    <span class="journey-number">
+                        01
+                    </span>
+
+                    <div>
+
+                        <small>
+                            FOUNDATION
+                        </small>
+
+                        <strong>
+                            Setup
+                        </strong>
+
+                        <p>
+                            Cohort and review baselines locked
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <div class="journey-connector complete"></div>
+
+
+
+                <article class="journey-stage live">
+
+                    <span class="journey-number">
+                        02
+                    </span>
+
+                    <div>
+
+                        <small>
+                            CURRENT
+                        </small>
+
+                        <strong>
+                            Self Assessment
+                        </strong>
+
+                        <p>
+                            Employee reviews are underway
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <div class="journey-connector"></div>
+
+
+
+                <article class="journey-stage queued">
+
+                    <span class="journey-number">
+                        03
+                    </span>
+
+                    <div>
+
+                        <small>
+                            NEXT
+                        </small>
+
+                        <strong>
+                            Peer Review
+                        </strong>
+
+                        <p>
+                            Waiting for peer assignments
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <div class="journey-connector"></div>
+
+
+
+                <article class="journey-stage queued">
+
+                    <span class="journey-number">
+                        04
+                    </span>
+
+                    <div>
+
+                        <small>
+                            LATER
+                        </small>
+
+                        <strong>
+                            Supervisor
+                        </strong>
+
+                        <p>
+                            Evaluation stage
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <div class="journey-connector"></div>
+
+
+
+                <article class="journey-stage queued">
+
+                    <span class="journey-number">
+                        05
+                    </span>
+
+                    <div>
+
+                        <small>
+                            FINAL
+                        </small>
+
+                        <strong>
+                            Approval
+                        </strong>
+
+                        <p>
+                            Manager decision
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <div class="flow-empty">
+
+                <span>○</span>
+
+                <strong>
+                    No active review programme
+                </strong>
+
+                <p>
+                    Configure and activate a review cycle
+                    to begin the organisation review journey.
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         COMMAND CENTER
+    ====================================== -->
+
+    <section class="command-center">
+
+
+        <div class="command-card featured">
+
+
+            <span>
+                PEOPLE
+            </span>
+
+
+            <strong>
+                {{ employee_count }}
+            </strong>
+
+
+            <p>
+                Active employee profiles
+            </p>
+
+
+            <a href="{{ url_for('employees') }}">
+                Open directory →
+            </a>
+
+
+        </div>
+
+
+
+        <div class="command-card">
+
+
+            <span>
+                REVIEW COHORT
+            </span>
+
+
+            <strong>
+
+                {% if current_active_cycle %}
+
+                    {{ current_active_cycle["assigned_count"] }}
+
+                {% else %}
+
+                    0
+
+                {% endif %}
+
+            </strong>
+
+
+            <p>
+                Employees in active review
+            </p>
+
+
+        </div>
+
+
+
+        <div class="command-card">
+
+
+            <span>
+                YOUR ACTIONS
+            </span>
+
+
+            <strong>
+                {{ user_actions|length }}
+            </strong>
+
+
+            <p>
+                Open workflow responsibilities
+            </p>
+
+
+        </div>
+
+
+
+        <div class="command-card">
+
+
+            <span>
+                SIGNALS
+            </span>
+
+
+            <strong>
+                {{ unread_notification_count }}
+            </strong>
+
+
+            <p>
+                Unread review notifications
+            </p>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         QUICK CONTROL DOCK
+    ====================================== -->
+
+    <section class="quick-control-dock">
+
+
+        <div>
+
+            <span class="section-label">
+                QUICK CONTROL
+            </span>
+
+            <strong>
+                Move the programme
+            </strong>
+
+        </div>
+
+
+        <div class="quick-control-actions">
+
+
+            <a
+                href="{{ url_for('employees') }}"
+                class="quick-control-link"
+            >
+                <span>+</span>
+
+                Employee
+            </a>
+
+
+            <a
+                href="{{ url_for('review_cycles') }}"
+                class="quick-control-link"
+            >
+                <span>◎</span>
+
+                Review Program
+            </a>
+
+
+            {% if current_active_cycle %}
+
+                <a
+                    href="{{ url_for(
+                        'review_cycle_workspace',
+                        cycle_id=current_active_cycle['id']
+                    ) }}"
+                    class="quick-control-link featured"
+                >
+                    <span>↗</span>
+
+                    Open Live Cycle
+                </a>
+
+            {% endif %}
+
+
+        </div>
+
+
+    </section>
+
+
+{% endif %}
+
+
+
+<!-- =========================================================
+     SUPERVISOR FLOWBOARD
+========================================================= -->
+
+{% if user_role == "Supervisor" %}
+
+
+    <section class="supervisor-pulse">
+
+
+        <div class="supervisor-pulse-main">
+
+
+            <span class="section-label">
+                TEAM PULSE
+            </span>
+
+
+            <h2>
+                Your review supervision
+            </h2>
+
+
+            <p>
+                Track the people you are responsible for
+                and follow the live actions generated
+                by their reviews.
+            </p>
+
+
+            <a
+                href="{{ url_for('my_team') }}"
+                class="flow-primary-link"
+            >
+                Open My Team
+                <span>→</span>
+            </a>
+
+
+        </div>
+
+
+
+        <div class="supervisor-pulse-metrics">
+
+
+            <div>
+
+                <span>
+                    TEAM
+                </span>
+
+                <strong>
+                    {{ supervisor_team_count }}
+                </strong>
+
+                <small>
+                    active employees
+                </small>
+
+            </div>
+
+
+
+            <div>
+
+                <span>
+                    LIVE REVIEWS
+                </span>
+
+                <strong>
+                    {{ supervisor_active_reviews }}
+                </strong>
+
+                <small>
+                    under supervision
+                </small>
+
+            </div>
+
+
+
+            <div>
+
+                <span>
+                    ACTION QUEUE
+                </span>
+
+                <strong>
+                    {{ user_actions|length }}
+                </strong>
+
+                <small>
+                    waiting on you
+                </small>
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+{% endif %}
+
+
+
+<!-- =====================================================
+     EMPLOYEE REVIEW JOURNEY
+====================================================== -->
+
+{% if user_role == "Employee" %}
+
+
+    {% if current_review %}
+
+    {% set review_status = current_review["review_status"] %}
+
+    {% set self_assessment_complete =
+        review_status in [
+            "Self Assessment Submitted",
+            "Peer Review In Progress",
+            "Peer Review Completed",
+            "Supervisor Evaluation In Progress",
+            "Supervisor Evaluation Submitted",
+            "Manager Approval Pending",
+            "Approved"
+        ]
+    %}
+
+    {% set peer_review_active =
+        review_status == "Peer Review In Progress"
+    %}
+
+    {% set peer_review_complete =
+        review_status in [
+            "Peer Review Completed",
+            "Supervisor Evaluation In Progress",
+            "Supervisor Evaluation Submitted",
+            "Manager Approval Pending",
+            "Approved"
+        ]
+    %}
+
+    {% set supervisor_evaluation_active =
+        review_status == "Supervisor Evaluation In Progress"
+    %}
+
+    {% set supervisor_evaluation_complete =
+        review_status in [
+            "Supervisor Evaluation Submitted",
+            "Manager Approval Pending",
+            "Approved"
+        ]
+    %}
+
+    {% set manager_approval_active =
+        review_status == "Manager Approval Pending"
+    %}
+
+    {% set review_approved =
+        review_status == "Approved"
+    %}
+
+
+        <section class="review-command-map">
+
+    <!-- TOP ROW -->
+
+    <div class="review-command-header">
+
+        <div>
+
+            <span class="eyebrow">
+                YOUR REVIEW JOURNEY
+            </span>
+
+            <h2>
+                {{ current_review["cycle_name"] }}
+            </h2>
+
+            <p>
+                Your performance review moves through four
+                controlled stages from reflection to approval.
+            </p>
+
+        </div>
+
+
+        <div class="review-command-live">
+
+            <span class="command-live-dot"></span>
+
+            <div>
+                <small>LIVE REVIEW</small>
+                <strong>
+                    {{ current_review["review_status"] }}
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         PROGRESS + NEXT MOVE
+    ====================================== -->
+
+    <div class="review-progress-console">
+
+        <div class="review-progress-main">
+
+            <div class="review-progress-heading">
+
+                <div>
+                    <span>REVIEW PROGRESS</span>
+
+                    <strong>
+
+                        {% if review_approved %}
+
+                            100%
+
+                        {% elif manager_approval_active %}
+
+                            85%
+
+                        {% elif supervisor_evaluation_complete %}
+
+                            75%
+
+                        {% elif supervisor_evaluation_active %}
+
+                            65%
+
+                        {% elif peer_review_complete %}
+
+                            50%
+
+                        {% elif peer_review_active %}
+
+                            40%
+
+                        {% elif self_assessment_complete %}
+
+                            25%
+
+                        {% elif review_status == "Self Assessment In Progress" %}
+
+                            15%
+
+                        {% else %}
+
+                            5%
+
+                        {% endif %}
+
+                    </strong>
+                </div>
+
+
+                <small>
+                    4-stage review journey
+                </small>
+
+            </div>
+
+
+            <div class="review-progress-track">
+
+                <div
+                    class="review-progress-fill"
+
+                    {% if review_approved %}
+
+                        style="width: 100%;"
+
+                    {% elif manager_approval_active %}
+
+                        style="width: 85%;"
+
+                    {% elif supervisor_evaluation_complete %}
+
+                        style="width: 75%;"
+
+                    {% elif supervisor_evaluation_active %}
+
+                        style="width: 65%;"
+
+                    {% elif peer_review_complete %}
+
+                        style="width: 50%;"
+
+                    {% elif peer_review_active %}
+
+                        style="width: 40%;"
+
+                    {% elif self_assessment_complete %}
+
+                        style="width: 25%;"
+
+                    {% elif review_status == "Self Assessment In Progress" %}
+
+                        style="width: 15%;"
+
+                    {% else %}
+
+                        style="width: 5%;"
+
+                    {% endif %}
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <div class="review-next-move">
+
+            <span>
+                NEXT MOVE
+            </span>
+
+
+            {% if review_approved %}
+
+                <strong>
+                    Review Approved
+                </strong>
+
+                <small>
+                    Your performance review has completed
+                    its evaluation and approval journey.
+                </small>
+
+
+            {% elif manager_approval_active %}
+
+                <strong>
+                    Management Approval Underway
+                </strong>
+
+                <small>
+                    Your supervisor evaluation is complete.
+                    Management is reviewing the final outcome.
+                </small>
+
+
+            {% elif supervisor_evaluation_complete %}
+
+                <strong>
+                    Management Approval
+                </strong>
+
+                <small>
+                    Your supervisor evaluation is complete.
+                    The review is being prepared for approval.
+                </small>
+
+
+            {% elif supervisor_evaluation_active %}
+
+                <strong>
+                    Supervisor Evaluation Underway
+                </strong>
+
+                <small>
+                    Your supervisor is reviewing your assessment,
+                    evidence and confidential peer feedback.
+                </small>
+
+
+            {% elif peer_review_active %}
+
+                <strong>
+                    Peer Review Underway
+                </strong>
+
+                <small>
+                    Your self-assessment is complete.
+                    Assigned colleagues are now providing
+                    confidential peer feedback.
+                </small>
+
+
+            {% elif peer_review_complete %}
+
+                <strong>
+                    Supervisor Evaluation
+                </strong>
+
+                <small>
+                    Peer feedback is complete.
+                    Your review will move to supervisor evaluation.
+                </small>
+
+
+            {% elif self_assessment_complete %}
+
+                <strong>
+                    Peer Review
+                </strong>
+
+                <small>
+                    Your self-assessment is complete.
+                    Peer reviewers are waiting to be assigned.
+                </small>
+
+
+            {% elif review_status == "Self Assessment In Progress" %}
+
+                <strong>
+                    Finish Self Assessment
+                </strong>
+
+                <small>
+                    Complete your ratings, reflections and
+                    evidence before submitting.
+                </small>
+
+
+            {% else %}
+
+                <strong>
+                    Start Self Assessment
+                </strong>
+
+                <small>
+                    Begin reflecting against your locked
+                    review baseline.
+                </small>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         JOURNEY MAP
+    ====================================== -->
+
+    <div class="review-journey-map">
+
+        <!-- 01 SELF ASSESSMENT -->
+
+            <article class="
+                journey-node
+
+                {% if self_assessment_complete %}
+                    journey-complete
+                {% else %}
+                    journey-current
+                {% endif %}
+            ">
+
+
+                <div class="journey-node-top">
+
+
+                    <div class="journey-node-number">
+
+                        {% if self_assessment_complete %}
+                            ✓
+                        {% else %}
+                            01
+                        {% endif %}
+
+                    </div>
+
+
+                    <span class="journey-state-label">
+
+                        {% if self_assessment_complete %}
+                            COMPLETE
+                        {% else %}
+                            LIVE
+                        {% endif %}
+
+                    </span>
+
+
+                </div>
+
+
+
+                <div class="journey-node-body">
+
+                    <small>
+                        EMPLOYEE
+                    </small>
+
+                    <h3>
+                        Self Assessment
+                    </h3>
+
+                    <p>
+                        Reflect against your locked performance
+                        baseline and provide supporting evidence.
+                    </p>
+
+                </div>
+
+
+
+                <div class="journey-node-footer">
+
+                    {% if self_assessment_complete %}
+
+                        <span class="journey-success">
+                            ✓ Submitted
+                        </span>
+
+                        <a
+                            href="{{ url_for(
+                                'self_assessment_studio',
+                                employee_review_id=current_review['employee_review_id']
+                            ) }}"
+                        >
+                            View →
+                        </a>
+
+                    {% else %}
+
+                        <span>
+                            {% if review_status == "Self Assessment In Progress" %}
+                                In progress
+                            {% else %}
+                                Ready to start
+                            {% endif %}
+                        </span>
+
+                        <a
+                            href="{{ url_for(
+                                'self_assessment_studio',
+                                employee_review_id=current_review['employee_review_id']
+                            ) }}"
+                        >
+
+                            {% if review_status == "Self Assessment In Progress" %}
+                                Continue →
+                            {% else %}
+                                Start →
+                            {% endif %}
+
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+
+            </article>
+
+
+        <!-- CONNECTOR -->
+
+        <div class="
+            journey-flow-line
+
+            {% if self_assessment_complete %}
+                active
+            {% endif %}
+        ">
+
+            <span></span>
+
+        </div>
+
+
+        <!-- 02 PEER REVIEW -->
+
+        <article class="
+            journey-node
+
+            {% if peer_review_complete %}
+                journey-complete
+
+            {% elif peer_review_active %}
+                journey-current
+
+            {% elif self_assessment_complete %}
+                journey-next
+
+            {% else %}
+                journey-locked
+            {% endif %}
+        ">
+
+
+            <div class="journey-node-top">
+
+
+                <div class="journey-node-number">
+
+                    {% if peer_review_complete %}
+                        ✓
+                    {% else %}
+                        02
+                    {% endif %}
+
+                </div>
+
+
+                <span class="journey-state-label">
+
+                    {% if peer_review_complete %}
+
+                        COMPLETE
+
+                    {% elif peer_review_active %}
+
+                        LIVE
+
+                    {% elif self_assessment_complete %}
+
+                        NEXT
+
+                    {% else %}
+
+                        QUEUED
+
+                    {% endif %}
+
+                </span>
+
+
+            </div>
+
+
+
+            <div class="journey-node-body">
+
+                <small>
+                    COLLEAGUES
+                </small>
+
+                <h3>
+                    Peer Review
+                </h3>
+
+                <p>
+                    Selected colleagues provide structured
+                    performance feedback.
+                </p>
+
+            </div>
+
+
+
+            <div class="journey-node-footer">
+
+                {% if peer_review_complete %}
+
+                    <span class="journey-success">
+                        ✓ Feedback complete
+                    </span>
+
+                {% elif peer_review_active %}
+
+                    <span class="journey-next-text">
+                        Peer feedback underway
+                    </span>
+
+                {% elif self_assessment_complete %}
+
+                    <span class="journey-next-text">
+                        Awaiting assignment
+                    </span>
+
+                {% else %}
+
+                    <span>
+                        Not available yet
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+        </article>
+
+
+        <!-- CONNECTOR -->
+
+        <div class="
+            journey-flow-line
+            {% if peer_review_complete %}
+                active
+            {% endif %}
+        ">
+            <span></span>
+        </div>
+
+
+        <!-- 03 SUPERVISOR -->
+
+        <article class="
+            journey-node
+
+            {% if supervisor_evaluation_complete %}
+                journey-complete
+            {% elif supervisor_evaluation_active %}
+                journey-current
+            {% elif peer_review_complete %}
+                journey-next
+            {% else %}
+                journey-locked
+            {% endif %}
+        ">
+
+            <div class="journey-node-top">
+
+                <div class="journey-node-number">
+                    {% if supervisor_evaluation_complete %}
+                        ✓
+                    {% else %}
+                        03
+                    {% endif %}
+                </div>
+
+                <span class="journey-state-label">
+                    {% if supervisor_evaluation_complete %}
+                        COMPLETE
+                    {% elif supervisor_evaluation_active %}
+                        LIVE
+                    {% elif peer_review_complete %}
+                        NEXT
+                    {% else %}
+                        QUEUED
+                    {% endif %}
+                </span>
+
+            </div>
+
+
+            <div class="journey-node-body">
+
+                <small>
+                    SUPERVISOR
+                </small>
+
+                <h3>
+                    Evaluation
+                </h3>
+
+                <p>
+                    Your supervisor considers your assessment,
+                    evidence and peer feedback.
+                </p>
+
+            </div>
+
+
+            <div class="journey-node-footer">
+                {% if supervisor_evaluation_complete %}
+                    <span class="journey-success">
+                        ✓ Evaluation submitted
+                    </span>
+                {% elif supervisor_evaluation_active %}
+                    <span class="journey-next-text">
+                        Evaluation underway
+                    </span>
+                {% elif peer_review_complete %}
+                    <span class="journey-next-text">
+                        Ready for supervisor
+                    </span>
+                {% else %}
+                    <span>Upcoming</span>
+                {% endif %}
+            </div>
+
+        </article>
+
+
+        <!-- CONNECTOR -->
+
+        <div class="
+            journey-flow-line
+            {% if supervisor_evaluation_complete %}
+                active
+            {% endif %}
+        ">
+            <span></span>
+        </div>
+
+
+        <!-- 04 APPROVAL -->
+
+        <article class="
+            journey-node
+            {% if review_approved %}
+                journey-complete
+            {% elif manager_approval_active %}
+                journey-current
+            {% elif supervisor_evaluation_complete %}
+                journey-next
+            {% else %}
+                journey-locked
+            {% endif %}
+        ">
+
+            <div class="journey-node-top">
+
+                <div class="journey-node-number">
+                    {% if review_approved %}
+                        ✓
+                    {% else %}
+                        04
+                    {% endif %}
+                </div>
+
+                <span class="journey-state-label">
+                    {% if review_approved %}
+                        COMPLETE
+                    {% elif manager_approval_active %}
+                        LIVE
+                    {% elif supervisor_evaluation_complete %}
+                        NEXT
+                    {% else %}
+                        QUEUED
+                    {% endif %}
+                </span>
+
+            </div>
+
+
+            <div class="journey-node-body">
+
+                <small>
+                    MANAGER
+                </small>
+
+                <h3>
+                    Approval
+                </h3>
+
+                <p>
+                    Management reviews the evaluation before
+                    the review moves toward PAR.
+                </p>
+
+            </div>
+
+
+            <div class="journey-node-footer">
+                {% if review_approved %}
+                    <span class="journey-success">
+                        ✓ Approved
+                    </span>
+                {% elif manager_approval_active %}
+                    <span class="journey-next-text">
+                        Approval underway
+                    </span>
+                {% elif supervisor_evaluation_complete %}
+                    <span class="journey-next-text">
+                        Ready for approval
+                    </span>
+                {% else %}
+                    <span>Upcoming</span>
+                {% endif %}
+            </div>
+
+        </article>
+
+    </div>
+
+
+    <!-- =====================================
+         REVIEW INTELLIGENCE STRIP
+    ====================================== -->
+
+    <div class="review-intelligence-strip">
+
+
+        <div>
+
+            <span>
+                REVIEW STATE
+            </span>
+
+            <strong>
+                {{ current_review["review_status"] }}
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                REVIEW WINDOW
+            </span>
+
+            <strong>
+                {{ current_review["start_date"] }}
+                →
+                {{ current_review["end_date"] }}
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                BASELINE
+            </span>
+
+            <strong class="intelligence-positive">
+                {{ current_review["baseline_item_count"] }}
+                locked items
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                CURRENT OWNER
+            </span>
+
+            <strong>
+
+                {% if review_approved %}
+
+                    Review Complete
+
+                {% elif manager_approval_active %}
+
+                    Management
+
+                {% elif supervisor_evaluation_complete %}
+
+                    HR / Management Process
+
+                {% elif supervisor_evaluation_active %}
+
+                    Supervisor
+
+                {% elif peer_review_active %}
+
+                    Peer Reviewers / Review Process
+
+                {% elif peer_review_complete %}
+
+                    Supervisor
+
+                {% elif self_assessment_complete %}
+
+                    HR / Review Process
+
+                {% else %}
+
+                    You
+
+                {% endif %}
+
+            </strong>
+
+        </div>
+
+
+        </div>
+
+</section>
+
+
+    {% else %}
+
+
+        <!-- =============================================
+             EMPLOYEE HAS NO ACTIVE REVIEW
+        ============================================== -->
+
+        <section class="review-command-map">
+
+
+            <div class="review-command-header">
+
+                <div>
+
+                    <span class="eyebrow">
+                        YOUR REVIEW JOURNEY
+                    </span>
+
+
+                    <h2>
+                        No active review
+                    </h2>
+
+
+                    <p>
+                        You currently have no active
+                        performance review assigned to you.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="flow-empty">
+
+                <span class="flow-empty-icon">
+                    ◇
+                </span>
+
+
+                <strong>
+                    Nothing scheduled right now
+                </strong>
+
+
+                <p>
+                    When HR activates a review cycle that
+                    includes you, your review journey will
+                    appear here.
+                </p>
+
+            </div>
+
+
+        </section>
+
+
+    {% endif %}
+
+
+{% endif %}
+
+
+
+<!-- =========================================================
+     UNIVERSAL ACTION STREAM
+========================================================= -->
+
+
+
+<!-- =========================================================
+     UNIVERSAL ACTION STREAM
+========================================================= -->
+
+<section class="action-stream flowboard-actions">
+
+
+    <div class="action-stream-header">
+
+
+        <div>
+
+            <span class="eyebrow">
+                MY ACTION STREAM
+            </span>
+
+
+            <h2>
+                What needs your attention
+            </h2>
+
+
+            <p>
+                Live responsibilities generated by
+                Altrium's review workflow.
+            </p>
+
+        </div>
+
+
+
+        <div class="action-stream-counter">
+
+
+            <strong>
+                {{ user_actions|length }}
+            </strong>
+
+
+            <span>
+
+                {% if user_actions|length == 1 %}
+
+                    open action
+
+                {% else %}
+
+                    open actions
+
+                {% endif %}
+
+            </span>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    {% if user_actions %}
+
+
+        <div class="action-stream-list">
+
+
+            {% for action in user_actions %}
+
+
+                <article class="action-stream-item">
+
+
+                    <div class="action-index">
+
+                        {{ "%02d"|format(loop.index) }}
+
+                    </div>
+
+
+
+                    <div class="action-content">
+
+
+                        <div class="action-meta">
+
+
+                            <span
+                                class="
+                                action-priority
+                                priority-{{ action['priority']|lower }}
+                                "
+                            >
+                                {{ action["priority"] }}
+                            </span>
+
+
+                            <span class="action-cycle">
+                                {{ action["cycle_name"] }}
+                            </span>
+
+
+                        </div>
+
+
+
+                        <h3>
+                            {{ action["title"] }}
+                        </h3>
+
+
+                        <p>
+                            {{ action["description"] }}
+                        </p>
+
+
+                        {% if action["review_employee_name"] %}
+
+                            <div class="action-context">
+
+                                <span>
+                                    REVIEW SUBJECT
+                                </span>
+
+                                <strong>
+                                    {{ action["review_employee_name"] }}
+                                </strong>
+
+                            </div>
+
+                        {% endif %}
+
+
+                    </div>
+
+
+
+                    <div class="action-state">
+
+
+                        <span class="action-status-pulse">
+
+                            <i></i>
+
+                            {{ action["status"] }}
+
+                        </span>
+
+
+                        {% if action["due_date"] %}
+
+                            <small>
+                                Due {{ action["due_date"] }}
+                            </small>
+
+                        {% else %}
+
+                            <small>
+                                Live workflow
+                            </small>
+
+                        {% endif %}
+
+                        {% if action["action_type"] == "SELF_ASSESSMENT"
+                            and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'self_assessment_studio',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Open Studio →
+                            </a>
+
+
+                        {% elif action["action_type"] == "PEER_REVIEW"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'peer_review_studio',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Open Review →
+                            </a>
+
+
+                        {% elif action["action_type"] == "SUPERVISOR_EVALUATION"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'supervisor_evaluation_workspace',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Open Evaluation →
+                            </a>
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                </article>
+
+
+            {% endfor %}
+
+
+        </div>
+
+
+    {% else %}
+
+
+        <div class="action-stream-empty">
+
+            <div>
+                ✓
+            </div>
+
+            <strong>
+                You're clear
+            </strong>
+
+            <p>
+                No open review actions require
+                your attention right now.
+            </p>
+
+        </div>
+
+
+    {% endif %}
+
+
+</section>
+
+
+{% endblock %}

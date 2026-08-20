@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+
+    <title>
+
+        {% block title %}
+
+            Altrium PerformanceFlow
+
+        {% endblock %}
+
+    </title>
+
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/dashboard.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+    <div class="application">
+
+
+
+        <!-- =====================================
+             FLOATING NAVIGATION
+        ====================================== -->
+
+        <aside class="nav-rail">
+
+
+
+            <!-- BRAND -->
+
+            <div class="nav-brand">
+
+
+                <div class="brand-symbol">
+                    A
+                </div>
+
+
+                <div class="brand-text">
+
+                    <span>
+                        ALTRIUM
+                    </span>
+
+                    <strong>
+                        PerformanceFlow
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- NAVIGATION -->
+
+            <nav class="navigation">
+
+
+                <!-- DASHBOARD -->
+
+                <a
+                    href="{{ url_for('dashboard') }}"
+                    class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+                >
+
+                    <span class="nav-icon">
+                        ⌂
+                    </span>
+
+                    <span class="nav-label">
+                        Dashboard
+                    </span>
+
+                </a>
+
+
+
+                <!-- =====================================
+                     HR NAVIGATION
+                ====================================== -->
+
+                {% if user_role == "HR" %}
+
+
+                    <a
+                        href="{{ url_for('employees') }}"
+                        class="nav-link {% if request.endpoint == 'employees' %}active{% endif %}"
+                    >
+
+                        <span class="nav-icon">
+                            ♙
+                        </span>
+
+                        <span class="nav-label">
+                            Employees
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="{{ url_for('review_cycles') }}"
+                        class="nav-link {% if request.endpoint == 'review_cycles' %}active{% endif %}"
+                    >
+
+                        <span class="nav-icon">
+                            ↻
+                        </span>
+
+                        <span class="nav-label">
+                            Review Cycles
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ✓
+                        </span>
+
+                        <span class="nav-label">
+                            Reviews
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ⇄
+                        </span>
+
+                        <span class="nav-label">
+                            Peer Assignments
+                        </span>
+
+                    </a>
+
+
+
+                <!-- =====================================
+                     SUPERVISOR NAVIGATION
+                ====================================== -->
+
+                {% elif user_role == "Supervisor" %}
+
+
+                    <a
+                        href="{{ url_for('my_team') }}"
+                        class="nav-link {% if request.endpoint == 'my_team' %}active{% endif %}"
+                    >
+
+                        <span class="nav-icon">
+                            ♙
+                        </span>
+
+                        <span class="nav-label">
+                            My Team
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ◎
+                        </span>
+
+                        <span class="nav-label">
+                            Goals & KPIs
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ✓
+                        </span>
+
+                        <span class="nav-label">
+                            Evaluations
+                        </span>
+
+                    </a>
+
+
+
+                <!-- =====================================
+                     EMPLOYEE NAVIGATION
+                ====================================== -->
+
+                {% elif user_role == "Employee" %}
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ◎
+                        </span>
+
+                        <span class="nav-label">
+                            My Review
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ✎
+                        </span>
+
+                        <span class="nav-label">
+                            Self Assessment
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ⇄
+                        </span>
+
+                        <span class="nav-label">
+                            Peer Reviews
+                        </span>
+
+                    </a>
+
+
+
+                <!-- =====================================
+                     MANAGER NAVIGATION
+                ====================================== -->
+
+                {% elif user_role == "Manager" %}
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ✓
+                        </span>
+
+                        <span class="nav-label">
+                            Approvals
+                        </span>
+
+                    </a>
+
+
+
+                    <a
+                        href="#"
+                        class="nav-link"
+                    >
+
+                        <span class="nav-icon">
+                            ◷
+                        </span>
+
+                        <span class="nav-label">
+                            Review History
+                        </span>
+
+                    </a>
+
+
+                {% endif %}
+
+
+            </nav>
+
+
+
+            <!-- LOGOUT -->
+
+            <div class="nav-bottom">
+
+
+                <a
+                    href="{{ url_for('logout') }}"
+                    class="nav-link"
+                >
+
+                    <span class="nav-icon">
+                        ↪
+                    </span>
+
+                    <span class="nav-label">
+                        Logout
+                    </span>
+
+                </a>
+
+
+            </div>
+
+
+        </aside>
+
+
+
+        <!-- =====================================
+             MAIN WORKSPACE
+        ====================================== -->
+
+        <section class="workspace">
+
+
+
+            <!-- TOP BAR -->
+
+            <header class="topbar">
+
+
+
+                <!-- SEARCH -->
+
+                <div class="search-area">
+
+
+                    <span class="search-icon">
+                        ⌕
+                    </span>
+
+
+                    <input
+                        type="text"
+                        placeholder="Search employees, reviews or cycles..."
+                    >
+
+
+                    <span class="search-shortcut">
+                        Ctrl K
+                    </span>
+
+
+                </div>
+
+
+
+                <!-- RIGHT SIDE -->
+
+                <div class="topbar-actions">
+
+
+
+                    <!-- NOTIFICATION -->
+
+                    <button
+                        type="button"
+                        class="altrium-notify-button"
+                        id="notificationButton"
+                        aria-label="Open Signal Center"
+                    >
+
+                        <span class="altrium-notify-icon">
+                            ◇
+                        </span>
+
+
+                        <span
+                            class="altrium-notify-badge"
+                            id="notificationBadge"
+
+                            {% if unread_notification_count == 0 %}
+                                style="display: none;"
+                            {% endif %}
+                        >
+
+                            {% if unread_notification_count > 9 %}
+
+                                9+
+
+                            {% else %}
+
+                                {{ unread_notification_count }}
+
+                            {% endif %}
+
+                        </span>
+
+                    </button>
+
+
+
+                    <!-- PROFILE -->
+
+                    <div class="profile">
+
+
+                        <div class="avatar">
+                            {{ user_name[0] }}
+                        </div>
+
+
+                        <div class="profile-details">
+
+
+                            <strong>
+                                {{ user_name }}
+                            </strong>
+
+
+                            <small>
+                                {{ user_role }}
+                            </small>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </header>
+
+
+
+            <!-- PAGE CONTENT -->
+
+            <main class="workspace-content">
+
+
+                {% block content %}
+
+                {% endblock %}
+
+
+            </main>
+
+
+        </section>
+
+
+    </div>
+
+
+<!-- =====================================
+     SIGNAL CENTER BACKDROP
+====================================== -->
+
+<div
+    class="signal-center-backdrop"
+    id="signalCenterBackdrop"
+></div>
+
+
+
+<!-- =====================================
+     ALTRIUM SIGNAL CENTER
+====================================== -->
+
+<aside
+    class="signal-center"
+    id="signalCenter"
+>
+
+
+    <!-- HEADER -->
+
+    <div class="signal-center-header">
+
+
+        <div>
+
+            <span class="section-label">
+                LIVE SIGNALS
+            </span>
+
+
+            <h2>
+                Signal Center
+            </h2>
+
+
+            <p>
+                Review activity and workflow updates
+                relevant to you.
+            </p>
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="signal-center-close"
+            id="closeSignalCenter"
+        >
+            ×
+        </button>
+
+
+    </div>
+
+
+
+    <!-- CONTROL BAR -->
+
+    <div class="signal-control-bar">
+
+
+        <div class="signal-live-state">
+
+            <span class="signal-live-dot"></span>
+
+            Live feed
+
+        </div>
+
+
+
+        <button
+            type="button"
+            class="mark-all-signals"
+            id="markAllSignals"
+        >
+            Mark all read
+        </button>
+
+
+    </div>
+
+
+
+    <!-- SIGNAL FEED -->
+
+    <div
+        class="signal-feed"
+        id="signalFeed"
+    >
+
+
+        <div class="signal-loading">
+
+            <span></span>
+
+            Loading signals...
+
+        </div>
+
+
+    </div>
+
+
+</aside>
+
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/notification_center.js'
+    ) }}"
+></script>
+
+
+</body>
+
+</html>
