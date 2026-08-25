@@ -1,5 +1,7 @@
 import sqlite3
 import os
+import secrets
+import time
 import uuid
 from datetime import datetime
 
@@ -27,7 +29,63 @@ from database import get_db_connection
 
 app = Flask(__name__)
 
-app.secret_key = "altrium-performanceflow-development-key"
+app.secret_key = os.environ.get(
+    "PERFORMANCEFLOW_SECRET_KEY"
+) or secrets.token_hex(32)
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=(
+        os.environ.get("PERFORMANCEFLOW_SECURE_COOKIES", "0") == "1"
+    )
+)
+
+
+LOGIN_ATTEMPT_LIMIT = 5
+LOGIN_ATTEMPT_WINDOW_SECONDS = 15 * 60
+login_attempts = {}
+
+
+@app.before_request
+def protect_unsafe_requests():
+
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+
+    if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+        return None
+
+    if app.config.get("TESTING"):
+        return None
+
+    supplied_token = (
+        request.form.get("csrf_token")
+        or request.headers.get("X-CSRF-Token")
+    )
+
+    if supplied_token and secrets.compare_digest(
+        supplied_token,
+        session["_csrf_token"]
+    ):
+        return None
+
+    if request.is_json:
+        return jsonify({
+            "success": False,
+            "message": "Your session security token expired. Refresh and try again."
+        }), 400
+
+    flash(
+        "Your session security token expired. Please try again.",
+        "error"
+    )
+    return redirect(request.referrer or url_for("login"))
+
+
+@app.context_processor
+def inject_security_context():
+    return {"csrf_token": session.get("_csrf_token", "")}
 
 
 # =====================================
@@ -67,6 +125,28 @@ ALLOWED_EVIDENCE_EXTENSIONS = {
     "docx",
     "xlsx"
 }
+
+
+def clean_json_text(
+    data,
+    field_name,
+    label,
+    max_length=10000
+):
+
+    value = data.get(field_name, "")
+
+    if not isinstance(value, str):
+        raise ValueError(f"Invalid {label}.")
+
+    value = value.strip()
+
+    if len(value) > max_length:
+        raise ValueError(
+            f"{label.capitalize()} must be {max_length:,} characters or fewer."
+        )
+
+    return value
 
 
 def allowed_evidence_file(filename):
@@ -644,7 +724,17 @@ def download_self_assessment_evidence(
             self_assessment_evidence.stored_file_name,
 
             employees.user_id
-                AS employee_user_id
+                AS employee_user_id,
+
+            employee_reviews.supervisor_id,
+
+            employee_reviews.status
+                AS employee_review_status,
+
+            self_assessments.status
+                AS self_assessment_status,
+
+            manager_approvals.manager_id
 
         FROM self_assessment_evidence
 
@@ -659,6 +749,10 @@ def download_self_assessment_evidence(
         JOIN employees
             ON employee_reviews.employee_id
             = employees.id
+
+        LEFT JOIN manager_approvals
+            ON manager_approvals.employee_review_id
+            = employee_reviews.id
 
         WHERE self_assessment_evidence.id = ?
 
@@ -688,17 +782,29 @@ def download_self_assessment_evidence(
         )
 
 
-    # For PB06, only the owning employee
-    # accesses their draft evidence.
-    # Supervisor access will be added after
-    # final submission.
+    role = session["user_role"]
 
-    if (
-        session["user_role"] != "Employee"
-        or
-        evidence["employee_user_id"]
-            != session["user_id"]
-    ):
+    is_owner = (
+        role == "Employee"
+        and evidence["employee_user_id"] == session["user_id"]
+    )
+
+    is_authorised_reviewer = (
+        evidence["self_assessment_status"] == "Submitted"
+        and (
+            role == "HR"
+            or (
+                role == "Supervisor"
+                and evidence["supervisor_id"] == session["user_id"]
+            )
+            or (
+                role == "Manager"
+                and evidence["manager_id"] == session["user_id"]
+            )
+        )
+    )
+
+    if not (is_owner or is_authorised_reviewer):
 
         flash(
             "You are not authorised to access this evidence.",
@@ -762,7 +868,7 @@ def save_self_assessment_draft(employee_review_id):
     )
 
 
-    if data is None:
+    if not isinstance(data, dict):
 
         return jsonify({
             "success": False,
@@ -770,36 +876,32 @@ def save_self_assessment_draft(employee_review_id):
         }), 400
 
 
-    overall_summary = (
-        data.get(
+    try:
+        overall_summary = clean_json_text(
+            data,
             "overall_summary",
-            ""
-        ).strip()
-    )
-
-
-    key_achievements = (
-        data.get(
+            "overall summary"
+        )
+        key_achievements = clean_json_text(
+            data,
             "key_achievements",
-            ""
-        ).strip()
-    )
-
-
-    challenges = (
-        data.get(
+            "key achievements"
+        )
+        challenges = clean_json_text(
+            data,
             "challenges",
-            ""
-        ).strip()
-    )
-
-
-    support_needed = (
-        data.get(
+            "challenges"
+        )
+        support_needed = clean_json_text(
+            data,
             "support_needed",
-            ""
-        ).strip()
-    )
+            "support needed"
+        )
+    except ValueError as error:
+        return jsonify({
+            "success": False,
+            "message": str(error)
+        }), 400
 
 
     responses = data.get(
@@ -945,6 +1047,9 @@ def save_self_assessment_draft(employee_review_id):
 
         for response in responses:
 
+            if not isinstance(response, dict):
+                raise ValueError("Invalid assessment response.")
+
             try:
 
                 review_plan_item_id = int(
@@ -968,11 +1073,10 @@ def save_self_assessment_draft(employee_review_id):
             )
 
 
-            response_text = (
-                response.get(
-                    "response_text",
-                    ""
-                ).strip()
+            response_text = clean_json_text(
+                response,
+                "response_text",
+                "assessment response"
             )
 
 
@@ -1155,7 +1259,7 @@ def submit_self_assessment(employee_review_id):
     )
 
 
-    if data is None:
+    if not isinstance(data, dict):
 
         return jsonify({
             "success": False,
@@ -1167,36 +1271,32 @@ def submit_self_assessment(employee_review_id):
     # BASIC VALUES
     # =====================================
 
-    overall_summary = (
-        data.get(
+    try:
+        overall_summary = clean_json_text(
+            data,
             "overall_summary",
-            ""
-        ).strip()
-    )
-
-
-    key_achievements = (
-        data.get(
+            "overall summary"
+        )
+        key_achievements = clean_json_text(
+            data,
             "key_achievements",
-            ""
-        ).strip()
-    )
-
-
-    challenges = (
-        data.get(
+            "key achievements"
+        )
+        challenges = clean_json_text(
+            data,
             "challenges",
-            ""
-        ).strip()
-    )
-
-
-    support_needed = (
-        data.get(
+            "challenges"
+        )
+        support_needed = clean_json_text(
+            data,
             "support_needed",
-            ""
-        ).strip()
-    )
+            "support needed"
+        )
+    except ValueError as error:
+        return jsonify({
+            "success": False,
+            "message": str(error)
+        }), 400
 
 
     responses = data.get(
@@ -1348,6 +1448,9 @@ def submit_self_assessment(employee_review_id):
 
         for response in responses:
 
+            if not isinstance(response, dict):
+                raise ValueError("Invalid assessment response.")
+
             try:
 
                 review_plan_item_id = int(
@@ -1371,11 +1474,10 @@ def submit_self_assessment(employee_review_id):
             )
 
 
-            response_text = (
-                response.get(
-                    "response_text",
-                    ""
-                ).strip()
+            response_text = clean_json_text(
+                response,
+                "response_text",
+                "assessment response"
             )
 
 
@@ -2105,9 +2207,30 @@ def login():
 
     if request.method == "POST":
 
-        email = request.form["email"]
+        client_key = request.remote_addr or "unknown"
 
-        password = request.form["password"]
+        now = time.monotonic()
+
+        recent_attempts = [
+            attempt
+            for attempt in login_attempts.get(client_key, [])
+            if now - attempt < LOGIN_ATTEMPT_WINDOW_SECONDS
+        ]
+
+        login_attempts[client_key] = recent_attempts
+
+        if len(recent_attempts) >= LOGIN_ATTEMPT_LIMIT:
+            return render_template(
+                "login.html",
+                error=(
+                    "Too many unsuccessful sign-in attempts. "
+                    "Please wait 15 minutes and try again."
+                )
+            ), 429
+
+        email = request.form.get("email", "").strip().lower()
+
+        password = request.form.get("password", "")
 
         connection = get_db_connection()
 
@@ -2125,6 +2248,8 @@ def login():
 
             error = "Invalid email or password."
 
+            recent_attempts.append(now)
+
         elif not check_password_hash(
             user["password"],
             password
@@ -2132,7 +2257,11 @@ def login():
 
             error = "Invalid email or password."
 
+            recent_attempts.append(now)
+
         else:
+
+            login_attempts.pop(client_key, None)
 
             session["user_id"] = user["id"]
 
@@ -2174,6 +2303,8 @@ def dashboard():
     supervisor_team_count = 0
 
     supervisor_active_reviews = 0
+
+    manager_pending_approvals = 0
 
 
     # =====================================
@@ -2350,6 +2481,30 @@ def dashboard():
 
 
     # =====================================
+    # MANAGER FLOWBOARD DATA
+    # =====================================
+
+    elif session["user_role"] == "Manager":
+
+        manager_pending_approvals = connection.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM manager_approvals
+            JOIN employee_reviews
+                ON employee_reviews.id
+                    = manager_approvals.employee_review_id
+            JOIN review_cycles
+                ON review_cycles.id
+                    = employee_reviews.review_cycle_id
+            WHERE manager_approvals.manager_id = ?
+            AND manager_approvals.status = 'Pending'
+            AND review_cycles.status = 'Active'
+            """,
+            (session["user_id"],)
+        ).fetchone()["total"]
+
+
+    # =====================================
     # ACTION STREAM
     # =====================================
 
@@ -2461,6 +2616,8 @@ def dashboard():
         supervisor_team_count=supervisor_team_count,
 
         supervisor_active_reviews=supervisor_active_reviews,
+
+        manager_pending_approvals=manager_pending_approvals,
 
         user_actions=user_actions,
 
@@ -3419,9 +3576,16 @@ def add_employee():
 
     if supervisor_id:
 
-        supervisor_id = int(
-            supervisor_id
-        )
+        try:
+            supervisor_id = int(
+                supervisor_id
+            )
+        except ValueError:
+            flash(
+                "Invalid supervisor selection.",
+                "error"
+            )
+            return redirect(url_for("employees"))
 
     else:
 
@@ -5621,6 +5785,12 @@ def review_cycle_workspace(cycle_id):
             supervisor.full_name
                 AS supervisor_name,
 
+            employee_reviews.id
+                AS employee_review_id,
+
+            employee_reviews.status
+                AS employee_review_status,
+
             (
                 SELECT COUNT(*)
 
@@ -5647,6 +5817,12 @@ def review_cycle_workspace(cycle_id):
         LEFT JOIN users AS supervisor
             ON employees.supervisor_id
             = supervisor.id
+
+        LEFT JOIN employee_reviews
+            ON employee_reviews.review_cycle_id
+                = review_cycle_employees.review_cycle_id
+            AND employee_reviews.employee_id
+                = review_cycle_employees.employee_id
 
         WHERE review_cycle_employees.review_cycle_id = ?
 
@@ -5871,6 +6047,23 @@ def review_cycle_workspace(cycle_id):
     }
 
 
+    completed_review_count = sum(
+        1
+        for employee in assigned_employees
+        if employee["employee_review_status"] == "Completed"
+    )
+
+    closure_readiness = {
+        "completed": completed_review_count,
+        "total": assigned_count,
+        "can_close": (
+            cycle["status"] == "Active"
+            and assigned_count > 0
+            and completed_review_count == assigned_count
+        )
+    }
+
+
     # =====================================
     # ELIGIBLE EMPLOYEE POOL
     #
@@ -5944,6 +6137,8 @@ def review_cycle_workspace(cycle_id):
         cycle_readiness=cycle_readiness,
 
         activation_readiness=activation_readiness,
+
+        closure_readiness=closure_readiness,
 
         user_name=session["user_name"],
 
@@ -6323,112 +6518,112 @@ def activate_review_cycle(cycle_id):
                 )
 
 
-                # =====================================
-                # EMPLOYEE ACTION
-                # =====================================
+            # =====================================
+            # EMPLOYEE ACTION
+            # =====================================
 
-                connection.execute(
-                    """
-                    INSERT INTO review_actions
-                    (
-                        review_cycle_id,
-                        employee_review_id,
-                        assigned_to,
-                        action_type,
-                        title,
-                        description,
-                        status,
-                        priority
-                    )
-
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-
-                    (
-                        cycle_id,
-                        employee_review_id,
-                        assignment["employee_user_id"],
-                        "SELF_ASSESSMENT",
-                        "Complete Self Assessment",
-                        (
-                            f"Complete your self-assessment for "
-                            f"{cycle['cycle_name']}."
-                        ),
-                        "Pending",
-                        "High"
-                    )
+            connection.execute(
+                """
+                INSERT INTO review_actions
+                (
+                    review_cycle_id,
+                    employee_review_id,
+                    assigned_to,
+                    action_type,
+                    title,
+                    description,
+                    status,
+                    priority
                 )
 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
 
-                # =====================================
-                # SUPERVISOR ACTION
-                # =====================================
-
-                connection.execute(
-                    """
-                    INSERT INTO review_actions
+                (
+                    cycle_id,
+                    employee_review_id,
+                    assignment["employee_user_id"],
+                    "SELF_ASSESSMENT",
+                    "Complete Self Assessment",
                     (
-                        review_cycle_id,
-                        employee_review_id,
-                        assigned_to,
-                        action_type,
-                        title,
-                        description,
-                        status,
-                        priority
-                    )
+                        f"Complete your self-assessment for "
+                        f"{cycle['cycle_name']}."
+                    ),
+                    "Pending",
+                    "High"
+                )
+            )
 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
 
-                    (
-                        cycle_id,
-                        employee_review_id,
-                        assignment["supervisor_id"],
-                        "SUPERVISOR_MONITORING",
-                        f"Monitor {assignment['full_name']}'s Review",
-                        (
-                            f"Monitor review progress for "
-                            f"{assignment['full_name']} during "
-                            f"{cycle['cycle_name']}."
-                        ),
-                        "Pending",
-                        "Normal"
-                    )
+            # =====================================
+            # SUPERVISOR ACTION
+            # =====================================
+
+            connection.execute(
+                """
+                INSERT INTO review_actions
+                (
+                    review_cycle_id,
+                    employee_review_id,
+                    assigned_to,
+                    action_type,
+                    title,
+                    description,
+                    status,
+                    priority
                 )
 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
 
-                # =====================================
-                # SUPERVISOR NOTIFICATION
-                # =====================================
-
-                connection.execute(
-                    """
-                    INSERT INTO notifications
+                (
+                    cycle_id,
+                    employee_review_id,
+                    assignment["supervisor_id"],
+                    "SUPERVISOR_MONITORING",
+                    f"Monitor {assignment['full_name']}'s Review",
                     (
-                        user_id,
-                        review_cycle_id,
-                        employee_review_id,
-                        notification_type,
-                        title,
-                        message
-                    )
+                        f"Monitor review progress for "
+                        f"{assignment['full_name']} during "
+                        f"{cycle['cycle_name']}."
+                    ),
+                    "Pending",
+                    "Normal"
+                )
+            )
 
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    """,
 
+            # =====================================
+            # SUPERVISOR NOTIFICATION
+            # =====================================
+
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+
+                (
+                    assignment["supervisor_id"],
+                    cycle_id,
+                    employee_review_id,
+                    "REVIEW_ASSIGNED",
+                    "Employee Review Assigned",
                     (
-                        assignment["supervisor_id"],
-                        cycle_id,
-                        employee_review_id,
-                        "REVIEW_ASSIGNED",
-                        "Employee Review Assigned",
-                        (
-                            f"{assignment['full_name']} has entered "
-                            f"{cycle['cycle_name']} under your supervision."
-                        )
+                        f"{assignment['full_name']} has entered "
+                        f"{cycle['cycle_name']} under your supervision."
                     )
                 )
+            )
 
 
         # =====================================
@@ -6590,6 +6785,188 @@ def activate_review_cycle(cycle_id):
             cycle_id=cycle_id
         )
     )
+
+
+@app.route(
+    "/review-cycles/<int:cycle_id>/close",
+    methods=["POST"]
+)
+def close_review_cycle(cycle_id):
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session["user_role"] != "HR":
+        return redirect(url_for("dashboard"))
+
+    connection = get_db_connection()
+
+    try:
+        cycle = connection.execute(
+            """
+            SELECT id, cycle_name, status
+            FROM review_cycles
+            WHERE id = ?
+            """,
+            (cycle_id,)
+        ).fetchone()
+
+        if cycle is None:
+            flash("Review cycle not found.", "error")
+            return redirect(url_for("review_cycles"))
+
+        review_progress = connection.execute(
+            """
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END)
+                    AS completed
+            FROM employee_reviews
+            WHERE review_cycle_id = ?
+            """,
+            (cycle_id,)
+        ).fetchone()
+
+        total = review_progress["total"] or 0
+        completed = review_progress["completed"] or 0
+
+        if cycle["status"] != "Active":
+            flash("Only an active review cycle can be closed.", "error")
+            return redirect(url_for(
+                "review_cycle_workspace",
+                cycle_id=cycle_id
+            ))
+
+        if total == 0 or completed != total:
+            flash(
+                "Every employee must acknowledge their final outcome "
+                "before this cycle can be closed.",
+                "error"
+            )
+            return redirect(url_for(
+                "review_cycle_workspace",
+                cycle_id=cycle_id
+            ))
+
+        updated = connection.execute(
+            """
+            UPDATE review_cycles
+            SET
+                status = 'Closed',
+                closed_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            AND status = 'Active'
+            """,
+            (cycle_id,)
+        )
+
+        if not updated.rowcount:
+            raise ValueError("The cycle state changed before it was closed.")
+
+        connection.execute(
+            """
+            UPDATE review_actions
+            SET
+                status = 'Completed',
+                completed_at = CURRENT_TIMESTAMP
+            WHERE review_cycle_id = ?
+            AND action_type = 'CYCLE_MONITORING'
+            AND status = 'Pending'
+            """,
+            (cycle_id,)
+        )
+
+        connection.execute(
+            """
+            INSERT INTO review_cycle_history
+            (
+                review_cycle_id,
+                action,
+                from_status,
+                to_status,
+                performed_by,
+                note
+            )
+            VALUES (?, 'Closed', 'Active', 'Closed', ?, ?)
+            """,
+            (
+                cycle_id,
+                session["user_id"],
+                f"All {total} employee review(s) were completed."
+            )
+        )
+
+        connection.execute(
+            """
+            INSERT INTO notifications
+            (
+                user_id,
+                review_cycle_id,
+                employee_review_id,
+                notification_type,
+                title,
+                message
+            )
+            SELECT DISTINCT
+                recipients.user_id,
+                ?,
+                NULL,
+                'CYCLE_CLOSED',
+                'Review Cycle Closed',
+                ?
+            FROM (
+                SELECT employees.user_id
+                FROM employee_reviews
+                JOIN employees
+                    ON employees.id = employee_reviews.employee_id
+                WHERE employee_reviews.review_cycle_id = ?
+
+                UNION
+
+                SELECT employee_reviews.supervisor_id
+                FROM employee_reviews
+                WHERE employee_reviews.review_cycle_id = ?
+
+                UNION
+
+                SELECT manager_approvals.manager_id
+                FROM manager_approvals
+                JOIN employee_reviews
+                    ON employee_reviews.id
+                        = manager_approvals.employee_review_id
+                WHERE employee_reviews.review_cycle_id = ?
+            ) AS recipients
+            WHERE recipients.user_id IS NOT NULL
+            """,
+            (
+                cycle_id,
+                f"{cycle['cycle_name']} has been closed and archived.",
+                cycle_id,
+                cycle_id,
+                cycle_id
+            )
+        )
+
+        connection.commit()
+        flash(
+            f"{cycle['cycle_name']} has been closed successfully.",
+            "success"
+        )
+
+    except (sqlite3.Error, ValueError) as error:
+        connection.rollback()
+        print("Review cycle closure error:", error)
+        flash("The review cycle could not be closed.", "error")
+
+    finally:
+        connection.close()
+
+    return redirect(url_for(
+        "review_cycle_workspace",
+        cycle_id=cycle_id
+    ))
+
 
 @app.route(
     "/review-cycles/<int:cycle_id>/schedule",
@@ -8156,7 +8533,7 @@ def assign_peer_reviewer(
     )
 
 
-    if data is None:
+    if not isinstance(data, dict):
 
         return jsonify({
             "success": False,
@@ -9406,7 +9783,7 @@ def save_peer_review_draft(employee_review_id):
     )
 
 
-    if data is None:
+    if not isinstance(data, dict):
 
         return jsonify({
             "success": False,
@@ -9860,7 +10237,7 @@ def submit_peer_review(employee_review_id):
     )
 
 
-    if data is None:
+    if not isinstance(data, dict):
 
         return jsonify({
             "success": False,
@@ -11030,7 +11407,8 @@ def supervisor_evaluation_workspace(employee_review_id):
             "Supervisor Evaluation In Progress",
             "Supervisor Evaluation Submitted",
             "Manager Approval Pending",
-            "Approved"
+            "Approved",
+            "Completed"
         )
 
         if review["employee_review_status"] not in allowed_statuses:
@@ -11228,6 +11606,24 @@ def supervisor_evaluation_workspace(employee_review_id):
             (employee_review_id,)
         ).fetchone()
 
+        evidence_files = connection.execute(
+            """
+            SELECT
+                self_assessment_evidence.id,
+                self_assessment_evidence.original_file_name,
+                self_assessment_evidence.file_size,
+                self_assessment_evidence.uploaded_at
+            FROM self_assessment_evidence
+            JOIN self_assessments
+                ON self_assessments.id
+                    = self_assessment_evidence.self_assessment_id
+            WHERE self_assessments.employee_review_id = ?
+            AND self_assessments.status = 'Submitted'
+            ORDER BY self_assessment_evidence.uploaded_at DESC
+            """,
+            (employee_review_id,)
+        ).fetchall()
+
         peer_overviews = connection.execute(
             """
             SELECT
@@ -11277,14 +11673,31 @@ def supervisor_evaluation_workspace(employee_review_id):
                 []
             ).append(feedback)
 
+        manager_feedback = connection.execute(
+            """
+            SELECT
+                manager_approvals.status,
+                manager_approvals.decision_note,
+                manager_approvals.decided_at,
+                users.full_name AS manager_name
+            FROM manager_approvals
+            JOIN users
+                ON users.id = manager_approvals.manager_id
+            WHERE manager_approvals.employee_review_id = ?
+            """,
+            (employee_review_id,)
+        ).fetchone()
+
         return render_template(
             "supervisor_evaluation.html",
             review=review,
             baseline_items=baseline_items,
             self_assessment=self_assessment,
+            evidence_files=evidence_files,
             peer_overviews=peer_overviews,
             peer_feedback_map=peer_feedback_map,
             peer_progress=peer_progress,
+            manager_feedback=manager_feedback,
             recommendation_options=SUPERVISOR_RECOMMENDATIONS,
             user_name=session["user_name"],
             user_role=session["user_role"]
@@ -11634,6 +12047,115 @@ def submit_supervisor_evaluation(employee_review_id):
             )
         )
 
+        manager = connection.execute(
+            """
+            SELECT
+                users.id,
+                COUNT(manager_approvals.id) AS pending_workload
+            FROM users
+            LEFT JOIN manager_approvals
+                ON manager_approvals.manager_id = users.id
+                AND manager_approvals.status = 'Pending'
+            WHERE users.role = 'Manager'
+            GROUP BY users.id
+            ORDER BY pending_workload, users.full_name
+            LIMIT 1
+            """
+        ).fetchone()
+
+        if manager is not None:
+            connection.execute(
+                """
+                INSERT INTO manager_approvals
+                (
+                    employee_review_id,
+                    manager_id,
+                    status
+                )
+                VALUES (?, ?, 'Pending')
+                ON CONFLICT(employee_review_id)
+                DO UPDATE SET
+                    manager_id = excluded.manager_id,
+                    status = 'Pending',
+                    decision_note = NULL,
+                    decided_at = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    employee_review_id,
+                    manager["id"]
+                )
+            )
+
+            connection.execute(
+                """
+                INSERT INTO review_actions
+                (
+                    review_cycle_id,
+                    employee_review_id,
+                    assigned_to,
+                    action_type,
+                    title,
+                    description,
+                    status,
+                    priority
+                )
+                VALUES (?, ?, ?, ?, ?, ?, 'Pending', 'High')
+                ON CONFLICT(
+                    review_cycle_id,
+                    employee_review_id,
+                    assigned_to,
+                    action_type
+                )
+                DO UPDATE SET
+                    title = excluded.title,
+                    description = excluded.description,
+                    status = 'Pending',
+                    priority = 'High',
+                    completed_at = NULL
+                """,
+                (
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    manager["id"],
+                    "MANAGER_APPROVAL",
+                    (
+                        f"Approve {review['employee_name_snapshot']}'s "
+                        "Review"
+                    ),
+                    (
+                        "Review the submitted supervisor evaluation "
+                        "and record the final management decision."
+                    )
+                )
+            )
+
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    manager["id"],
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    "MANAGER_APPROVAL_READY",
+                    "Review Ready for Approval",
+                    (
+                        f"{review['employee_name_snapshot']}'s "
+                        "supervisor evaluation is ready for your decision."
+                    )
+                )
+            )
+
         hr_users = connection.execute(
             """
             SELECT id
@@ -11748,6 +12270,1656 @@ def submit_supervisor_evaluation(employee_review_id):
         connection.close()
 
 
+# =========================================================
+# PB10 - MANAGEMENT APPROVAL
+# =========================================================
+
+def get_manager_approval_context(connection, employee_review_id):
+
+    return connection.execute(
+        """
+        SELECT
+            employee_reviews.id AS employee_review_id,
+            employee_reviews.employee_id,
+            employee_reviews.review_cycle_id,
+            employee_reviews.supervisor_id,
+            employee_reviews.employee_name_snapshot,
+            employee_reviews.employee_code_snapshot,
+            employee_reviews.department_snapshot,
+            employee_reviews.job_title_snapshot,
+            employee_reviews.status AS employee_review_status,
+            employees.user_id AS employee_user_id,
+            review_cycles.cycle_name,
+            review_cycles.start_date,
+            review_cycles.end_date,
+            review_cycles.status AS cycle_status,
+            supervisor_users.full_name AS supervisor_name,
+            supervisor_evaluations.id AS supervisor_evaluation_id,
+            supervisor_evaluations.status AS supervisor_evaluation_status,
+            supervisor_evaluations.overall_rating,
+            supervisor_evaluations.performance_summary,
+            supervisor_evaluations.key_strengths,
+            supervisor_evaluations.development_priorities,
+            supervisor_evaluations.support_plan,
+            supervisor_evaluations.recommendation,
+            supervisor_evaluations.submitted_at
+                AS supervisor_submitted_at,
+            manager_approvals.id AS manager_approval_id,
+            manager_approvals.manager_id,
+            manager_approvals.status AS approval_status,
+            manager_approvals.decision_note,
+            manager_approvals.decided_at,
+            manager_users.full_name AS manager_name
+
+        FROM employee_reviews
+
+        JOIN employees
+            ON employees.id = employee_reviews.employee_id
+
+        JOIN review_cycles
+            ON review_cycles.id = employee_reviews.review_cycle_id
+
+        JOIN users AS supervisor_users
+            ON supervisor_users.id = employee_reviews.supervisor_id
+
+        JOIN supervisor_evaluations
+            ON supervisor_evaluations.employee_review_id
+                = employee_reviews.id
+
+        JOIN manager_approvals
+            ON manager_approvals.employee_review_id
+                = employee_reviews.id
+
+        JOIN users AS manager_users
+            ON manager_users.id = manager_approvals.manager_id
+
+        WHERE employee_reviews.id = ?
+        """,
+        (employee_review_id,)
+    ).fetchone()
+
+
+def parse_manager_decision_note(data):
+
+    if not isinstance(data, dict):
+        raise ValueError("Invalid management decision data.")
+
+    decision_note = data.get("decision_note", "")
+
+    if not isinstance(decision_note, str):
+        raise ValueError("Invalid management decision note.")
+
+    decision_note = decision_note.strip()
+
+    if not decision_note:
+        raise ValueError(
+            "Please record a decision note before continuing."
+        )
+
+    if len(decision_note) > 3000:
+        raise ValueError(
+            "The decision note must be 3,000 characters or fewer."
+        )
+
+    return decision_note
+
+
+@app.route(
+    "/reviews/<int:employee_review_id>/manager-approval"
+)
+def manager_approval_workspace(employee_review_id):
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session["user_role"] not in ("Manager", "HR"):
+        return redirect(url_for("dashboard"))
+
+    connection = get_db_connection()
+
+    try:
+        review = get_manager_approval_context(
+            connection,
+            employee_review_id
+        )
+
+        if review is None:
+            flash("Management approval record not found.", "error")
+            return redirect(url_for("dashboard"))
+
+        if (
+            session["user_role"] == "Manager"
+            and review["manager_id"] != session["user_id"]
+        ):
+            flash(
+                "This approval is assigned to another manager.",
+                "error"
+            )
+            return redirect(url_for("dashboard"))
+
+        if review["cycle_status"] != "Active":
+            flash("This review cycle is no longer active.", "error")
+            return redirect(url_for("dashboard"))
+
+        allowed_statuses = (
+            "Supervisor Evaluation Submitted",
+            "Manager Approval Pending",
+            "Supervisor Evaluation In Progress",
+            "Approved",
+            "Completed"
+        )
+
+        if review["employee_review_status"] not in allowed_statuses:
+            flash(
+                "The supervisor evaluation is not ready for approval.",
+                "error"
+            )
+            return redirect(url_for("dashboard"))
+
+        if (
+            session["user_role"] == "Manager"
+            and review["approval_status"] == "Pending"
+            and review["employee_review_status"]
+                == "Supervisor Evaluation Submitted"
+        ):
+            transition = connection.execute(
+                """
+                UPDATE employee_reviews
+                SET
+                    status = 'Manager Approval Pending',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                AND status = 'Supervisor Evaluation Submitted'
+                """,
+                (employee_review_id,)
+            )
+
+            if transition.rowcount:
+                connection.execute(
+                    """
+                    INSERT INTO notifications
+                    (
+                        user_id,
+                        review_cycle_id,
+                        employee_review_id,
+                        notification_type,
+                        title,
+                        message
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        review["employee_user_id"],
+                        review["review_cycle_id"],
+                        employee_review_id,
+                        "MANAGER_APPROVAL_STARTED",
+                        "Management Approval Started",
+                        (
+                            f"Management is reviewing your "
+                            f"{review['cycle_name']} outcome."
+                        )
+                    )
+                )
+
+            connection.commit()
+            review = get_manager_approval_context(
+                connection,
+                employee_review_id
+            )
+
+        baseline_items = connection.execute(
+            """
+            SELECT
+                review_plan_items.id AS review_plan_item_id,
+                review_plan_items.item_type,
+                review_plan_items.title,
+                review_plan_items.description,
+                review_plan_items.target,
+                review_plan_items.due_date,
+                self_assessment_items.rating AS self_rating,
+                supervisor_evaluation_items.rating
+                    AS supervisor_rating,
+                supervisor_evaluation_items.evaluation_text,
+                (
+                    SELECT ROUND(AVG(peer_review_items.rating), 1)
+                    FROM peer_review_items
+                    JOIN peer_reviews
+                        ON peer_reviews.id
+                            = peer_review_items.peer_review_id
+                    JOIN peer_review_assignments
+                        ON peer_review_assignments.id
+                            = peer_reviews.peer_assignment_id
+                    WHERE peer_review_items.review_plan_item_id
+                        = review_plan_items.id
+                    AND peer_review_assignments.employee_review_id
+                        = review_plan_items.employee_review_id
+                    AND peer_reviews.status = 'Submitted'
+                    AND peer_review_assignments.status = 'Submitted'
+                ) AS peer_average_rating,
+                (
+                    SELECT COUNT(*)
+                    FROM peer_review_items
+                    JOIN peer_reviews
+                        ON peer_reviews.id
+                            = peer_review_items.peer_review_id
+                    JOIN peer_review_assignments
+                        ON peer_review_assignments.id
+                            = peer_reviews.peer_assignment_id
+                    WHERE peer_review_items.review_plan_item_id
+                        = review_plan_items.id
+                    AND peer_review_assignments.employee_review_id
+                        = review_plan_items.employee_review_id
+                    AND peer_reviews.status = 'Submitted'
+                    AND peer_review_assignments.status = 'Submitted'
+                ) AS peer_rating_count
+
+            FROM review_plan_items
+
+            LEFT JOIN self_assessments
+                ON self_assessments.employee_review_id
+                    = review_plan_items.employee_review_id
+
+            LEFT JOIN self_assessment_items
+                ON self_assessment_items.self_assessment_id
+                    = self_assessments.id
+                AND self_assessment_items.review_plan_item_id
+                    = review_plan_items.id
+
+            LEFT JOIN supervisor_evaluation_items
+                ON supervisor_evaluation_items.supervisor_evaluation_id
+                    = ?
+                AND supervisor_evaluation_items.review_plan_item_id
+                    = review_plan_items.id
+
+            WHERE review_plan_items.employee_review_id = ?
+            ORDER BY review_plan_items.id
+            """,
+            (
+                review["supervisor_evaluation_id"],
+                employee_review_id
+            )
+        ).fetchall()
+
+        peer_comments = connection.execute(
+            """
+            SELECT
+                peer_review_items.review_plan_item_id,
+                peer_review_items.feedback_text
+            FROM peer_review_items
+            JOIN peer_reviews
+                ON peer_reviews.id = peer_review_items.peer_review_id
+            JOIN peer_review_assignments
+                ON peer_review_assignments.id
+                    = peer_reviews.peer_assignment_id
+            WHERE peer_review_assignments.employee_review_id = ?
+            AND peer_review_assignments.status = 'Submitted'
+            AND peer_reviews.status = 'Submitted'
+            AND TRIM(COALESCE(peer_review_items.feedback_text, '')) <> ''
+            ORDER BY peer_review_items.review_plan_item_id,
+                peer_review_items.id
+            """,
+            (employee_review_id,)
+        ).fetchall()
+
+        comments_by_item = {}
+
+        for comment in peer_comments:
+            comments_by_item.setdefault(
+                comment["review_plan_item_id"],
+                []
+            ).append(comment["feedback_text"])
+
+        evidence_files = connection.execute(
+            """
+            SELECT
+                self_assessment_evidence.id,
+                self_assessment_evidence.original_file_name,
+                self_assessment_evidence.file_size,
+                self_assessment_evidence.uploaded_at
+            FROM self_assessment_evidence
+            JOIN self_assessments
+                ON self_assessments.id
+                    = self_assessment_evidence.self_assessment_id
+            WHERE self_assessments.employee_review_id = ?
+            AND self_assessments.status = 'Submitted'
+            ORDER BY self_assessment_evidence.uploaded_at DESC
+            """,
+            (employee_review_id,)
+        ).fetchall()
+
+        readonly = (
+            session["user_role"] != "Manager"
+            or review["approval_status"] != "Pending"
+            or review["employee_review_status"] not in (
+                "Supervisor Evaluation Submitted",
+                "Manager Approval Pending"
+            )
+        )
+
+        manager_options = []
+
+        if session["user_role"] == "HR":
+            manager_options = connection.execute(
+                """
+                SELECT id, full_name, email
+                FROM users
+                WHERE role = 'Manager'
+                ORDER BY full_name
+                """
+            ).fetchall()
+
+        return render_template(
+            "manager_approval.html",
+            review=review,
+            baseline_items=baseline_items,
+            comments_by_item=comments_by_item,
+            evidence_files=evidence_files,
+            readonly=readonly,
+            manager_options=manager_options,
+            user_name=session["user_name"],
+            user_role=session["user_role"]
+        )
+
+    finally:
+        connection.close()
+
+
+@app.route(
+    "/reviews/<int:employee_review_id>/manager-approval/assign",
+    methods=["POST"]
+)
+def assign_manager_approval(employee_review_id):
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session["user_role"] != "HR":
+        return redirect(url_for("dashboard"))
+
+    try:
+        manager_id = int(request.form.get("manager_id", ""))
+    except (TypeError, ValueError):
+        flash("Select a valid manager.", "error")
+        return redirect(url_for(
+            "manager_approval_workspace",
+            employee_review_id=employee_review_id
+        ))
+
+    connection = get_db_connection()
+
+    try:
+        review = get_manager_approval_context(
+            connection,
+            employee_review_id
+        )
+
+        manager = connection.execute(
+            """
+            SELECT id, full_name
+            FROM users
+            WHERE id = ?
+            AND role = 'Manager'
+            """,
+            (manager_id,)
+        ).fetchone()
+
+        if review is None or manager is None:
+            flash("The review or manager could not be found.", "error")
+            return redirect(url_for("dashboard"))
+
+        if (
+            review["cycle_status"] != "Active"
+            or review["approval_status"] != "Pending"
+        ):
+            flash("This approval can no longer be reassigned.", "error")
+            return redirect(url_for(
+                "manager_approval_workspace",
+                employee_review_id=employee_review_id
+            ))
+
+        previous_manager_id = review["manager_id"]
+
+        if previous_manager_id == manager_id:
+            flash("This approval is already assigned to that manager.", "success")
+            return redirect(url_for(
+                "manager_approval_workspace",
+                employee_review_id=employee_review_id
+            ))
+
+        connection.execute(
+            """
+            UPDATE manager_approvals
+            SET
+                manager_id = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE employee_review_id = ?
+            AND status = 'Pending'
+            """,
+            (manager_id, employee_review_id)
+        )
+
+        connection.execute(
+            """
+            UPDATE review_actions
+            SET
+                status = 'Completed',
+                completed_at = CURRENT_TIMESTAMP
+            WHERE employee_review_id = ?
+            AND assigned_to = ?
+            AND action_type = 'MANAGER_APPROVAL'
+            AND status = 'Pending'
+            """,
+            (employee_review_id, previous_manager_id)
+        )
+
+        connection.execute(
+            """
+            INSERT INTO review_actions
+            (
+                review_cycle_id,
+                employee_review_id,
+                assigned_to,
+                action_type,
+                title,
+                description,
+                status,
+                priority
+            )
+            VALUES (?, ?, ?, 'MANAGER_APPROVAL', ?, ?, 'Pending', 'High')
+            ON CONFLICT(
+                review_cycle_id,
+                employee_review_id,
+                assigned_to,
+                action_type
+            )
+            DO UPDATE SET
+                title = excluded.title,
+                description = excluded.description,
+                status = 'Pending',
+                priority = 'High',
+                completed_at = NULL
+            """,
+            (
+                review["review_cycle_id"],
+                employee_review_id,
+                manager_id,
+                f"Approve {review['employee_name_snapshot']}'s Review",
+                "Review the submitted evaluation and record the final decision."
+            )
+        )
+
+        connection.execute(
+            """
+            INSERT INTO notifications
+            (
+                user_id,
+                review_cycle_id,
+                employee_review_id,
+                notification_type,
+                title,
+                message
+            )
+            VALUES (?, ?, ?, 'MANAGER_APPROVAL_ASSIGNED', ?, ?)
+            """,
+            (
+                manager_id,
+                review["review_cycle_id"],
+                employee_review_id,
+                "Approval Assigned",
+                (
+                    f"HR assigned {review['employee_name_snapshot']}'s "
+                    "review to you for approval."
+                )
+            )
+        )
+
+        connection.commit()
+        flash(
+            f"Approval assigned to {manager['full_name']}.",
+            "success"
+        )
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Manager assignment error:", error)
+        flash("The manager assignment could not be changed.", "error")
+
+    finally:
+        connection.close()
+
+    return redirect(url_for(
+        "manager_approval_workspace",
+        employee_review_id=employee_review_id
+    ))
+
+
+@app.route(
+    "/reviews/<int:employee_review_id>/manager-approval/approve",
+    methods=["POST"]
+)
+def approve_manager_review(employee_review_id):
+
+    if "user_id" not in session:
+        return jsonify({
+            "success": False,
+            "message": "Authentication required."
+        }), 401
+
+    if session["user_role"] != "Manager":
+        return jsonify({
+            "success": False,
+            "message": "Only the assigned manager can approve this review."
+        }), 403
+
+    try:
+        decision_note = parse_manager_decision_note(
+            request.get_json(silent=True)
+        )
+    except ValueError as error:
+        return jsonify({
+            "success": False,
+            "message": str(error)
+        }), 400
+
+    connection = get_db_connection()
+
+    try:
+        review = get_manager_approval_context(
+            connection,
+            employee_review_id
+        )
+
+        if review is None or review["manager_id"] != session["user_id"]:
+            return jsonify({
+                "success": False,
+                "message": "Management approval not found."
+            }), 404
+
+        if review["cycle_status"] != "Active":
+            return jsonify({
+                "success": False,
+                "message": "This review cycle is no longer active."
+            }), 409
+
+        if (
+            review["approval_status"] != "Pending"
+            or review["supervisor_evaluation_status"] != "Submitted"
+            or review["employee_review_status"] not in (
+                "Supervisor Evaluation Submitted",
+                "Manager Approval Pending"
+            )
+        ):
+            return jsonify({
+                "success": False,
+                "message": "This review is no longer awaiting approval."
+            }), 409
+
+        connection.execute(
+            """
+            UPDATE manager_approvals
+            SET
+                status = 'Approved',
+                decision_note = ?,
+                decided_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            AND status = 'Pending'
+            """,
+            (
+                decision_note,
+                review["manager_approval_id"]
+            )
+        )
+
+        connection.execute(
+            """
+            UPDATE employee_reviews
+            SET
+                status = 'Approved',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (employee_review_id,)
+        )
+
+        connection.execute(
+            """
+            INSERT INTO final_review_acknowledgements
+            (
+                employee_review_id,
+                employee_user_id,
+                status
+            )
+            VALUES (?, ?, 'Pending')
+            ON CONFLICT(employee_review_id)
+            DO UPDATE SET
+                employee_user_id = excluded.employee_user_id,
+                status = 'Pending',
+                employee_comment = NULL,
+                acknowledged_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (
+                employee_review_id,
+                review["employee_user_id"]
+            )
+        )
+
+        connection.execute(
+            """
+            INSERT INTO review_actions
+            (
+                review_cycle_id,
+                employee_review_id,
+                assigned_to,
+                action_type,
+                title,
+                description,
+                status,
+                priority
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 'Pending', 'High')
+            ON CONFLICT(
+                review_cycle_id,
+                employee_review_id,
+                assigned_to,
+                action_type
+            )
+            DO UPDATE SET
+                title = excluded.title,
+                description = excluded.description,
+                status = 'Pending',
+                priority = 'High',
+                completed_at = NULL
+            """,
+            (
+                review["review_cycle_id"],
+                employee_review_id,
+                review["employee_user_id"],
+                "FINAL_REVIEW_ACKNOWLEDGEMENT",
+                "Acknowledge Final Review Outcome",
+                (
+                    "Read the approved review outcome and confirm that "
+                    "it has been received. You may also add a final "
+                    "employee comment."
+                )
+            )
+        )
+
+        connection.execute(
+            """
+            UPDATE review_actions
+            SET
+                status = 'Completed',
+                completed_at = CURRENT_TIMESTAMP
+            WHERE employee_review_id = ?
+            AND action_type IN (
+                'MANAGER_APPROVAL',
+                'MANAGER_APPROVAL_COORDINATION'
+            )
+            AND status != 'Completed'
+            """,
+            (employee_review_id,)
+        )
+
+        recipients = (
+            (
+                review["employee_user_id"],
+                "REVIEW_APPROVED",
+                "Performance Review Approved",
+                (
+                    f"Your {review['cycle_name']} performance review "
+                    "has received final management approval."
+                )
+            ),
+            (
+                review["supervisor_id"],
+                "REVIEW_APPROVED",
+                "Team Review Approved",
+                (
+                    f"{review['employee_name_snapshot']}'s review "
+                    "has received final management approval."
+                )
+            ),
+            (
+                session["user_id"],
+                "MANAGER_APPROVAL_CONFIRMED",
+                "Approval Recorded",
+                (
+                    f"Your approval for "
+                    f"{review['employee_name_snapshot']} is recorded."
+                )
+            )
+        )
+
+        for user_id, notification_type, title, message in recipients:
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+            )
+
+        hr_users = connection.execute(
+            "SELECT id FROM users WHERE role = 'HR'"
+        ).fetchall()
+
+        for hr_user in hr_users:
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    hr_user["id"],
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    "REVIEW_APPROVED",
+                    "Review Approved",
+                    (
+                        f"{review['employee_name_snapshot']}'s review "
+                        "has completed the approval workflow."
+                    )
+                )
+            )
+
+        connection.commit()
+
+        flash(
+            "The performance review has been approved and locked.",
+            "success"
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Final management approval recorded.",
+            "redirect_url": url_for(
+                "manager_approval_workspace",
+                employee_review_id=employee_review_id
+            )
+        })
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Manager approval error:", error)
+        return jsonify({
+            "success": False,
+            "message": "The management decision could not be recorded."
+        }), 500
+
+    finally:
+        connection.close()
+
+
+@app.route(
+    "/reviews/<int:employee_review_id>/manager-approval/request-changes",
+    methods=["POST"]
+)
+def request_manager_review_changes(employee_review_id):
+
+    if "user_id" not in session:
+        return jsonify({
+            "success": False,
+            "message": "Authentication required."
+        }), 401
+
+    if session["user_role"] != "Manager":
+        return jsonify({
+            "success": False,
+            "message": "Only the assigned manager can return this review."
+        }), 403
+
+    try:
+        decision_note = parse_manager_decision_note(
+            request.get_json(silent=True)
+        )
+    except ValueError as error:
+        return jsonify({
+            "success": False,
+            "message": str(error)
+        }), 400
+
+    connection = get_db_connection()
+
+    try:
+        review = get_manager_approval_context(
+            connection,
+            employee_review_id
+        )
+
+        if review is None or review["manager_id"] != session["user_id"]:
+            return jsonify({
+                "success": False,
+                "message": "Management approval not found."
+            }), 404
+
+        if (
+            review["cycle_status"] != "Active"
+            or review["approval_status"] != "Pending"
+            or review["supervisor_evaluation_status"] != "Submitted"
+            or review["employee_review_status"] not in (
+                "Supervisor Evaluation Submitted",
+                "Manager Approval Pending"
+            )
+        ):
+            return jsonify({
+                "success": False,
+                "message": "This review can no longer be returned."
+            }), 409
+
+        connection.execute(
+            """
+            UPDATE manager_approvals
+            SET
+                status = 'Changes Requested',
+                decision_note = ?,
+                decided_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            AND status = 'Pending'
+            """,
+            (
+                decision_note,
+                review["manager_approval_id"]
+            )
+        )
+
+        connection.execute(
+            """
+            UPDATE supervisor_evaluations
+            SET
+                status = 'Draft',
+                submitted_at = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            AND status = 'Submitted'
+            """,
+            (review["supervisor_evaluation_id"],)
+        )
+
+        connection.execute(
+            """
+            UPDATE employee_reviews
+            SET
+                status = 'Supervisor Evaluation In Progress',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (employee_review_id,)
+        )
+
+        connection.execute(
+            """
+            UPDATE review_actions
+            SET
+                status = 'Completed',
+                completed_at = CURRENT_TIMESTAMP
+            WHERE employee_review_id = ?
+            AND action_type IN (
+                'MANAGER_APPROVAL',
+                'MANAGER_APPROVAL_COORDINATION'
+            )
+            AND status != 'Completed'
+            """,
+            (employee_review_id,)
+        )
+
+        connection.execute(
+            """
+            INSERT INTO review_actions
+            (
+                review_cycle_id,
+                employee_review_id,
+                assigned_to,
+                action_type,
+                title,
+                description,
+                status,
+                priority
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 'Pending', 'High')
+            ON CONFLICT(
+                review_cycle_id,
+                employee_review_id,
+                assigned_to,
+                action_type
+            )
+            DO UPDATE SET
+                title = excluded.title,
+                description = excluded.description,
+                status = 'Pending',
+                priority = 'High',
+                completed_at = NULL
+            """,
+            (
+                review["review_cycle_id"],
+                employee_review_id,
+                review["supervisor_id"],
+                "SUPERVISOR_EVALUATION",
+                (
+                    f"Revise {review['employee_name_snapshot']}'s "
+                    "Evaluation"
+                ),
+                (
+                    "Management requested changes. Review the decision "
+                    "note, update the evaluation and submit it again."
+                )
+            )
+        )
+
+        recipients = (
+            (
+                review["supervisor_id"],
+                "MANAGER_CHANGES_REQUESTED",
+                "Evaluation Changes Requested",
+                (
+                    f"Management returned "
+                    f"{review['employee_name_snapshot']}'s evaluation. "
+                    "Open it to review the decision note and revise it."
+                )
+            ),
+            (
+                review["employee_user_id"],
+                "MANAGER_CHANGES_REQUESTED",
+                "Review Returned for Revision",
+                (
+                    f"Your {review['cycle_name']} review was returned "
+                    "to your supervisor for revision."
+                )
+            ),
+            (
+                session["user_id"],
+                "MANAGER_RETURN_CONFIRMED",
+                "Review Returned",
+                (
+                    f"{review['employee_name_snapshot']}'s review was "
+                    "returned to the supervisor."
+                )
+            )
+        )
+
+        for user_id, notification_type, title, message in recipients:
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+            )
+
+        connection.commit()
+
+        flash(
+            "The review was returned to the supervisor for revision.",
+            "success"
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Changes requested successfully.",
+            "redirect_url": url_for("dashboard")
+        })
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Manager return error:", error)
+        return jsonify({
+            "success": False,
+            "message": "The review could not be returned."
+        }), 500
+
+    finally:
+        connection.close()
+
+
+# =========================================================
+# PB11 - FINAL REVIEW OUTCOME + ACKNOWLEDGEMENT
+# =========================================================
+
+def get_final_review_outcome_context(connection, employee_review_id):
+
+    return connection.execute(
+        """
+        SELECT
+            employee_reviews.id AS employee_review_id,
+            employee_reviews.employee_id,
+            employee_reviews.review_cycle_id,
+            employee_reviews.supervisor_id,
+            employee_reviews.employee_name_snapshot,
+            employee_reviews.employee_code_snapshot,
+            employee_reviews.department_snapshot,
+            employee_reviews.job_title_snapshot,
+            employee_reviews.status AS employee_review_status,
+            employees.user_id AS employee_user_id,
+            review_cycles.cycle_name,
+            review_cycles.start_date,
+            review_cycles.end_date,
+            review_cycles.status AS cycle_status,
+            supervisor_users.full_name AS supervisor_name,
+            supervisor_evaluations.id AS supervisor_evaluation_id,
+            supervisor_evaluations.overall_rating,
+            supervisor_evaluations.performance_summary,
+            supervisor_evaluations.key_strengths,
+            supervisor_evaluations.development_priorities,
+            supervisor_evaluations.support_plan,
+            supervisor_evaluations.recommendation,
+            manager_approvals.manager_id,
+            manager_approvals.decision_note AS manager_decision_note,
+            manager_approvals.decided_at AS manager_decided_at,
+            manager_users.full_name AS manager_name,
+            final_review_acknowledgements.id AS acknowledgement_id,
+            final_review_acknowledgements.status
+                AS acknowledgement_status,
+            final_review_acknowledgements.employee_comment,
+            final_review_acknowledgements.acknowledged_at
+
+        FROM employee_reviews
+
+        JOIN employees
+            ON employees.id = employee_reviews.employee_id
+
+        JOIN review_cycles
+            ON review_cycles.id = employee_reviews.review_cycle_id
+
+        JOIN users AS supervisor_users
+            ON supervisor_users.id = employee_reviews.supervisor_id
+
+        JOIN supervisor_evaluations
+            ON supervisor_evaluations.employee_review_id
+                = employee_reviews.id
+            AND supervisor_evaluations.status = 'Submitted'
+
+        JOIN manager_approvals
+            ON manager_approvals.employee_review_id
+                = employee_reviews.id
+            AND manager_approvals.status = 'Approved'
+
+        JOIN users AS manager_users
+            ON manager_users.id = manager_approvals.manager_id
+
+        JOIN final_review_acknowledgements
+            ON final_review_acknowledgements.employee_review_id
+                = employee_reviews.id
+
+        WHERE employee_reviews.id = ?
+        """,
+        (employee_review_id,)
+    ).fetchone()
+
+
+def can_view_final_review_outcome(review):
+
+    if session["user_role"] == "HR":
+        return True
+
+    if session["user_role"] == "Employee":
+        return review["employee_user_id"] == session["user_id"]
+
+    if session["user_role"] == "Supervisor":
+        return review["supervisor_id"] == session["user_id"]
+
+    if session["user_role"] == "Manager":
+        return review["manager_id"] == session["user_id"]
+
+    return False
+
+
+@app.route(
+    "/reviews/<int:employee_review_id>/final-outcome"
+)
+def final_review_outcome(employee_review_id):
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+
+    try:
+        review = get_final_review_outcome_context(
+            connection,
+            employee_review_id
+        )
+
+        if review is None or not can_view_final_review_outcome(review):
+            flash("Final review outcome not found.", "error")
+            return redirect(url_for("dashboard"))
+
+        if review["employee_review_status"] not in (
+            "Approved",
+            "Completed"
+        ):
+            flash("This review outcome is not yet available.", "error")
+            return redirect(url_for("dashboard"))
+
+        baseline_items = connection.execute(
+            """
+            SELECT
+                review_plan_items.id AS review_plan_item_id,
+                review_plan_items.item_type,
+                review_plan_items.title,
+                review_plan_items.description,
+                review_plan_items.target,
+                review_plan_items.due_date,
+                self_assessment_items.rating AS self_rating,
+                supervisor_evaluation_items.rating
+                    AS supervisor_rating,
+                supervisor_evaluation_items.evaluation_text,
+                (
+                    SELECT ROUND(AVG(peer_review_items.rating), 1)
+                    FROM peer_review_items
+                    JOIN peer_reviews
+                        ON peer_reviews.id
+                            = peer_review_items.peer_review_id
+                    JOIN peer_review_assignments
+                        ON peer_review_assignments.id
+                            = peer_reviews.peer_assignment_id
+                    WHERE peer_review_items.review_plan_item_id
+                        = review_plan_items.id
+                    AND peer_review_assignments.employee_review_id
+                        = review_plan_items.employee_review_id
+                    AND peer_reviews.status = 'Submitted'
+                    AND peer_review_assignments.status = 'Submitted'
+                ) AS peer_average_rating,
+                (
+                    SELECT COUNT(*)
+                    FROM peer_review_items
+                    JOIN peer_reviews
+                        ON peer_reviews.id
+                            = peer_review_items.peer_review_id
+                    JOIN peer_review_assignments
+                        ON peer_review_assignments.id
+                            = peer_reviews.peer_assignment_id
+                    WHERE peer_review_items.review_plan_item_id
+                        = review_plan_items.id
+                    AND peer_review_assignments.employee_review_id
+                        = review_plan_items.employee_review_id
+                    AND peer_reviews.status = 'Submitted'
+                    AND peer_review_assignments.status = 'Submitted'
+                ) AS peer_rating_count
+
+            FROM review_plan_items
+
+            LEFT JOIN self_assessments
+                ON self_assessments.employee_review_id
+                    = review_plan_items.employee_review_id
+
+            LEFT JOIN self_assessment_items
+                ON self_assessment_items.self_assessment_id
+                    = self_assessments.id
+                AND self_assessment_items.review_plan_item_id
+                    = review_plan_items.id
+
+            LEFT JOIN supervisor_evaluation_items
+                ON supervisor_evaluation_items.supervisor_evaluation_id
+                    = ?
+                AND supervisor_evaluation_items.review_plan_item_id
+                    = review_plan_items.id
+
+            WHERE review_plan_items.employee_review_id = ?
+            ORDER BY review_plan_items.id
+            """,
+            (
+                review["supervisor_evaluation_id"],
+                employee_review_id
+            )
+        ).fetchall()
+
+        readonly = (
+            session["user_role"] != "Employee"
+            or review["acknowledgement_status"] == "Acknowledged"
+            or review["employee_review_status"] == "Completed"
+        )
+
+        return render_template(
+            "final_review_outcome.html",
+            review=review,
+            baseline_items=baseline_items,
+            readonly=readonly,
+            user_name=session["user_name"],
+            user_role=session["user_role"]
+        )
+
+    finally:
+        connection.close()
+
+
+@app.route(
+    "/reviews/<int:employee_review_id>/final-outcome/acknowledge",
+    methods=["POST"]
+)
+def acknowledge_final_review_outcome(employee_review_id):
+
+    if "user_id" not in session:
+        return jsonify({
+            "success": False,
+            "message": "Authentication required."
+        }), 401
+
+    if session["user_role"] != "Employee":
+        return jsonify({
+            "success": False,
+            "message": "Only the reviewed employee can acknowledge this outcome."
+        }), 403
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict) or data.get("confirmed") is not True:
+        return jsonify({
+            "success": False,
+            "message": "Please confirm that you received the final outcome."
+        }), 400
+
+    employee_comment = data.get("employee_comment", "")
+
+    if not isinstance(employee_comment, str):
+        return jsonify({
+            "success": False,
+            "message": "Invalid employee comment."
+        }), 400
+
+    employee_comment = employee_comment.strip()
+
+    if len(employee_comment) > 3000:
+        return jsonify({
+            "success": False,
+            "message": "The final comment must be 3,000 characters or fewer."
+        }), 400
+
+    connection = get_db_connection()
+
+    try:
+        review = get_final_review_outcome_context(
+            connection,
+            employee_review_id
+        )
+
+        if (
+            review is None
+            or review["employee_user_id"] != session["user_id"]
+        ):
+            return jsonify({
+                "success": False,
+                "message": "Final review outcome not found."
+            }), 404
+
+        if (
+            review["employee_review_status"] != "Approved"
+            or review["acknowledgement_status"] != "Pending"
+        ):
+            return jsonify({
+                "success": False,
+                "message": "This review outcome has already been acknowledged."
+            }), 409
+
+        acknowledgement = connection.execute(
+            """
+            UPDATE final_review_acknowledgements
+            SET
+                status = 'Acknowledged',
+                employee_comment = ?,
+                acknowledged_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            AND status = 'Pending'
+            """,
+            (
+                employee_comment,
+                review["acknowledgement_id"]
+            )
+        )
+
+        if not acknowledgement.rowcount:
+            return jsonify({
+                "success": False,
+                "message": "This outcome was already acknowledged."
+            }), 409
+
+        transition = connection.execute(
+            """
+            UPDATE employee_reviews
+            SET
+                status = 'Completed',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            AND status = 'Approved'
+            """,
+            (employee_review_id,)
+        )
+
+        if not transition.rowcount:
+            connection.rollback()
+            return jsonify({
+                "success": False,
+                "message": "The review could not be completed."
+            }), 409
+
+        connection.execute(
+            """
+            UPDATE review_actions
+            SET
+                status = 'Completed',
+                completed_at = CURRENT_TIMESTAMP
+            WHERE employee_review_id = ?
+            AND assigned_to = ?
+            AND action_type = 'FINAL_REVIEW_ACKNOWLEDGEMENT'
+            AND status != 'Completed'
+            """,
+            (
+                employee_review_id,
+                session["user_id"]
+            )
+        )
+
+        recipients = (
+            (
+                session["user_id"],
+                "FINAL_OUTCOME_ACKNOWLEDGED",
+                "Review Outcome Acknowledged",
+                (
+                    f"Your {review['cycle_name']} review is now complete "
+                    "and available as a final record."
+                )
+            ),
+            (
+                review["supervisor_id"],
+                "FINAL_OUTCOME_ACKNOWLEDGED",
+                "Review Outcome Acknowledged",
+                (
+                    f"{review['employee_name_snapshot']} acknowledged "
+                    "the final review outcome."
+                )
+            ),
+            (
+                review["manager_id"],
+                "FINAL_OUTCOME_ACKNOWLEDGED",
+                "Approved Review Completed",
+                (
+                    f"{review['employee_name_snapshot']} acknowledged "
+                    "the approved outcome and completed the review."
+                )
+            )
+        )
+
+        for user_id, notification_type, title, message in recipients:
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+            )
+
+        hr_users = connection.execute(
+            "SELECT id FROM users WHERE role = 'HR'"
+        ).fetchall()
+
+        for hr_user in hr_users:
+            connection.execute(
+                """
+                INSERT INTO notifications
+                (
+                    user_id,
+                    review_cycle_id,
+                    employee_review_id,
+                    notification_type,
+                    title,
+                    message
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    hr_user["id"],
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    "FINAL_OUTCOME_ACKNOWLEDGED",
+                    "Review Workflow Completed",
+                    (
+                        f"{review['employee_name_snapshot']}'s review "
+                        "has been acknowledged and completed."
+                    )
+                )
+            )
+
+        connection.commit()
+
+        flash(
+            "Your final review outcome has been acknowledged.",
+            "success"
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Final review outcome acknowledged.",
+            "redirect_url": url_for(
+                "final_review_outcome",
+                employee_review_id=employee_review_id
+            )
+        })
+
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("Final review acknowledgement error:", error)
+        return jsonify({
+            "success": False,
+            "message": "The acknowledgement could not be recorded."
+        }), 500
+
+    finally:
+        connection.close()
+
+
+@app.route("/account/password", methods=["GET", "POST"])
+def change_password():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        connection = get_db_connection()
+
+        try:
+            user = connection.execute(
+                "SELECT password FROM users WHERE id = ?",
+                (session["user_id"],)
+            ).fetchone()
+
+            if user is None or not check_password_hash(
+                user["password"],
+                current_password
+            ):
+                flash("Your current password is incorrect.", "error")
+
+            elif len(new_password) < 12:
+                flash(
+                    "Your new password must contain at least 12 characters.",
+                    "error"
+                )
+
+            elif new_password != confirm_password:
+                flash("The new passwords do not match.", "error")
+
+            elif check_password_hash(user["password"], new_password):
+                flash(
+                    "Choose a password that is different from your current one.",
+                    "error"
+                )
+
+            else:
+                connection.execute(
+                    """
+                    UPDATE users
+                    SET password = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        generate_password_hash(new_password),
+                        session["user_id"]
+                    )
+                )
+                connection.commit()
+                session.clear()
+                flash(
+                    "Password updated. Sign in again with your new password.",
+                    "success"
+                )
+                return redirect(url_for("login"))
+
+        finally:
+            connection.close()
+
+    return render_template(
+        "change_password.html",
+        user_name=session["user_name"],
+        user_role=session["user_role"]
+    )
+
+
+@app.route("/review-history")
+def review_history():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    role = session["user_role"]
+    user_id = session["user_id"]
+
+    role_filters = {
+        "HR": ("1 = 1", ()),
+        "Employee": ("employees.user_id = ?", (user_id,)),
+        "Supervisor": (
+            "employee_reviews.supervisor_id = ?",
+            (user_id,)
+        ),
+        "Manager": ("manager_approvals.manager_id = ?", (user_id,))
+    }
+
+    if role not in role_filters:
+        return redirect(url_for("dashboard"))
+
+    access_clause, parameters = role_filters[role]
+    connection = get_db_connection()
+
+    try:
+        reviews = connection.execute(
+            f"""
+            SELECT
+                employee_reviews.id AS employee_review_id,
+                employee_reviews.employee_name_snapshot,
+                employee_reviews.employee_code_snapshot,
+                employee_reviews.department_snapshot,
+                employee_reviews.job_title_snapshot,
+                employee_reviews.status AS review_status,
+                review_cycles.id AS review_cycle_id,
+                review_cycles.cycle_name,
+                review_cycles.cycle_year,
+                review_cycles.status AS cycle_status,
+                supervisor_users.full_name AS supervisor_name,
+                supervisor_evaluations.overall_rating,
+                supervisor_evaluations.recommendation,
+                manager_users.full_name AS manager_name,
+                manager_approvals.decided_at,
+                final_review_acknowledgements.acknowledged_at
+            FROM employee_reviews
+            JOIN employees
+                ON employees.id = employee_reviews.employee_id
+            JOIN review_cycles
+                ON review_cycles.id = employee_reviews.review_cycle_id
+            JOIN users AS supervisor_users
+                ON supervisor_users.id = employee_reviews.supervisor_id
+            LEFT JOIN supervisor_evaluations
+                ON supervisor_evaluations.employee_review_id
+                    = employee_reviews.id
+                AND supervisor_evaluations.status = 'Submitted'
+            LEFT JOIN manager_approvals
+                ON manager_approvals.employee_review_id
+                    = employee_reviews.id
+            LEFT JOIN users AS manager_users
+                ON manager_users.id = manager_approvals.manager_id
+            LEFT JOIN final_review_acknowledgements
+                ON final_review_acknowledgements.employee_review_id
+                    = employee_reviews.id
+            WHERE employee_reviews.status = 'Completed'
+            AND {access_clause}
+            ORDER BY
+                COALESCE(
+                    final_review_acknowledgements.acknowledged_at,
+                    employee_reviews.updated_at
+                ) DESC,
+                review_cycles.cycle_year DESC,
+                employee_reviews.employee_name_snapshot
+            """,
+            parameters
+        ).fetchall()
+
+        return render_template(
+            "review_history.html",
+            reviews=reviews,
+            user_name=session["user_name"],
+            user_role=role
+        )
+
+    finally:
+        connection.close()
+
+
 @app.route("/logout")
 def logout():
 
@@ -11756,4 +13928,6 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        debug=(os.environ.get("PERFORMANCEFLOW_DEBUG", "0") == "1")
+    )

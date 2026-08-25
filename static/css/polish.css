@@ -1,0 +1,1823 @@
+/* =========================================================
+   PERFORMANCEFLOW — REFINED ORIGINAL THEME
+   Keeps the established navy / indigo / violet identity and
+   adds restrained depth, movement and clearer interaction.
+========================================================= */
+
+:root {
+    --navy: #101828;
+    --navy-soft: #182230;
+    --indigo: #4f46e5;
+    --violet: #7c3aed;
+    --background: #f6f7fb;
+    --surface: #ffffff;
+    --text: #182230;
+    --muted: #667085;
+    --border: #e5e8ef;
+    --green: #16a34a;
+    --polish-indigo-soft: rgba(79, 70, 229, 0.09);
+    --polish-violet-soft: rgba(124, 58, 237, 0.08);
+    --polish-shadow: 0 14px 38px rgba(16, 24, 40, 0.065);
+    --polish-shadow-hover: 0 20px 48px rgba(16, 24, 40, 0.1);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body.app-body {
+    background:
+        radial-gradient(circle at 92% 4%, rgba(79, 70, 229, 0.065), transparent 24rem),
+        linear-gradient(180deg, #f7f8fc 0%, var(--background) 48%, #f5f6fa 100%);
+    -webkit-font-smoothing: antialiased;
+}
+
+body.app-body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.18;
+    background-image:
+        linear-gradient(rgba(79, 70, 229, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 70, 229, 0.035) 1px, transparent 1px);
+    background-size: 78px 78px;
+    mask-image: linear-gradient(135deg, black, transparent 58%);
+}
+
+::selection {
+    color: #ffffff;
+    background: var(--indigo);
+}
+
+.skip-link {
+    position: fixed;
+    left: 20px;
+    top: -60px;
+    z-index: 200;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--indigo);
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+    transition: top 0.18s ease;
+}
+
+.skip-link:focus {
+    top: 18px;
+}
+
+/* Floating application shell */
+
+.nav-rail {
+    border: 1px solid rgba(199, 210, 254, 0.075);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.13), transparent 19%),
+        linear-gradient(180deg, #101828, #172033);
+    box-shadow: 0 24px 58px rgba(16, 24, 40, 0.2);
+}
+
+.avatar {
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.22);
+}
+
+.nav-brand-logo {
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.18));
+}
+
+.nav-link {
+    position: relative;
+    border: 1px solid transparent;
+}
+
+.nav-link:hover {
+    border-color: rgba(199, 210, 254, 0.08);
+}
+
+.nav-link.active {
+    border-color: rgba(165, 180, 252, 0.12);
+    box-shadow:
+        inset 3px 0 0 #8b83ff,
+        0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    border-bottom: 1px solid rgba(229, 232, 239, 0.72);
+    background: rgba(247, 248, 252, 0.82);
+    backdrop-filter: blur(16px);
+}
+
+.search-area,
+.altrium-notify-button {
+    box-shadow: 0 7px 22px rgba(16, 24, 40, 0.045);
+}
+
+.search-area:focus-within {
+    border-color: #aaa5f4;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08);
+}
+
+.altrium-notify-button {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.altrium-notify-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+}
+
+.workspace-content {
+    max-width: 1660px;
+    margin: 0 auto;
+}
+
+/* Page headers retain their original shape, with added depth. */
+
+.flowboard-hero,
+.employees-header,
+.profile-page-header,
+.team-page-header,
+.blueprint-header,
+.cycle-program-header,
+.cycle-workspace-header,
+.peer-matchboard-hero,
+.peer-review-header,
+.assessment-studio-header,
+.supervisor-evaluation-header,
+.manager-approval-header {
+    position: relative;
+    overflow: hidden;
+    border-color: var(--border);
+    background:
+        radial-gradient(circle at 92% 8%, rgba(79, 70, 229, 0.095), transparent 28%),
+        linear-gradient(135deg, #ffffff, #fafaff);
+    box-shadow: var(--polish-shadow);
+}
+
+.flowboard-hero::after,
+.employees-header::after,
+.profile-page-header::after,
+.team-page-header::after,
+.blueprint-header::after,
+.cycle-program-header::after,
+.cycle-workspace-header::after,
+.peer-matchboard-hero::after,
+.peer-review-header::after,
+.assessment-studio-header::after,
+.supervisor-evaluation-header::after,
+.manager-approval-header::after {
+    content: "";
+    position: absolute;
+    right: -62px;
+    top: -82px;
+    width: 230px;
+    height: 230px;
+    border: 1px solid rgba(79, 70, 229, 0.08);
+    border-radius: 50%;
+    box-shadow: 0 0 0 38px rgba(124, 58, 237, 0.018);
+    pointer-events: none;
+}
+
+.eyebrow,
+.section-label {
+    letter-spacing: 1.85px;
+}
+
+/* Lively but restrained cards */
+
+.flow-section,
+.command-card,
+.employee-panel,
+.employee-table-wrapper,
+.profile-overview-card,
+.profile-detail-card,
+.team-card,
+.blueprint-lane,
+.cycle-node-card,
+.cycle-control-strip,
+.cycle-launch-gate,
+.cycle-pool-panel,
+.cycle-cohort-panel,
+.peer-review-item,
+.assessment-item-card,
+.evidence-vault,
+.supervisor-evidence-panel,
+.supervisor-evaluation-item,
+.supervisor-overall-evaluation,
+.manager-outcome-panel,
+.manager-evidence-section,
+.manager-evidence-card,
+.manager-decision-record {
+    border-color: var(--border);
+    box-shadow: 0 9px 27px rgba(16, 24, 40, 0.04);
+}
+
+.flow-section:hover,
+.command-card:hover,
+.team-card:hover,
+.cycle-node-card:hover,
+.assessment-item-card:hover,
+.manager-evidence-card:hover {
+    border-color: #d4d3f4;
+    box-shadow: var(--polish-shadow-hover);
+}
+
+.command-card.featured,
+.employee-panel,
+.manager-evidence-section {
+    position: relative;
+}
+
+.command-card.featured::before,
+.employee-panel::before,
+.manager-evidence-section::before {
+    content: "";
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    top: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--indigo), var(--violet), transparent 85%);
+    opacity: 0.75;
+}
+
+/* Review journey movement */
+
+.journey-stage,
+.journey-node-card {
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.journey-stage:hover,
+.journey-node-card:hover {
+    transform: translateY(-2px);
+}
+
+.journey-stage.live,
+.journey-node-card.live {
+    border-color: #b9b5f3;
+    background:
+        radial-gradient(circle at 90% 8%, rgba(124, 58, 237, 0.08), transparent 34%),
+        #faf9ff;
+    box-shadow:
+        0 12px 30px rgba(79, 70, 229, 0.08),
+        inset 0 0 0 1px rgba(79, 70, 229, 0.035);
+}
+
+.journey-stage.live .journey-number,
+.journey-node-card.live .journey-node-number {
+    box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.1);
+}
+
+.journey-connector.complete,
+.annual-flow-line {
+    background: linear-gradient(90deg, var(--indigo), #a5b4fc, #e5e7eb);
+}
+
+.flow-live-badge,
+.cycle-status,
+.blueprint-status,
+.supervisor-source-badge {
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.045);
+}
+
+/* Controls and forms */
+
+.primary-button,
+.cycle-configure-button,
+.schedule-cycle-button,
+.manager-approve-button,
+.flow-primary-link {
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.2);
+}
+
+.primary-button:hover,
+.cycle-configure-button:hover,
+.schedule-cycle-button:hover,
+.manager-approve-button:hover,
+.flow-primary-link:hover {
+    box-shadow: 0 15px 30px rgba(79, 70, 229, 0.27);
+}
+
+.workspace-content input:not([type="checkbox"]):not([type="radio"]):focus,
+.workspace-content select:focus,
+.workspace-content textarea:focus {
+    border-color: #8f89ee;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.085);
+}
+
+.employee-table tbody tr,
+.assigned-cohort-member,
+.eligible-employee,
+.evidence-file-card {
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.employee-table tbody tr:hover {
+    background: #f8f8ff;
+}
+
+.assigned-cohort-member:hover,
+.eligible-employee:hover,
+.evidence-file-card:hover {
+    transform: translateX(2px);
+}
+
+/* Dark command surfaces keep the original identity. */
+
+.command-center,
+.year-command-strip,
+.launch-gate-action,
+.manager-decision-console,
+.manager-overall-score,
+.assessment-studio-dock,
+.supervisor-evaluation-dock {
+    background:
+        radial-gradient(circle at 82% 0%, rgba(124, 58, 237, 0.13), transparent 28%),
+        linear-gradient(135deg, #111827, #172033);
+}
+
+.command-center,
+.year-command-strip,
+.assessment-studio-dock,
+.supervisor-evaluation-dock {
+    box-shadow: 0 19px 45px rgba(15, 23, 42, 0.17);
+}
+
+/* Dialogs, drawers and notifications */
+
+.drawer-backdrop,
+.submission-gate-backdrop,
+.manager-confirm-backdrop {
+    backdrop-filter: blur(5px);
+}
+
+.employee-drawer,
+.submission-gate,
+.manager-confirm-dialog {
+    box-shadow: 0 30px 85px rgba(16, 24, 40, 0.24);
+}
+
+.drawer-header {
+    background:
+        radial-gradient(circle at 92% 0%, rgba(79, 70, 229, 0.08), transparent 30%),
+        #ffffff;
+}
+
+.page-alert {
+    box-shadow: 0 10px 26px rgba(16, 24, 40, 0.065);
+}
+
+/* Motion is small, meaningful and disabled when requested. */
+
+@media (prefers-reduced-motion: no-preference) {
+    .live-dot,
+    .command-live-dot,
+    .signal-live-dot,
+    .action-status-pulse {
+        animation: status-breathe 2.3s ease-in-out infinite;
+    }
+
+    .flow-section,
+    .command-card,
+    .team-card,
+    .cycle-node-card,
+    .assessment-item-card,
+    .manager-evidence-card {
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            box-shadow 0.18s ease;
+    }
+}
+
+@keyframes workspace-enter {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
+@keyframes status-breathe {
+    50% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.055);
+    }
+}
+
+@media (max-width: 780px) {
+    .topbar {
+        position: static;
+    }
+
+    .workspace-content {
+        animation: none;
+    }
+}
+
+/* =========================================================
+   PERFORMANCEFLOW — LIVE EXPERIENCE LAYER
+   Editorial rhythm, responsive motion and tactile feedback.
+========================================================= */
+
+:root {
+    --motion-swift: 160ms;
+    --motion-base: 280ms;
+    --motion-slow: 620ms;
+    --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --surface-highlight: rgba(99, 102, 241, 0.085);
+}
+
+.experience-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 250;
+    width: 100%;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: left center;
+    background: linear-gradient(90deg, #4f46e5, #8b5cf6, #c4b5fd);
+    box-shadow: 0 0 14px rgba(99, 102, 241, 0.45);
+    pointer-events: none;
+}
+
+/* Shell and navigation */
+
+.nav-rail {
+    isolation: isolate;
+    transition:
+        width 420ms var(--motion-spring),
+        box-shadow var(--motion-base) ease;
+}
+
+.nav-rail::before {
+    content: "";
+    position: absolute;
+    inset: -30% -80% auto;
+    z-index: -1;
+    height: 310px;
+    opacity: 0.42;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.34), transparent 65%);
+    transform: translate3d(0, -28%, 0);
+    pointer-events: none;
+}
+
+.nav-brand {
+    transition: width 420ms var(--motion-spring);
+}
+
+.nav-brand-logo {
+    transition: filter var(--motion-base) ease, transform var(--motion-base) var(--motion-spring);
+}
+
+.nav-rail:hover .nav-brand-logo {
+    filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.26));
+    transform: translateX(1px);
+}
+
+.nav-link {
+    isolation: isolate;
+    transition:
+        color var(--motion-swift) ease,
+        background var(--motion-swift) ease,
+        border-color var(--motion-swift) ease,
+        transform var(--motion-base) var(--motion-spring),
+        box-shadow var(--motion-base) ease;
+}
+
+.nav-link::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    opacity: 0;
+    border-radius: 50%;
+    background: #a5b4fc;
+    box-shadow: 0 0 0 5px rgba(165, 180, 252, 0.08);
+    transform: translate(9px, -50%) scale(0.5);
+    transition: opacity var(--motion-swift), transform var(--motion-base) var(--motion-spring);
+}
+
+.nav-rail:hover .nav-link.active::after {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+}
+
+.nav-icon {
+    transform-origin: center;
+    transition:
+        color var(--motion-swift) ease,
+        transform var(--motion-base) var(--motion-spring);
+}
+
+.nav-link:hover .nav-icon,
+.nav-link.active .nav-icon {
+    transform: translateY(-1px) scale(1.08);
+}
+
+.nav-label {
+    transform: translateX(-7px);
+    transition:
+        opacity 210ms ease,
+        transform 330ms var(--motion-spring);
+}
+
+.nav-rail:hover .nav-label {
+    transform: translateX(0);
+}
+
+.navigation .nav-link:nth-child(2) .nav-label { transition-delay: 20ms; }
+.navigation .nav-link:nth-child(3) .nav-label { transition-delay: 35ms; }
+.navigation .nav-link:nth-child(4) .nav-label { transition-delay: 50ms; }
+.navigation .nav-link:nth-child(5) .nav-label { transition-delay: 65ms; }
+
+.topbar {
+    transition: box-shadow var(--motion-base) ease, background var(--motion-base) ease;
+}
+
+.topbar:hover {
+    box-shadow: 0 12px 34px rgba(16, 24, 40, 0.045);
+}
+
+.profile {
+    padding: 5px 8px 5px 5px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    transition: border-color var(--motion-swift), background var(--motion-swift);
+}
+
+.profile:hover {
+    border-color: rgba(79, 70, 229, 0.09);
+    background: rgba(255, 255, 255, 0.58);
+}
+
+.profile:hover .avatar {
+    transform: translateY(-1px) rotate(-2deg);
+}
+
+.avatar {
+    transition: transform var(--motion-base) var(--motion-spring), box-shadow var(--motion-base);
+}
+
+/* Command palette */
+
+.search-area {
+    position: relative;
+    z-index: 45;
+    transition:
+        width var(--motion-base) var(--motion-spring),
+        border-color var(--motion-swift),
+        box-shadow var(--motion-base);
+}
+
+.search-area:focus-within {
+    width: min(570px, 55vw);
+}
+
+.search-shortcut {
+    transition: opacity var(--motion-swift), transform var(--motion-swift);
+}
+
+.search-area:focus-within .search-shortcut {
+    opacity: 0;
+    transform: translateX(5px);
+}
+
+.quick-navigation {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    width: 100%;
+    max-height: min(430px, 68vh);
+    padding: 9px;
+    overflow: auto;
+    visibility: hidden;
+    opacity: 0;
+    border: 1px solid rgba(226, 228, 236, 0.95);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 26px 70px rgba(16, 24, 40, 0.17);
+    backdrop-filter: blur(18px);
+    transform: translateY(-7px) scale(0.985);
+    transform-origin: top center;
+    transition:
+        opacity var(--motion-swift),
+        visibility var(--motion-swift),
+        transform var(--motion-base) var(--motion-spring);
+}
+
+.quick-navigation-open .quick-navigation {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.quick-navigation-heading {
+    display: block;
+    padding: 8px 10px 7px;
+    color: #7b8190;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.17em;
+}
+
+.quick-navigation a {
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 5px 9px 5px 6px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--motion-swift), background var(--motion-swift), transform var(--motion-swift);
+}
+
+.quick-navigation a:hover,
+.quick-navigation a:focus-visible {
+    outline: none;
+    border-color: #deddf4;
+    background: #f7f7ff;
+    transform: translateX(2px);
+}
+
+.quick-navigation a > span {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    color: #4f46e5;
+    background: #eeedff;
+    font-size: 15px;
+}
+
+.quick-navigation a strong {
+    font-size: 11px;
+}
+
+.quick-navigation a small {
+    color: #98a2b3;
+    font-size: 8px;
+}
+
+.quick-navigation-empty {
+    display: block;
+    padding: 22px 10px;
+    color: #98a2b3;
+    font-size: 10px;
+    text-align: center;
+}
+
+/* Editorial headers and live context */
+
+.flowboard-hero,
+.employees-header,
+.profile-page-header,
+.team-page-header,
+.blueprint-header,
+.cycle-program-header,
+.cycle-workspace-header,
+.peer-matchboard-hero,
+.peer-review-header,
+.assessment-studio-header,
+.supervisor-evaluation-header,
+.manager-approval-header,
+.security-hero {
+    background-size: 135% 135%;
+    background-position: 0% 50%;
+    transition:
+        background-position 900ms var(--motion-ease),
+        box-shadow var(--motion-base) ease,
+        border-color var(--motion-base) ease;
+}
+
+.flowboard-hero:hover,
+.employees-header:hover,
+.profile-page-header:hover,
+.team-page-header:hover,
+.cycle-program-header:hover,
+.cycle-workspace-header:hover,
+.peer-matchboard-hero:hover,
+.peer-review-header:hover,
+.assessment-studio-header:hover,
+.supervisor-evaluation-header:hover,
+.manager-approval-header:hover,
+.security-hero:hover {
+    background-position: 100% 50%;
+    border-color: #dcdbf2;
+    box-shadow: 0 18px 45px rgba(16, 24, 40, 0.08);
+}
+
+.flowboard-hero::after,
+.employees-header::after,
+.profile-page-header::after,
+.team-page-header::after,
+.blueprint-header::after,
+.cycle-program-header::after,
+.cycle-workspace-header::after,
+.peer-matchboard-hero::after,
+.peer-review-header::after,
+.assessment-studio-header::after,
+.supervisor-evaluation-header::after,
+.manager-approval-header::after {
+    transition: transform 1.1s var(--motion-ease), opacity var(--motion-base);
+}
+
+.flowboard-hero:hover::after,
+.employees-header:hover::after,
+.profile-page-header:hover::after,
+.team-page-header:hover::after,
+.cycle-program-header:hover::after,
+.cycle-workspace-header:hover::after,
+.peer-matchboard-hero:hover::after,
+.peer-review-header:hover::after,
+.assessment-studio-header:hover::after,
+.supervisor-evaluation-header:hover::after,
+.manager-approval-header:hover::after {
+    opacity: 0.85;
+    transform: translate(-12px, 14px) scale(1.04);
+}
+
+.eyebrow,
+.section-label {
+    background: linear-gradient(90deg, #4338ca, #7c3aed, #4338ca);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.flowboard-live-card {
+    overflow: hidden;
+    transition: transform var(--motion-base) var(--motion-spring), box-shadow var(--motion-base);
+}
+
+.flowboard-live-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 42px rgba(16, 24, 40, 0.1);
+}
+
+/* Tactile surfaces */
+
+.motion-surface {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.motion-surface-glow {
+    position: absolute;
+    left: var(--glow-x, 50%);
+    top: var(--glow-y, 50%);
+    z-index: 0;
+    width: 260px;
+    height: 260px;
+    opacity: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--surface-highlight), transparent 68%);
+    transform: translate(-50%, -50%);
+    transition: opacity var(--motion-base) ease;
+    pointer-events: none;
+}
+
+.motion-surface > :not(.motion-surface-glow) {
+    position: relative;
+    z-index: 1;
+}
+
+.motion-surface:hover .motion-surface-glow {
+    opacity: 1;
+}
+
+.flow-section,
+.command-card,
+.profile-card,
+.team-card,
+.cycle-node-card,
+.assessment-item-card,
+.manager-evidence-card,
+.security-form-card,
+.employee-panel,
+.cycle-pool-panel,
+.cycle-cohort-panel {
+    transition:
+        transform var(--motion-base) var(--motion-spring),
+        border-color var(--motion-base),
+        box-shadow var(--motion-base),
+        background var(--motion-base);
+}
+
+@media (hover: hover) {
+    .command-card:hover,
+    .profile-card:hover,
+    .team-card:hover,
+    .cycle-node-card:hover,
+    .assessment-item-card:hover,
+    .manager-evidence-card:hover {
+        transform: translateY(-4px);
+        border-color: #d7d4f5;
+        box-shadow: 0 21px 48px rgba(16, 24, 40, 0.1);
+    }
+}
+
+.command-card > strong,
+.employee-count strong,
+.action-stream-counter strong,
+.supervisor-pulse-metrics strong {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Tables and repeatable workflow data */
+
+.employee-table thead {
+    background: linear-gradient(180deg, #fbfbfe, #f8f9fc);
+}
+
+.employee-table th {
+    letter-spacing: 0.07em;
+}
+
+.employee-table tbody tr {
+    position: relative;
+    transition: background var(--motion-swift), box-shadow var(--motion-swift);
+}
+
+.employee-table tbody tr:hover {
+    background: #f8f8ff;
+    box-shadow: inset 3px 0 0 rgba(79, 70, 229, 0.72);
+}
+
+.employee-table tbody td {
+    transition: transform var(--motion-base) var(--motion-spring);
+}
+
+.employee-table tbody tr:hover td:first-child {
+    transform: translateX(3px);
+}
+
+.table-action,
+.action-open-link {
+    transition:
+        color var(--motion-swift),
+        background var(--motion-swift),
+        border-color var(--motion-swift),
+        transform var(--motion-base) var(--motion-spring),
+        box-shadow var(--motion-base);
+}
+
+.table-action:hover,
+.action-open-link:hover {
+    transform: translateX(3px);
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.12);
+}
+
+/* Workflow motion */
+
+.journey-connector,
+.annual-flow-line,
+.review-progress-track {
+    position: relative;
+    overflow: hidden;
+}
+
+.journey-connector.complete::after,
+.annual-flow-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+    transform: translateX(-110%);
+}
+
+.journey-stage.live,
+.journey-node-card.live {
+    animation: live-stage-glow 3.2s ease-in-out infinite;
+}
+
+.review-progress-fill {
+    transform-origin: left center;
+}
+
+.is-visible .review-progress-fill {
+    animation: progress-grow 900ms var(--motion-ease) 180ms both;
+}
+
+.command-center,
+.year-command-strip,
+.assessment-studio-dock,
+.supervisor-evaluation-dock,
+.security-note-card {
+    background-size: 150% 150%;
+}
+
+/* Buttons and feedback */
+
+.motion-ripple-host {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.motion-ripple {
+    position: absolute;
+    z-index: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.28);
+    transform: scale(0);
+    animation: control-ripple 560ms ease-out forwards;
+    pointer-events: none;
+}
+
+.primary-button,
+.cycle-configure-button,
+.schedule-cycle-button,
+.manager-approve-button,
+.flow-primary-link,
+.security-submit-button {
+    background-size: 180% auto;
+    transition:
+        transform var(--motion-base) var(--motion-spring),
+        box-shadow var(--motion-base),
+        background-position var(--motion-slow) var(--motion-ease);
+}
+
+.primary-button:hover,
+.cycle-configure-button:hover,
+.schedule-cycle-button:hover,
+.manager-approve-button:hover,
+.flow-primary-link:hover,
+.security-submit-button:hover {
+    background-position: 100% center;
+    transform: translateY(-2px);
+}
+
+.flow-primary-link span,
+.schedule-cycle-button > span,
+.manager-approve-button > span,
+.security-submit-button > span {
+    display: inline-block;
+    transition: transform var(--motion-base) var(--motion-spring);
+}
+
+.flow-primary-link:hover span,
+.schedule-cycle-button:hover > span,
+.manager-approve-button:hover > span,
+.security-submit-button:hover > span {
+    transform: translateX(4px);
+}
+
+.page-alert {
+    animation: alert-arrive 420ms var(--motion-spring) both;
+}
+
+/* Drawers and dialogs */
+
+.employee-drawer,
+.signal-center,
+.cycle-setup-drawer,
+.cycle-edit-drawer,
+.workspace-inspector {
+    transition: transform 420ms var(--motion-spring), box-shadow var(--motion-base) !important;
+}
+
+.employee-drawer.open,
+.signal-center.open,
+.cycle-setup-drawer.open,
+.cycle-edit-drawer.open,
+.workspace-inspector.open {
+    box-shadow: -28px 0 80px rgba(16, 24, 40, 0.2);
+}
+
+.submission-gate.open,
+.manager-confirm-dialog.visible {
+    animation: dialog-arrive 360ms var(--motion-spring) both;
+}
+
+.drawer-backdrop.show,
+.signal-center-backdrop.show,
+.submission-gate-backdrop.show,
+.manager-confirm-backdrop.visible {
+    animation: backdrop-arrive var(--motion-base) ease both;
+}
+
+/* Reveal and handoff */
+
+.motion-capable body.motion-ready [data-motion-section]:not(.is-visible) {
+    opacity: 0;
+    transform: translateY(18px);
+}
+
+.motion-capable body.motion-ready [data-motion-section].is-visible {
+    animation: section-arrive 620ms var(--motion-ease) both;
+    animation-delay: min(calc(var(--section-order, 0) * 35ms), 175ms);
+}
+
+.motion-capable body.motion-ready [data-motion-item] {
+    opacity: 0;
+    transform: translateY(12px) scale(0.988);
+}
+
+.motion-capable body.motion-ready [data-motion-group].is-visible [data-motion-item] {
+    animation: item-arrive 520ms var(--motion-ease) both;
+    animation-delay: min(calc(var(--item-order, 0) * 65ms), 390ms);
+}
+
+.workspace-content {
+    transition: opacity 145ms ease, transform 145ms ease;
+}
+
+body.page-exiting .workspace-content {
+    opacity: 0;
+    transform: translateY(5px);
+}
+
+@keyframes section-arrive {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes item-arrive {
+    from { opacity: 0; transform: translateY(12px) scale(0.988); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes live-stage-glow {
+    50% {
+        box-shadow:
+            0 16px 36px rgba(79, 70, 229, 0.13),
+            inset 0 0 0 1px rgba(79, 70, 229, 0.07);
+    }
+}
+
+@keyframes connector-travel {
+    to { transform: translateX(110%); }
+}
+
+@keyframes progress-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+@keyframes control-ripple {
+    to { opacity: 0; transform: scale(1); }
+}
+
+@keyframes alert-arrive {
+    from { opacity: 0; transform: translateY(-8px) scale(0.99); }
+}
+
+@keyframes dialog-arrive {
+    from { opacity: 0; transform: translate(-50%, -47%) scale(0.97); }
+}
+
+@keyframes backdrop-arrive {
+    from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .journey-connector.complete::after,
+    .annual-flow-line::after {
+        animation: connector-travel 2.7s ease-in-out infinite;
+    }
+
+    .command-center,
+    .year-command-strip,
+    .assessment-studio-dock,
+    .supervisor-evaluation-dock,
+    .security-note-card {
+        animation: ambient-surface 12s ease-in-out infinite alternate;
+    }
+
+    .flowboard-hero .eyebrow,
+    .employees-header .eyebrow,
+    .profile-page-header .eyebrow,
+    .team-page-header .eyebrow,
+    .cycle-program-header .eyebrow,
+    .cycle-workspace-header .eyebrow,
+    .peer-matchboard-hero .eyebrow,
+    .peer-review-header .eyebrow,
+    .assessment-studio-header .eyebrow,
+    .supervisor-evaluation-header .eyebrow,
+    .manager-approval-header .eyebrow,
+    .security-hero .eyebrow {
+        animation: label-shimmer 8s linear infinite;
+    }
+}
+
+@keyframes ambient-surface {
+    to { background-position: 100% 75%; }
+}
+
+@keyframes label-shimmer {
+    to { background-position: 200% center; }
+}
+
+@media (max-width: 780px) {
+    .nav-rail {
+        display: flex;
+        top: auto;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+        height: 64px;
+        padding: 8px;
+        flex-direction: row;
+        align-items: center;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .nav-rail:hover {
+        width: auto;
+    }
+
+    .nav-brand {
+        display: none;
+    }
+
+    .navigation {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .navigation::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-bottom {
+        display: flex;
+        gap: 4px;
+        margin: 0 0 0 5px;
+        padding-left: 5px;
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-link {
+        min-width: 48px;
+        width: 48px;
+        min-height: 48px;
+        height: 48px;
+        padding: 0;
+        flex: 0 0 48px;
+    }
+
+    .nav-icon {
+        width: 48px;
+        min-width: 48px;
+    }
+
+    .nav-label {
+        display: none;
+    }
+
+    .nav-link::after,
+    .nav-rail:hover .nav-link.active::after {
+        left: 50%;
+        right: auto;
+        top: auto;
+        bottom: 3px;
+        width: 4px;
+        height: 4px;
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+
+    .workspace-content {
+        padding-bottom: 96px;
+    }
+
+    .search-area:focus-within {
+        width: 72%;
+    }
+
+    .quick-navigation {
+        position: fixed;
+        left: 18px;
+        right: 18px;
+        top: 76px;
+        width: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =========================================================
+   ALIGNMENT CORRECTIONS
+   Shared content geometry and page-specific grid repairs.
+========================================================= */
+
+.workspace-content {
+    width: 100%;
+    max-width: 1480px;
+    padding: 28px 40px 72px;
+}
+
+.workspace-content > section,
+.workspace-content > .page-alert {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Review Program uses the same generous editorial header treatment as
+   Account Security, while retaining its year selector. */
+.cycle-program-header {
+    align-items: center;
+    min-height: 148px;
+    padding: 28px 30px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+}
+
+.cycle-program-identity {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 22px;
+}
+
+.cycle-program-icon {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    min-width: 58px;
+    height: 58px;
+    border-radius: 17px;
+    color: #fff;
+    background: linear-gradient(145deg, #172033, #26375e);
+    box-shadow: 0 13px 28px rgba(16, 24, 40, 0.18);
+}
+
+.cycle-program-icon svg {
+    width: 29px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.65;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cycle-program-copy {
+    min-width: 0;
+}
+
+.cycle-program-header .program-year-selector {
+    position: relative;
+    z-index: 1;
+    min-width: 168px;
+    padding: 14px;
+    border: 1px solid rgba(217, 222, 232, 0.82);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.045);
+}
+
+/* =========================================================
+   UNIFIED WORKSPACE HEADERS
+   A single editorial card language across every workspace.
+========================================================= */
+
+.flowboard-hero,
+.employees-header,
+.team-page-header,
+.blueprint-header,
+.cycle-workspace-header,
+.peer-matchboard-hero,
+.peer-review-header,
+.assessment-studio-header,
+.supervisor-evaluation-header,
+.manager-approval-header {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 148px;
+    gap: 22px;
+    padding: 28px 30px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+}
+
+.flowboard-hero::before,
+.employees-header::before,
+.team-page-header::before,
+.blueprint-header::before,
+.cycle-workspace-header::before,
+.peer-matchboard-hero::before,
+.peer-review-header::before,
+.assessment-studio-header::before,
+.supervisor-evaluation-header::before,
+.manager-approval-header::before {
+    content: var(--workspace-header-symbol, "◇");
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-column: 1;
+    grid-row: 1;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 17px;
+    color: #fff;
+    background: linear-gradient(145deg, #172033, #26375e);
+    box-shadow: 0 13px 28px rgba(16, 24, 40, 0.18);
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.flowboard-hero > :first-child,
+.employees-header > :first-child,
+.team-page-header > :first-child,
+.blueprint-header > :first-child,
+.cycle-workspace-header > :first-child,
+.peer-matchboard-hero > :first-child,
+.peer-review-header > :first-child,
+.assessment-studio-header > :first-child,
+.supervisor-evaluation-header > :first-child,
+.manager-approval-header > :first-child {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+}
+
+.blueprint-header .back-link,
+.cycle-workspace-header .back-link,
+.peer-matchboard-hero .back-link,
+.peer-review-header .back-link,
+.assessment-studio-header .back-link,
+.supervisor-evaluation-header .back-link,
+.manager-approval-header .back-link {
+    margin-bottom: 10px;
+}
+
+.flowboard-hero > :last-child:not(:first-child),
+.employees-header > :last-child:not(:first-child),
+.team-page-header > :last-child:not(:first-child),
+.blueprint-header > :last-child:not(:first-child),
+.cycle-workspace-header > :last-child:not(:first-child),
+.peer-matchboard-hero > :last-child:not(:first-child),
+.peer-review-header > :last-child:not(:first-child),
+.assessment-studio-header > :last-child:not(:first-child),
+.supervisor-evaluation-header > :last-child:not(:first-child),
+.manager-approval-header > :last-child:not(:first-child) {
+    position: relative;
+    z-index: 1;
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.flowboard-hero {
+    --workspace-header-symbol: "◇";
+}
+
+.employees-header {
+    --workspace-header-symbol: "+";
+}
+
+.team-page-header {
+    --workspace-header-symbol: "◎";
+}
+
+.blueprint-header {
+    --workspace-header-symbol: "▦";
+}
+
+.cycle-workspace-header {
+    --workspace-header-symbol: "↻";
+}
+
+.peer-matchboard-hero {
+    --workspace-header-symbol: "⇄";
+}
+
+.peer-review-header {
+    --workspace-header-symbol: "✦";
+}
+
+.assessment-studio-header {
+    --workspace-header-symbol: "✎";
+}
+
+.supervisor-evaluation-header {
+    --workspace-header-symbol: "✓";
+}
+
+.manager-approval-header {
+    --workspace-header-symbol: "◆";
+}
+
+/* The employee profile already owns a meaningful avatar, so it uses the
+   same card geometry without adding a duplicate decorative icon. */
+.profile-page-header {
+    align-items: center;
+    min-height: 148px;
+    padding: 28px 30px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+}
+
+.profile-page-header .large-avatar {
+    color: #fff;
+    background: linear-gradient(145deg, #172033, #26375e);
+    box-shadow: 0 13px 28px rgba(16, 24, 40, 0.18);
+}
+
+/* The animated connector must stay outside annual-flow grid placement. */
+.annual-flow-line {
+    position: absolute;
+}
+
+.annual-cycle-flow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 16px;
+}
+
+.cycle-node {
+    display: flex;
+    min-width: 0;
+}
+
+.cycle-node-card {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Metric cards are individual surfaces, not one dark joined strip. */
+.command-center {
+    gap: 12px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    animation: none !important;
+}
+
+.command-card {
+    min-width: 0;
+    min-height: 148px;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(16, 24, 40, 0.055);
+}
+
+.command-card.featured {
+    border-top-width: 1px;
+}
+
+.command-card.featured::before {
+    left: 16px;
+    right: 16px;
+}
+
+/* Review archive */
+
+.review-history-section {
+    position: relative;
+    margin-top: 20px;
+    padding: 28px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface);
+    box-shadow: 0 15px 38px rgba(16, 24, 40, 0.06);
+}
+
+.review-history-section::before {
+    content: "";
+    position: absolute;
+    left: 28px;
+    right: 28px;
+    top: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--indigo), var(--violet), transparent 86%);
+    opacity: 0.78;
+}
+
+.review-history-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 22px;
+}
+
+.review-history-heading h2 {
+    margin-top: 5px;
+    color: var(--text);
+    font-size: 22px;
+    letter-spacing: -0.45px;
+}
+
+.review-history-heading p {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+.review-history-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.review-history-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e3e6ee;
+    border-radius: 17px;
+    background: #ffffff;
+    box-shadow: 0 9px 26px rgba(16, 24, 40, 0.035);
+    transition:
+        transform var(--motion-base) var(--motion-spring),
+        border-color var(--motion-base),
+        box-shadow var(--motion-base);
+}
+
+.review-history-card:hover {
+    border-color: #d8d5f5;
+    box-shadow: 0 17px 40px rgba(16, 24, 40, 0.08);
+    transform: translateY(-2px);
+}
+
+.review-history-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 24px;
+}
+
+.review-history-cycle {
+    color: #818ba0;
+    font-size: 8px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.review-history-card-header h3 {
+    margin-top: 7px;
+    color: var(--text);
+    font-size: 18px;
+    letter-spacing: -0.25px;
+}
+
+.review-history-card-header p {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.review-history-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    min-height: 38px;
+    padding: 0 12px;
+    flex: 0 0 auto;
+    border: 1px solid #dcdfea;
+    border-radius: 9px;
+    color: var(--indigo);
+    background: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    text-decoration: none;
+    transition:
+        color var(--motion-swift),
+        border-color var(--motion-swift),
+        background var(--motion-swift),
+        transform var(--motion-base) var(--motion-spring);
+}
+
+.review-history-open:hover {
+    border-color: #b8b4f3;
+    background: #f7f6ff;
+    transform: translateX(2px);
+}
+
+.review-history-open span {
+    transition: transform var(--motion-base) var(--motion-spring);
+}
+
+.review-history-open:hover span {
+    transform: translateX(3px);
+}
+
+.review-history-metrics {
+    display: grid;
+    grid-template-columns: 0.72fr 1.35fr 1fr 1fr;
+    border-top: 1px solid #e8eaf0;
+    background: #fafbfe;
+}
+
+.review-history-metrics > div {
+    min-width: 0;
+    padding: 17px 22px;
+    border-right: 1px solid #e8eaf0;
+}
+
+.review-history-metrics > div:last-child {
+    border-right: 0;
+}
+
+.review-history-metrics span,
+.review-history-metrics strong {
+    display: block;
+}
+
+.review-history-metrics span {
+    color: #8a93a5;
+    font-size: 7px;
+    font-weight: 850;
+    letter-spacing: 0.11em;
+}
+
+.review-history-metrics strong {
+    margin-top: 7px;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.review-history-metrics > div:first-child strong {
+    color: var(--indigo);
+    font-size: 20px;
+}
+
+@media (max-width: 1050px) {
+    .annual-cycle-flow {
+        grid-template-columns: 1fr;
+    }
+
+    .annual-flow-line {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .review-history-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .review-history-metrics > div:nth-child(2) {
+        border-right: 0;
+    }
+
+    .review-history-metrics > div:nth-child(-n + 2) {
+        border-bottom: 1px solid #e8eaf0;
+    }
+}
+
+@media (max-width: 780px) {
+    .workspace-content {
+        padding: 18px 18px 96px;
+    }
+
+    .review-history-section {
+        padding: 22px;
+        border-radius: 18px;
+    }
+
+    .review-history-card-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .review-history-open {
+        align-self: flex-start;
+    }
+
+    .cycle-program-header {
+        align-items: stretch;
+        min-height: 0;
+        padding: 24px;
+    }
+
+    .cycle-program-header .program-year-selector {
+        width: 100%;
+    }
+
+    .flowboard-hero,
+    .employees-header,
+    .team-page-header,
+    .blueprint-header,
+    .cycle-workspace-header,
+    .peer-matchboard-hero,
+    .peer-review-header,
+    .assessment-studio-header,
+    .supervisor-evaluation-header,
+    .manager-approval-header {
+        grid-template-columns: 52px minmax(0, 1fr);
+        align-items: start;
+        min-height: 0;
+        gap: 18px;
+        padding: 24px;
+    }
+
+    .flowboard-hero::before,
+    .employees-header::before,
+    .team-page-header::before,
+    .blueprint-header::before,
+    .cycle-workspace-header::before,
+    .peer-matchboard-hero::before,
+    .peer-review-header::before,
+    .assessment-studio-header::before,
+    .supervisor-evaluation-header::before,
+    .manager-approval-header::before {
+        width: 52px;
+        height: 52px;
+        border-radius: 15px;
+        font-size: 22px;
+    }
+
+    .flowboard-hero > :last-child:not(:first-child),
+    .employees-header > :last-child:not(:first-child),
+    .team-page-header > :last-child:not(:first-child),
+    .blueprint-header > :last-child:not(:first-child),
+    .cycle-workspace-header > :last-child:not(:first-child),
+    .peer-matchboard-hero > :last-child:not(:first-child),
+    .peer-review-header > :last-child:not(:first-child),
+    .assessment-studio-header > :last-child:not(:first-child),
+    .supervisor-evaluation-header > :last-child:not(:first-child),
+    .manager-approval-header > :last-child:not(:first-child) {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+    }
+
+    .profile-page-header {
+        min-height: 0;
+        padding: 24px;
+    }
+}
+
+@media (max-width: 560px) {
+    .cycle-program-identity {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .review-history-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .review-history-metrics > div {
+        border-right: 0;
+        border-bottom: 1px solid #e8eaf0;
+    }
+
+    .review-history-metrics > div:last-child {
+        border-bottom: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .review-history-card,
+    .review-history-open,
+    .review-history-open span {
+        transition-duration: 0.01ms !important;
+    }
+}

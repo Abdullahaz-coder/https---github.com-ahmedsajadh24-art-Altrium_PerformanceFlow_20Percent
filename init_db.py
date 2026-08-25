@@ -1,14 +1,23 @@
+import os
+import secrets
 import sqlite3
+from pathlib import Path
 
 from werkzeug.security import generate_password_hash
 
 
-connection = sqlite3.connect("database.db")
+DATABASE_PATH = Path(__file__).resolve().with_name("database.db")
+
+connection = sqlite3.connect(DATABASE_PATH, timeout=10)
 
 
 # Enable foreign key support
 
 connection.execute("PRAGMA foreign_keys = ON")
+
+connection.execute("PRAGMA journal_mode = WAL")
+
+connection.execute("PRAGMA busy_timeout = 10000")
 
 def add_column_if_missing(
     connection,
@@ -792,6 +801,91 @@ connection.execute(
 
 
 # ==========================================
+# MANAGEMENT APPROVALS
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS manager_approvals (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        employee_review_id INTEGER NOT NULL UNIQUE,
+
+        manager_id INTEGER NOT NULL,
+
+        status TEXT NOT NULL DEFAULT 'Pending',
+
+        decision_note TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        decided_at TIMESTAMP,
+
+        FOREIGN KEY (employee_review_id)
+            REFERENCES employee_reviews(id),
+
+        FOREIGN KEY (manager_id)
+            REFERENCES users(id),
+
+        CHECK (
+            status IN (
+                'Pending',
+                'Approved',
+                'Changes Requested'
+            )
+        )
+
+    )
+    """
+)
+
+
+# ==========================================
+# FINAL REVIEW ACKNOWLEDGEMENTS
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS final_review_acknowledgements (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        employee_review_id INTEGER NOT NULL UNIQUE,
+
+        employee_user_id INTEGER NOT NULL,
+
+        status TEXT NOT NULL DEFAULT 'Pending',
+
+        employee_comment TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        acknowledged_at TIMESTAMP,
+
+        FOREIGN KEY (employee_review_id)
+            REFERENCES employee_reviews(id),
+
+        FOREIGN KEY (employee_user_id)
+            REFERENCES users(id),
+
+        CHECK (
+            status IN (
+                'Pending',
+                'Acknowledged'
+            )
+        )
+
+    )
+    """
+)
+
+
+# ==========================================
 # REVIEW ASSIGNMENT LIFECYCLE
 # ==========================================
 
@@ -814,8 +908,22 @@ add_column_if_missing(
 # DEFAULT HR ACCOUNT
 # ==========================================
 
+generated_bootstrap_passwords = {}
+
+
+def bootstrap_password(environment_name, account_label):
+    password = os.environ.get(environment_name)
+
+    if password:
+        return password
+
+    password = secrets.token_urlsafe(18)
+    generated_bootstrap_passwords[account_label] = password
+    return password
+
+
 hr_password = generate_password_hash(
-    "Admin123!"
+    bootstrap_password("PERFORMANCEFLOW_HR_PASSWORD", "HR")
 )
 
 
@@ -847,7 +955,10 @@ connection.execute(
 # ==========================================
 
 supervisor_password = generate_password_hash(
-    "Supervisor123!"
+    bootstrap_password(
+        "PERFORMANCEFLOW_SUPERVISOR_PASSWORD",
+        "Supervisor"
+    )
 )
 
 
@@ -869,6 +980,36 @@ connection.execute(
         "supervisor@altrium.com",
         supervisor_password,
         "Supervisor"
+    )
+)
+
+# ==========================================
+# DEFAULT MANAGER ACCOUNT
+# ==========================================
+
+manager_password = generate_password_hash(
+    bootstrap_password("PERFORMANCEFLOW_MANAGER_PASSWORD", "Manager")
+)
+
+
+connection.execute(
+    """
+    INSERT OR IGNORE INTO users
+    (
+        full_name,
+        email,
+        password,
+        role
+    )
+
+    VALUES (?, ?, ?, ?)
+    """,
+
+    (
+        "Nimal Jayasinghe",
+        "manager@altrium.com",
+        manager_password,
+        "Manager"
     )
 )
 
@@ -980,6 +1121,175 @@ connection.execute(
 )
 
 # ==========================================
+# PB10 BACKFILL FOR SUBMITTED EVALUATIONS
+# ==========================================
+
+default_manager = connection.execute(
+    """
+    SELECT id
+    FROM users
+    WHERE role = 'Manager'
+    ORDER BY id
+    LIMIT 1
+    """
+).fetchone()
+
+
+if default_manager is not None:
+
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO manager_approvals
+        (
+            employee_review_id,
+            manager_id,
+            status
+        )
+        SELECT
+            employee_reviews.id,
+            ?,
+            CASE
+                WHEN employee_reviews.status IN ('Approved', 'Completed')
+                    THEN 'Approved'
+                ELSE 'Pending'
+            END
+        FROM employee_reviews
+        JOIN supervisor_evaluations
+            ON supervisor_evaluations.employee_review_id
+                = employee_reviews.id
+        WHERE supervisor_evaluations.status = 'Submitted'
+        AND employee_reviews.status IN (
+            'Supervisor Evaluation Submitted',
+            'Manager Approval Pending',
+            'Approved',
+            'Completed'
+        )
+        """,
+        (default_manager[0],)
+    )
+
+
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO review_actions
+        (
+            review_cycle_id,
+            employee_review_id,
+            assigned_to,
+            action_type,
+            title,
+            description,
+            status,
+            priority
+        )
+        SELECT
+            employee_reviews.review_cycle_id,
+            employee_reviews.id,
+            ?,
+            'MANAGER_APPROVAL',
+            'Approve ' || employee_reviews.employee_name_snapshot
+                || '''s Review',
+            'Review the submitted supervisor evaluation and record '
+                || 'the final management decision.',
+            CASE
+                WHEN employee_reviews.status IN ('Approved', 'Completed')
+                    THEN 'Completed'
+                ELSE 'Pending'
+            END,
+            'High'
+        FROM employee_reviews
+        JOIN supervisor_evaluations
+            ON supervisor_evaluations.employee_review_id
+                = employee_reviews.id
+        WHERE supervisor_evaluations.status = 'Submitted'
+        AND employee_reviews.status IN (
+            'Supervisor Evaluation Submitted',
+            'Manager Approval Pending',
+            'Approved',
+            'Completed'
+        )
+        """,
+        (default_manager[0],)
+    )
+
+
+# ==========================================
+# PB11 BACKFILL FOR APPROVED REVIEWS
+# ==========================================
+
+connection.execute(
+    """
+    INSERT OR IGNORE INTO final_review_acknowledgements
+    (
+        employee_review_id,
+        employee_user_id,
+        status,
+        acknowledged_at
+    )
+    SELECT
+        employee_reviews.id,
+        employees.user_id,
+        CASE
+            WHEN employee_reviews.status = 'Completed'
+                THEN 'Acknowledged'
+            ELSE 'Pending'
+        END,
+        CASE
+            WHEN employee_reviews.status = 'Completed'
+                THEN CURRENT_TIMESTAMP
+            ELSE NULL
+        END
+    FROM employee_reviews
+    JOIN employees
+        ON employees.id = employee_reviews.employee_id
+    JOIN manager_approvals
+        ON manager_approvals.employee_review_id
+            = employee_reviews.id
+    WHERE manager_approvals.status = 'Approved'
+    AND employee_reviews.status IN ('Approved', 'Completed')
+    """
+)
+
+
+connection.execute(
+    """
+    INSERT OR IGNORE INTO review_actions
+    (
+        review_cycle_id,
+        employee_review_id,
+        assigned_to,
+        action_type,
+        title,
+        description,
+        status,
+        priority
+    )
+    SELECT
+        employee_reviews.review_cycle_id,
+        employee_reviews.id,
+        employees.user_id,
+        'FINAL_REVIEW_ACKNOWLEDGEMENT',
+        'Acknowledge Final Review Outcome',
+        'Read the approved review outcome and confirm that it has been '
+            || 'received. You may also add a final employee comment.',
+        CASE
+            WHEN employee_reviews.status = 'Completed'
+                THEN 'Completed'
+            ELSE 'Pending'
+        END,
+        'High'
+    FROM employee_reviews
+    JOIN employees
+        ON employees.id = employee_reviews.employee_id
+    JOIN manager_approvals
+        ON manager_approvals.employee_review_id
+            = employee_reviews.id
+    WHERE manager_approvals.status = 'Approved'
+    AND employee_reviews.status IN ('Approved', 'Completed')
+    """
+)
+
+# ==========================================
 # SAVE DATABASE CHANGES
 # ==========================================
 
@@ -989,4 +1299,12 @@ connection.close()
 
 
 print("Database updated successfully.")
+
+if generated_bootstrap_passwords:
+    print("Generated passwords for newly created local accounts:")
+
+    for account_label, password in generated_bootstrap_passwords.items():
+        print(f"  {account_label}: {password}")
+
+    print("Save these locally; they will not be shown again.")
 

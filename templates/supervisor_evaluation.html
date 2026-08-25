@@ -91,6 +91,28 @@ Supervisor Evaluation | Altrium PerformanceFlow
 </section>
 
 
+{% if manager_feedback
+    and manager_feedback["status"] == "Changes Requested" %}
+
+    <section class="manager-return-notice">
+        <div class="manager-return-symbol">↺</div>
+
+        <div>
+            <span>MANAGEMENT REVISION REQUEST</span>
+            <strong>
+                {{ manager_feedback["manager_name"] }} returned this evaluation.
+            </strong>
+            <p>{{ manager_feedback["decision_note"] }}</p>
+            <small>
+                Update the relevant ratings or rationale, then submit the
+                evaluation again for management approval.
+            </small>
+        </div>
+    </section>
+
+{% endif %}
+
+
 <!-- =====================================================
      REVIEW CONTEXT
 ====================================================== -->
@@ -173,6 +195,26 @@ Supervisor Evaluation | Altrium PerformanceFlow
                     <span>SUPPORT NEEDED</span>
                     <p>{{ self_assessment["support_needed"] or "Not provided." }}</p>
                 </div>
+            </div>
+
+            <div class="supervisor-overview-field">
+                <span>SUPPORTING FILES</span>
+
+                {% if evidence_files %}
+                    {% for evidence in evidence_files %}
+                        <p>
+                            <a href="{{ url_for(
+                                'download_self_assessment_evidence',
+                                employee_review_id=review['employee_review_id'],
+                                evidence_id=evidence['id']
+                            ) }}">
+                                Download {{ evidence["original_file_name"] }}
+                            </a>
+                        </p>
+                    {% endfor %}
+                {% else %}
+                    <p>No supporting files were attached.</p>
+                {% endif %}
             </div>
 
         {% else %}

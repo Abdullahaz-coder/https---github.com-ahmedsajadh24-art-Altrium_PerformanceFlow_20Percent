@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Management Approval | Altrium PerformanceFlow
+{% endblock %}
+
+
+{% block content %}
+
+
+<div
+    id="managerApprovalWorkspace"
+    data-review-id="{{ review['employee_review_id'] }}"
+    data-status="{{ review['approval_status'] }}"
+    data-readonly="{{ 'true' if readonly else 'false' }}"
+></div>
+
+
+<section class="manager-approval-header">
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">
+            ← Flowboard
+        </a>
+
+        <span class="eyebrow">FINAL MANAGEMENT GATE</span>
+
+        <h1>{{ review["employee_name_snapshot"] }}</h1>
+
+        <p>
+            Review the complete evidence package and record the final,
+            accountable management decision.
+        </p>
+    </div>
+
+    <div class="manager-approval-state {{ review['approval_status']|lower|replace(' ', '-') }}">
+        <span>APPROVAL STATE</span>
+        <strong>{{ review["approval_status"] }}</strong>
+        <small>
+            Assigned to {{ review["manager_name"] }}
+        </small>
+    </div>
+</section>
+
+
+{% if user_role == "HR" %}
+
+    <section class="manager-readonly-banner">
+        <span>HR OVERSIGHT</span>
+        <strong>This approval package is read-only.</strong>
+        <p>
+            The assigned manager records the decision. HR can monitor the
+            evidence, current state and final outcome here.
+        </p>
+
+        {% if review["approval_status"] == "Pending" %}
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'assign_manager_approval',
+                    employee_review_id=review['employee_review_id']
+                ) }}"
+            >
+                <label for="managerId">Assigned manager</label>
+                <select id="managerId" name="manager_id" required>
+                    {% for manager in manager_options %}
+                        <option
+                            value="{{ manager['id'] }}"
+                            {% if manager['id'] == review['manager_id'] %}selected{% endif %}
+                        >
+                            {{ manager["full_name"] }} · {{ manager["email"] }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Update assignment</button>
+            </form>
+        {% endif %}
+    </section>
+
+{% endif %}
+
+
+<section class="manager-review-context">
+    <div>
+        <span>EMPLOYEE</span>
+        <strong>{{ review["employee_name_snapshot"] }}</strong>
+        <small>{{ review["employee_code_snapshot"] }}</small>
+    </div>
+
+    <div>
+        <span>ROLE</span>
+        <strong>{{ review["job_title_snapshot"] }}</strong>
+        <small>{{ review["department_snapshot"] }}</small>
+    </div>
+
+    <div>
+        <span>SUPERVISOR</span>
+        <strong>{{ review["supervisor_name"] }}</strong>
+        <small>Evaluation submitted</small>
+    </div>
+
+    <div>
+        <span>REVIEW WINDOW</span>
+        <strong>{{ review["start_date"] }} → {{ review["end_date"] }}</strong>
+        <small>{{ review["cycle_name"] }}</small>
+    </div>
+</section>
+
+
+<section class="manager-outcome-panel">
+    <div class="manager-outcome-heading">
+        <div>
+            <span class="section-label">SUPERVISOR OUTCOME</span>
+            <h2>Recommended performance outcome</h2>
+        </div>
+
+        <div class="manager-overall-score">
+            <span>OVERALL RATING</span>
+            <strong>{{ review["overall_rating"] }}/5</strong>
+        </div>
+    </div>
+
+    <div class="manager-recommendation-strip">
+        <span>RECOMMENDATION</span>
+        <strong>{{ review["recommendation"] }}</strong>
+    </div>
+
+    <div class="manager-outcome-grid">
+        <article>
+            <span>PERFORMANCE SUMMARY</span>
+            <p>{{ review["performance_summary"] }}</p>
+        </article>
+
+        <article>
+            <span>KEY STRENGTHS</span>
+            <p>{{ review["key_strengths"] }}</p>
+        </article>
+
+        <article>
+            <span>DEVELOPMENT PRIORITIES</span>
+            <p>{{ review["development_priorities"] }}</p>
+        </article>
+
+        <article>
+            <span>SUPPORT PLAN</span>
+            <p>{{ review["support_plan"] }}</p>
+        </article>
+    </div>
+</section>
+
+
+<section class="manager-evidence-section">
+    <div class="manager-section-heading">
+        <div>
+            <span class="eyebrow">SUPPORTING FILES</span>
+            <h2>Employee attachments</h2>
+            <p>Open the files submitted with the employee self-assessment.</p>
+        </div>
+    </div>
+
+    <div class="manager-evidence-list">
+        {% if evidence_files %}
+            {% for evidence in evidence_files %}
+                <article class="manager-evidence-card">
+                    <div class="manager-item-header">
+                        <div>
+                            <span>ATTACHMENT</span>
+                            <h3>{{ evidence["original_file_name"] }}</h3>
+                        </div>
+
+                        <a href="{{ url_for(
+                            'download_self_assessment_evidence',
+                            employee_review_id=review['employee_review_id'],
+                            evidence_id=evidence['id']
+                        ) }}">
+                            Download file
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        {% else %}
+            <article class="manager-evidence-card">
+                <p>No supporting files were attached.</p>
+            </article>
+        {% endif %}
+    </div>
+</section>
+
+
+<section class="manager-evidence-section">
+    <div class="manager-section-heading">
+        <div>
+            <span class="eyebrow">EVIDENCE ALIGNMENT</span>
+            <h2>Performance item decisions</h2>
+            <p>
+                Compare the employee view, anonymous peer signal and
+                supervisor judgment across the locked baseline.
+            </p>
+        </div>
+
+        <span class="manager-item-count">
+            {{ baseline_items|length }} ITEMS
+        </span>
+    </div>
+
+    <div class="manager-evidence-list">
+        {% for item in baseline_items %}
+
+            <article class="manager-evidence-card">
+                <div class="manager-item-header">
+                    <div>
+                        <span>{{ item["item_type"]|upper }}</span>
+                        <h3>{{ item["title"] }}</h3>
+                        <p>{{ item["description"] }}</p>
+                    </div>
+
+                    <div class="manager-item-target">
+                        <span>TARGET</span>
+                        <strong>{{ item["target"] or "Defined baseline" }}</strong>
+                    </div>
+                </div>
+
+                <div class="manager-rating-comparison">
+                    <div>
+                        <span>SELF</span>
+                        <strong>
+                            {{ item["self_rating"] if item["self_rating"] else "—" }}
+                        </strong>
+                        <small>Employee rating</small>
+                    </div>
+
+                    <div>
+                        <span>PEERS</span>
+                        <strong>
+                            {{ item["peer_average_rating"] if item["peer_average_rating"] else "—" }}
+                        </strong>
+                        <small>
+                            Anonymous average · {{ item["peer_rating_count"] }} response(s)
+                        </small>
+                    </div>
+
+                    <div class="manager-supervisor-rating">
+                        <span>SUPERVISOR</span>
+                        <strong>{{ item["supervisor_rating"] }}/5</strong>
+                        <small>Final item judgment</small>
+                    </div>
+                </div>
+
+                <div class="manager-rationale">
+                    <span>SUPERVISOR RATIONALE</span>
+                    <p>{{ item["evaluation_text"] }}</p>
+                </div>
+
+                {% set item_comments = comments_by_item.get(
+                    item["review_plan_item_id"], []
+                ) %}
+
+                {% if item_comments %}
+                    <details class="manager-peer-comments">
+                        <summary>
+                            View {{ item_comments|length }} anonymous peer note(s)
+                        </summary>
+
+                        <div>
+                            {% for comment in item_comments %}
+                                <p>
+                                    <span>ANONYMOUS PEER {{ loop.index }}</span>
+                                    {{ comment }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                    </details>
+                {% endif %}
+            </article>
+
+        {% endfor %}
+    </div>
+</section>
+
+
+{% if not readonly %}
+
+    <section class="manager-decision-console">
+        <div class="manager-decision-copy">
+            <span class="eyebrow">MANAGEMENT DECISION</span>
+            <h2>Record the final decision</h2>
+            <p>
+                Explain why the evidence supports approval, or state the
+                exact changes the supervisor must make. This note becomes
+                part of the review audit trail.
+            </p>
+        </div>
+
+        <div class="manager-decision-form">
+            <label for="managerDecisionNote">
+                DECISION NOTE <span>Required</span>
+            </label>
+
+            <textarea
+                id="managerDecisionNote"
+                maxlength="3000"
+                placeholder="Record your evidence-based decision..."
+            ></textarea>
+
+            <div class="manager-decision-footer">
+                <span id="managerDecisionStatus">
+                    A decision note is required.
+                </span>
+
+                <div>
+                    <button
+                        type="button"
+                        class="manager-return-button"
+                        id="requestManagerChanges"
+                    >
+                        Request Changes
+                    </button>
+
+                    <button
+                        type="button"
+                        class="manager-approve-button"
+                        id="approveManagerReview"
+                    >
+                        Approve & Lock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% else %}
+
+    <section class="manager-decision-record {{ review['approval_status']|lower|replace(' ', '-') }}">
+        <div class="manager-decision-record-icon">
+            {{ "✓" if review["approval_status"] == "Approved" else "↺" }}
+        </div>
+
+        <div>
+            <span>RECORDED MANAGEMENT DECISION</span>
+            <strong>{{ review["approval_status"] }}</strong>
+
+            {% if review["decision_note"] %}
+                <p>{{ review["decision_note"] }}</p>
+            {% else %}
+                <p>The assigned manager has not recorded a decision yet.</p>
+            {% endif %}
+
+            {% if review["decided_at"] %}
+                <small>
+                    Recorded by {{ review["manager_name"] }} ·
+                    {{ review["decided_at"] }}
+                </small>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="flow-primary-link">
+            Return to Flowboard →
+        </a>
+    </section>
+
+{% endif %}
+
+
+<div class="manager-confirm-backdrop" id="managerConfirmBackdrop"></div>
+
+<section class="manager-confirm-dialog" id="managerConfirmDialog" aria-hidden="true">
+    <button
+        type="button"
+        class="manager-confirm-close"
+        id="closeManagerConfirm"
+        aria-label="Close confirmation"
+    >×</button>
+
+    <span class="eyebrow" id="managerConfirmEyebrow">
+        FINAL DECISION
+    </span>
+
+    <h2 id="managerConfirmTitle">Confirm decision</h2>
+
+    <p id="managerConfirmMessage"></p>
+
+    <div class="manager-confirm-actions">
+        <button type="button" class="secondary-button" id="cancelManagerDecision">
+            Cancel
+        </button>
+
+        <button type="button" class="primary-button" id="confirmManagerDecision">
+            Confirm
+        </button>
+    </div>
+</section>
+
+
+<script src="{{ url_for('static', filename='js/manager_approval.js') }}"></script>
+
+
+{% endblock %}

@@ -476,9 +476,10 @@
 
 
                 <p>
-                    The review cycle is active.
-                    Employee review cases have been created
-                    and their performance baselines are locked.
+                    {{ closure_readiness["completed"] }} of
+                    {{ closure_readiness["total"] }} employee reviews are
+                    complete. Close the cycle after every employee has
+                    acknowledged their final outcome.
                 </p>
 
             </div>
@@ -637,7 +638,7 @@
             </form>
 
 
-        <<!-- =====================================
+        <!-- =====================================
             ACTIVE
         ====================================== -->
 
@@ -677,6 +678,24 @@
                 Peer Matchboard →
 
             </a>
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'close_review_cycle',
+                    cycle_id=cycle['id']
+                ) }}"
+                id="closeCycleForm"
+            >
+                <button
+                    type="submit"
+                    class="schedule-cycle-button"
+                    {% if not closure_readiness["can_close"] %}disabled{% endif %}
+                >
+                    Close Review Cycle
+                    <span>→</span>
+                </button>
+            </form>
 
 
         <!-- =====================================

@@ -43,6 +43,11 @@ Flowboard | Altrium PerformanceFlow
                 Stay ahead of your team's performance
                 reviews and upcoming responsibilities.
 
+            {% elif user_role == "Manager" %}
+
+                Review completed evaluation packages and make
+                clear, evidence-based approval decisions.
+
             {% else %}
 
                 Follow your review journey and complete
@@ -140,6 +145,18 @@ Flowboard | Altrium PerformanceFlow
                 </small>
 
             {% endif %}
+
+
+        {% elif user_role == "Manager" %}
+
+
+            <strong>
+                {{ manager_pending_approvals }} Pending
+            </strong>
+
+            <small>
+                Management approval(s)
+            </small>
 
 
         {% endif %}
@@ -690,7 +707,8 @@ Flowboard | Altrium PerformanceFlow
             "Supervisor Evaluation In Progress",
             "Supervisor Evaluation Submitted",
             "Manager Approval Pending",
-            "Approved"
+            "Approved",
+            "Completed"
         ]
     %}
 
@@ -704,7 +722,8 @@ Flowboard | Altrium PerformanceFlow
             "Supervisor Evaluation In Progress",
             "Supervisor Evaluation Submitted",
             "Manager Approval Pending",
-            "Approved"
+            "Approved",
+            "Completed"
         ]
     %}
 
@@ -716,7 +735,8 @@ Flowboard | Altrium PerformanceFlow
         review_status in [
             "Supervisor Evaluation Submitted",
             "Manager Approval Pending",
-            "Approved"
+            "Approved",
+            "Completed"
         ]
     %}
 
@@ -725,6 +745,14 @@ Flowboard | Altrium PerformanceFlow
     %}
 
     {% set review_approved =
+        review_status in ["Approved", "Completed"]
+    %}
+
+    {% set review_completed =
+        review_status == "Completed"
+    %}
+
+    {% set final_acknowledgement_active =
         review_status == "Approved"
     %}
 
@@ -746,8 +774,8 @@ Flowboard | Altrium PerformanceFlow
             </h2>
 
             <p>
-                Your performance review moves through four
-                controlled stages from reflection to approval.
+                Your performance review moves through five
+                controlled stages from reflection to acknowledgement.
             </p>
 
         </div>
@@ -784,9 +812,13 @@ Flowboard | Altrium PerformanceFlow
 
                     <strong>
 
-                        {% if review_approved %}
+                        {% if review_completed %}
 
                             100%
+
+                        {% elif review_approved %}
+
+                            95%
 
                         {% elif manager_approval_active %}
 
@@ -827,7 +859,7 @@ Flowboard | Altrium PerformanceFlow
 
 
                 <small>
-                    4-stage review journey
+                    5-stage review journey
                 </small>
 
             </div>
@@ -838,9 +870,13 @@ Flowboard | Altrium PerformanceFlow
                 <div
                     class="review-progress-fill"
 
-                    {% if review_approved %}
+                    {% if review_completed %}
 
                         style="width: 100%;"
+
+                    {% elif review_approved %}
+
+                        style="width: 95%;"
 
                     {% elif manager_approval_active %}
 
@@ -889,15 +925,27 @@ Flowboard | Altrium PerformanceFlow
             </span>
 
 
-            {% if review_approved %}
+            {% if review_completed %}
 
                 <strong>
-                    Review Approved
+                    Review Completed
                 </strong>
 
                 <small>
-                    Your performance review has completed
-                    its evaluation and approval journey.
+                    Your final outcome has been acknowledged and is
+                    available as a completed review record.
+                </small>
+
+
+            {% elif review_approved %}
+
+                <strong>
+                    Acknowledge Final Outcome
+                </strong>
+
+                <small>
+                    Management approved your review. Read the final
+                    outcome and confirm that you received it.
                 </small>
 
 
@@ -1406,7 +1454,7 @@ Flowboard | Altrium PerformanceFlow
 
                 <p>
                     Management reviews the evaluation before
-                    the review moves toward PAR.
+                    the review moves toward its final outcome.
                 </p>
 
             </div>
@@ -1427,6 +1475,93 @@ Flowboard | Altrium PerformanceFlow
                     </span>
                 {% else %}
                     <span>Upcoming</span>
+                {% endif %}
+            </div>
+
+        </article>
+
+
+        <!-- CONNECTOR -->
+
+        <div class="
+            journey-flow-line
+            {% if review_approved %}
+                active
+            {% endif %}
+        ">
+            <span></span>
+        </div>
+
+
+        <!-- 05 FINAL ACKNOWLEDGEMENT -->
+
+        <article class="
+            journey-node
+            {% if review_completed %}
+                journey-complete
+            {% elif final_acknowledgement_active %}
+                journey-current
+            {% else %}
+                journey-locked
+            {% endif %}
+        ">
+
+            <div class="journey-node-top">
+                <div class="journey-node-number">
+                    {% if review_completed %}
+                        ✓
+                    {% else %}
+                        05
+                    {% endif %}
+                </div>
+
+                <span class="journey-state-label">
+                    {% if review_completed %}
+                        COMPLETE
+                    {% elif final_acknowledgement_active %}
+                        LIVE
+                    {% else %}
+                        QUEUED
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="journey-node-body">
+                <small>EMPLOYEE</small>
+
+                <h3>Final Outcome</h3>
+
+                <p>
+                    Read the approved result, add an optional comment
+                    and confirm receipt of the outcome.
+                </p>
+            </div>
+
+            <div class="journey-node-footer">
+                {% if review_completed %}
+                    <span class="journey-success">
+                        ✓ Acknowledged
+                    </span>
+
+                    <a href="{{ url_for(
+                        'final_review_outcome',
+                        employee_review_id=current_review['employee_review_id']
+                    ) }}">
+                        View Record →
+                    </a>
+                {% elif final_acknowledgement_active %}
+                    <span class="journey-next-text">
+                        Acknowledgement required
+                    </span>
+
+                    <a href="{{ url_for(
+                        'final_review_outcome',
+                        employee_review_id=current_review['employee_review_id']
+                    ) }}">
+                        Open Outcome →
+                    </a>
+                {% else %}
+                    <span>Available after approval</span>
                 {% endif %}
             </div>
 
@@ -1492,9 +1627,13 @@ Flowboard | Altrium PerformanceFlow
 
             <strong>
 
-                {% if review_approved %}
+                {% if review_completed %}
 
-                    Review Complete
+                    Review History
+
+                {% elif review_approved %}
+
+                    You · Final Acknowledgement
 
                 {% elif manager_approval_active %}
 
@@ -1809,6 +1948,38 @@ Flowboard | Altrium PerformanceFlow
                                 class="action-open-link"
                             >
                                 Open Evaluation →
+                            </a>
+
+
+                        {% elif action["action_type"] in [
+                                    "MANAGER_APPROVAL",
+                                    "MANAGER_APPROVAL_COORDINATION"
+                                ]
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'manager_approval_workspace',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Open Approval →
+                            </a>
+
+
+                        {% elif action["action_type"]
+                                == "FINAL_REVIEW_ACKNOWLEDGEMENT"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'final_review_outcome',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Open Final Outcome →
                             </a>
 
                         {% endif %}

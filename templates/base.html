@@ -10,6 +10,8 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
 
     <title>
 
@@ -27,10 +29,19 @@
         href="{{ url_for('static', filename='css/dashboard.css') }}"
     >
 
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/polish.css') }}"
+    >
+
 </head>
 
 
-<body>
+<body class="app-body role-{{ user_role|lower }} page-{{ request.endpoint|replace('_', '-') }}">
+
+    <a class="skip-link" href="#main-content">
+        Skip to main content
+    </a>
 
 
     <div class="application">
@@ -48,26 +59,11 @@
             <!-- BRAND -->
 
             <div class="nav-brand">
-
-
-                <div class="brand-symbol">
-                    A
-                </div>
-
-
-                <div class="brand-text">
-
-                    <span>
-                        ALTRIUM
-                    </span>
-
-                    <strong>
-                        PerformanceFlow
-                    </strong>
-
-                </div>
-
-
+                <img
+                    class="nav-brand-logo"
+                    src="{{ url_for('static', filename='img/brand/altrium-logo-white.svg') }}"
+                    alt="Altrium"
+                >
             </div>
 
 
@@ -138,8 +134,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('review_history') }}"
+                        class="nav-link {% if request.endpoint == 'review_history' %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -155,8 +151,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('review_cycles') }}"
+                        class="nav-link {% if request.endpoint in ('peer_matchboard', 'review_cycle_workspace') %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -196,8 +192,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('my_team') }}"
+                        class="nav-link {% if request.endpoint == 'my_team' %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -213,8 +209,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('review_history') }}"
+                        class="nav-link {% if request.endpoint in ('supervisor_evaluation_workspace', 'review_history') %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -237,8 +233,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('dashboard') }}"
+                        class="nav-link {% if request.endpoint in ('dashboard', 'final_review_outcome') %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -254,8 +250,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('dashboard') }}"
+                        class="nav-link {% if request.endpoint == 'self_assessment_studio' %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -271,8 +267,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('dashboard') }}"
+                        class="nav-link {% if request.endpoint == 'peer_review_workspace' %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -295,8 +291,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('dashboard') }}"
+                        class="nav-link active"
                     >
 
                         <span class="nav-icon">
@@ -312,8 +308,8 @@
 
 
                     <a
-                        href="#"
-                        class="nav-link"
+                        href="{{ url_for('review_history') }}"
+                        class="nav-link {% if request.endpoint == 'review_history' %}active{% endif %}"
                     >
 
                         <span class="nav-icon">
@@ -337,6 +333,21 @@
             <!-- LOGOUT -->
 
             <div class="nav-bottom">
+
+                <a
+                    href="{{ url_for('change_password') }}"
+                    class="nav-link {% if request.endpoint == 'change_password' %}active{% endif %}"
+                >
+
+                    <span class="nav-icon">
+                        ⚿
+                    </span>
+
+                    <span class="nav-label">
+                        Password
+                    </span>
+
+                </a>
 
 
                 <a
@@ -388,7 +399,11 @@
 
                     <input
                         type="text"
-                        placeholder="Search employees, reviews or cycles..."
+                        id="workspaceQuickSearch"
+                        placeholder="Jump to a workspace or action..."
+                        autocomplete="off"
+                        aria-label="Quick navigation"
+                        aria-expanded="false"
                     >
 
 
@@ -484,7 +499,27 @@
 
             <!-- PAGE CONTENT -->
 
-            <main class="workspace-content">
+            <main class="workspace-content" id="main-content">
+
+
+                {% if request.endpoint not in (
+                    'employees',
+                    'employee_profile',
+                    'performance_workspace',
+                    'review_cycles',
+                    'review_cycle_workspace'
+                ) %}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% for category, message in messages %}
+                            <div class="page-alert {{ category }}">
+                                <span>
+                                    {% if category == "success" %}✓{% else %}!{% endif %}
+                                </span>
+                                <p>{{ message }}</p>
+                            </div>
+                        {% endfor %}
+                    {% endwith %}
+                {% endif %}
 
 
                 {% block content %}
@@ -613,12 +648,18 @@
 
 
 
+<script src="{{ url_for('static', filename='js/security.js') }}"></script>
+
 <script
     src="{{ url_for(
         'static',
         filename='js/notification_center.js'
     ) }}"
 ></script>
+
+<script src="{{ url_for('static', filename='js/motion.js') }}"></script>
+
+{% block scripts %}{% endblock %}
 
 
 </body>

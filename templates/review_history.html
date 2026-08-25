@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+Review History | Altrium PerformanceFlow
+{% endblock %}
+
+{% block content %}
+
+<section class="flowboard-hero">
+    <div class="flowboard-welcome">
+        <span class="eyebrow">REVIEW ARCHIVE</span>
+        <h1>Completed review history</h1>
+        <p>
+            Open final outcomes that have completed approval and employee
+            acknowledgement.
+        </p>
+    </div>
+
+    <div class="flowboard-live-card">
+        <div class="live-card-heading">
+            <span class="live-dot"></span>
+            <span>ARCHIVED RECORDS</span>
+        </div>
+        <strong>{{ reviews|length }} completed</strong>
+        <small>Visible to your role</small>
+    </div>
+</section>
+
+<section class="review-history-section">
+    <div class="review-history-heading">
+        <div>
+            <span class="eyebrow">FINAL OUTCOMES</span>
+            <h2>Your accessible records</h2>
+            <p>Completed decisions, ratings and ownership in one clear archive.</p>
+        </div>
+    </div>
+
+    <div class="review-history-list">
+        {% for review in reviews %}
+            <article class="review-history-card">
+                <div class="review-history-card-header">
+                    <div>
+                        <span class="review-history-cycle">
+                            {{ review["cycle_name"] }} ·
+                            {{ review["cycle_year"] }}
+                        </span>
+                        <h3>{{ review["employee_name_snapshot"] }}</h3>
+                        <p>
+                            {{ review["employee_code_snapshot"] }} ·
+                            {{ review["department_snapshot"] }} ·
+                            {{ review["job_title_snapshot"] }}
+                        </p>
+                    </div>
+
+                    <a class="review-history-open" href="{{ url_for(
+                        'final_review_outcome',
+                        employee_review_id=review['employee_review_id']
+                    ) }}">
+                        View final outcome <span>→</span>
+                    </a>
+                </div>
+
+                <div class="review-history-metrics">
+                    <div>
+                        <span>FINAL RATING</span>
+                        <strong>{{ review["overall_rating"] or "—" }}/5</strong>
+                    </div>
+                    <div>
+                        <span>RECOMMENDATION</span>
+                        <strong>{{ review["recommendation"] or "—" }}</strong>
+                    </div>
+                    <div>
+                        <span>SUPERVISOR</span>
+                        <strong>{{ review["supervisor_name"] }}</strong>
+                    </div>
+                    <div>
+                        <span>MANAGER</span>
+                        <strong>{{ review["manager_name"] or "—" }}</strong>
+                    </div>
+                </div>
+            </article>
+        {% else %}
+            <div class="flow-empty">
+                <strong>No completed reviews yet.</strong>
+                <p>Completed outcomes will appear here automatically.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}

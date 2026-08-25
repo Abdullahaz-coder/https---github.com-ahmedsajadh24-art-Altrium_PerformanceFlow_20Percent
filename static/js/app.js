@@ -115,7 +115,11 @@ loginForm.addEventListener("submit", function (event) {
 
     loginButton.disabled = true;
 
-    loginButton.textContent = "Signing in...";
+    loginButton.classList.add("is-loading");
+
+    loginButton.querySelector("span").textContent = "Signing in...";
+
+    loginButton.querySelector("strong").textContent = "···";
 
 });
 

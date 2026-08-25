@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Final Review Outcome | Altrium PerformanceFlow
+{% endblock %}
+
+
+{% block content %}
+
+
+<div
+    id="finalOutcomeWorkspace"
+    data-review-id="{{ review['employee_review_id'] }}"
+    data-status="{{ review['acknowledgement_status'] }}"
+    data-readonly="{{ 'true' if readonly else 'false' }}"
+></div>
+
+
+<section class="manager-approval-header">
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">
+            ← Flowboard
+        </a>
+
+        <span class="eyebrow">FINAL REVIEW OUTCOME</span>
+
+        <h1>{{ review["employee_name_snapshot"] }}</h1>
+
+        <p>
+            Your approved performance outcome brings together the locked
+            baseline, evidence-based supervisor judgment and final
+            management decision.
+        </p>
+    </div>
+
+    <div class="manager-approval-state approved">
+        <span>REVIEW STATE</span>
+        <strong>
+            {{ "Completed" if review["employee_review_status"] == "Completed" else "Approved" }}
+        </strong>
+        <small>{{ review["cycle_name"] }}</small>
+    </div>
+</section>
+
+
+{% if user_role != "Employee" %}
+
+    <section class="manager-readonly-banner">
+        <span>STAKEHOLDER VIEW</span>
+        <strong>This final outcome is read-only.</strong>
+        <p>
+            The reviewed employee is the only person who can record the
+            final acknowledgement and optional employee comment.
+        </p>
+    </section>
+
+{% endif %}
+
+
+<section class="manager-review-context">
+    <div>
+        <span>EMPLOYEE</span>
+        <strong>{{ review["employee_name_snapshot"] }}</strong>
+        <small>{{ review["employee_code_snapshot"] }}</small>
+    </div>
+
+    <div>
+        <span>ROLE</span>
+        <strong>{{ review["job_title_snapshot"] }}</strong>
+        <small>{{ review["department_snapshot"] }}</small>
+    </div>
+
+    <div>
+        <span>SUPERVISOR</span>
+        <strong>{{ review["supervisor_name"] }}</strong>
+        <small>Evaluation owner</small>
+    </div>
+
+    <div>
+        <span>REVIEW WINDOW</span>
+        <strong>{{ review["start_date"] }} → {{ review["end_date"] }}</strong>
+        <small>{{ review["cycle_status"] }} cycle</small>
+    </div>
+</section>
+
+
+<section class="manager-outcome-panel">
+    <div class="manager-outcome-heading">
+        <div>
+            <span class="section-label">APPROVED OUTCOME</span>
+            <h2>Final performance evaluation</h2>
+        </div>
+
+        <div class="manager-overall-score">
+            <span>OVERALL RATING</span>
+            <strong>{{ review["overall_rating"] }}/5</strong>
+        </div>
+    </div>
+
+    <div class="manager-recommendation-strip">
+        <span>FINAL RECOMMENDATION</span>
+        <strong>{{ review["recommendation"] }}</strong>
+    </div>
+
+    <div class="manager-outcome-grid">
+        <article>
+            <span>PERFORMANCE SUMMARY</span>
+            <p>{{ review["performance_summary"] }}</p>
+        </article>
+
+        <article>
+            <span>KEY STRENGTHS</span>
+            <p>{{ review["key_strengths"] }}</p>
+        </article>
+
+        <article>
+            <span>DEVELOPMENT PRIORITIES</span>
+            <p>{{ review["development_priorities"] }}</p>
+        </article>
+
+        <article>
+            <span>SUPPORT PLAN</span>
+            <p>{{ review["support_plan"] }}</p>
+        </article>
+    </div>
+</section>
+
+
+<section class="manager-evidence-section">
+    <div class="manager-section-heading">
+        <div>
+            <span class="eyebrow">FINAL ITEM RECORD</span>
+            <h2>Approved performance item ratings</h2>
+            <p>
+                Peer information is shown only as an anonymous combined
+                signal. Reviewer identities remain confidential.
+            </p>
+        </div>
+
+        <span class="manager-item-count">
+            {{ baseline_items|length }} ITEMS
+        </span>
+    </div>
+
+    <div class="manager-evidence-list">
+        {% for item in baseline_items %}
+
+            <article class="manager-evidence-card">
+                <div class="manager-item-header">
+                    <div>
+                        <span>{{ item["item_type"]|upper }}</span>
+                        <h3>{{ item["title"] }}</h3>
+                        <p>{{ item["description"] }}</p>
+                    </div>
+
+                    <div class="manager-item-target">
+                        <span>TARGET</span>
+                        <strong>{{ item["target"] or "Defined baseline" }}</strong>
+                    </div>
+                </div>
+
+                <div class="manager-rating-comparison">
+                    <div>
+                        <span>YOUR RATING</span>
+                        <strong>
+                            {{ item["self_rating"] if item["self_rating"] else "—" }}
+                        </strong>
+                        <small>Submitted self-assessment</small>
+                    </div>
+
+                    <div>
+                        <span>PEER SIGNAL</span>
+                        <strong>
+                            {{ item["peer_average_rating"] if item["peer_average_rating"] else "—" }}
+                        </strong>
+                        <small>
+                            Anonymous average · {{ item["peer_rating_count"] }} response(s)
+                        </small>
+                    </div>
+
+                    <div class="manager-supervisor-rating">
+                        <span>FINAL RATING</span>
+                        <strong>{{ item["supervisor_rating"] }}/5</strong>
+                        <small>Supervisor judgment</small>
+                    </div>
+                </div>
+
+                <div class="manager-rationale">
+                    <span>FINAL SUPERVISOR RATIONALE</span>
+                    <p>{{ item["evaluation_text"] }}</p>
+                </div>
+            </article>
+
+        {% endfor %}
+    </div>
+</section>
+
+
+<section class="manager-decision-record approved final-manager-decision">
+    <div class="manager-decision-record-icon">✓</div>
+
+    <div>
+        <span>FINAL MANAGEMENT DECISION</span>
+        <strong>Approved by {{ review["manager_name"] }}</strong>
+        <p>{{ review["manager_decision_note"] }}</p>
+        <small>Recorded {{ review["manager_decided_at"] }}</small>
+    </div>
+</section>
+
+
+{% if not readonly %}
+
+    <section class="manager-decision-console final-acknowledgement-console">
+        <div class="manager-decision-copy">
+            <span class="eyebrow">EMPLOYEE ACKNOWLEDGEMENT</span>
+            <h2>Confirm receipt of your outcome</h2>
+            <p>
+                Acknowledging confirms that you received and reviewed the
+                outcome. It does not require you to agree with every rating.
+                Your optional comment becomes part of the final record.
+            </p>
+        </div>
+
+        <div class="manager-decision-form">
+            <label for="finalEmployeeComment">
+                FINAL EMPLOYEE COMMENT <span>Optional</span>
+            </label>
+
+            <textarea
+                id="finalEmployeeComment"
+                maxlength="3000"
+                placeholder="Add an optional final comment..."
+            ></textarea>
+
+            <label class="final-confirmation-check" for="finalOutcomeConfirmed">
+                <input type="checkbox" id="finalOutcomeConfirmed">
+                <span>
+                    I confirm that I have received and reviewed this final
+                    performance outcome.
+                </span>
+            </label>
+
+            <div class="manager-decision-footer final-acknowledgement-footer">
+                <span id="finalAcknowledgementStatus">
+                    Confirmation is required.
+                </span>
+
+                <button
+                    type="button"
+                    class="manager-approve-button"
+                    id="acknowledgeFinalOutcome"
+                    disabled
+                >
+                    Acknowledge & Complete
+                </button>
+            </div>
+        </div>
+    </section>
+
+{% else %}
+
+    <section class="manager-decision-record approved final-acknowledgement-record">
+        <div class="manager-decision-record-icon">✓</div>
+
+        <div>
+            <span>EMPLOYEE ACKNOWLEDGEMENT</span>
+
+            {% if review["acknowledgement_status"] == "Acknowledged" %}
+                <strong>Outcome received and acknowledged</strong>
+
+                {% if review["employee_comment"] %}
+                    <p>{{ review["employee_comment"] }}</p>
+                {% else %}
+                    <p>No additional employee comment was provided.</p>
+                {% endif %}
+
+                <small>Recorded {{ review["acknowledged_at"] }}</small>
+            {% else %}
+                <strong>Awaiting employee acknowledgement</strong>
+                <p>The employee has not yet confirmed receipt.</p>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="flow-primary-link">
+            Return to Flowboard →
+        </a>
+    </section>
+
+{% endif %}
+
+
+<script src="{{ url_for('static', filename='js/final_review_outcome.js') }}"></script>
+
+
+{% endblock %}
