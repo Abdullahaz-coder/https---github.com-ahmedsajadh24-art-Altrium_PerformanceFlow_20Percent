@@ -315,6 +315,51 @@ connection.execute(
 )
 
 # ==========================================
+# REVIEW CYCLE EMPLOYEE ASSIGNMENTS
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS review_cycle_employees (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        review_cycle_id INTEGER NOT NULL,
+
+        employee_id INTEGER NOT NULL,
+
+        assigned_by INTEGER NOT NULL,
+
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        participation_status TEXT NOT NULL DEFAULT 'Assigned',
+
+        removed_at TIMESTAMP,
+
+        removed_by INTEGER,
+
+        FOREIGN KEY (review_cycle_id)
+            REFERENCES review_cycles(id),
+
+        FOREIGN KEY (employee_id)
+            REFERENCES employees(id),
+
+        FOREIGN KEY (assigned_by)
+            REFERENCES users(id),
+
+        FOREIGN KEY (removed_by)
+            REFERENCES users(id),
+
+        UNIQUE (
+            review_cycle_id,
+            employee_id
+        )
+
+    )
+    """
+)
+
+# ==========================================
 # REVIEW CYCLE ACTIVATION FIELDS
 # ==========================================
 
