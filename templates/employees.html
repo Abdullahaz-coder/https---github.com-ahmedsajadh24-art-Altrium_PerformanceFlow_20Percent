@@ -178,6 +178,10 @@ Employees | Altrium PerformanceFlow
                     </th>
 
                     <th>
+                        Role
+                    </th>
+
+                    <th>
                         Hire Date
                     </th>
 
@@ -263,6 +267,15 @@ Employees | Altrium PerformanceFlow
                     </td>
 
 
+                    <!-- ACCOUNT ROLE -->
+
+                    <td>
+                        <span class="employee-code">
+                            {{ employee["role"] }}
+                        </span>
+                    </td>
+
+
 
                     <!-- HIRE DATE -->
 
@@ -276,7 +289,7 @@ Employees | Altrium PerformanceFlow
 
                     <td>
 
-                        <span class="status-badge active-status">
+                        <span class="status-badge {% if employee['status'] == 'Inactive' %}inactive-status{% else %}active-status{% endif %}">
                             {{ employee["status"] }}
                         </span>
 
@@ -387,7 +400,7 @@ Employees | Altrium PerformanceFlow
         <div>
 
             <span class="section-label">
-                NEW EMPLOYEE
+                NEW ACCOUNT
             </span>
 
             <h2>
@@ -395,8 +408,8 @@ Employees | Altrium PerformanceFlow
             </h2>
 
             <p>
-                Add the employee's account and
-                performance profile information.
+                Add the account holder's access and
+                organisational profile information.
             </p>
 
         </div>
@@ -444,7 +457,7 @@ Employees | Altrium PerformanceFlow
                     </strong>
 
                     <small>
-                        Employee identity and contact details
+                        Account holder identity and contact details
                     </small>
 
                 </div>
@@ -480,7 +493,7 @@ Employees | Altrium PerformanceFlow
                 <div class="form-group">
 
                     <label for="employeeCode">
-                        Employee ID
+                        Staff ID
                     </label>
 
                     <input
@@ -525,6 +538,9 @@ Employees | Altrium PerformanceFlow
                     id="employeeEmail"
                     name="email"
                     placeholder="name@altrium.com"
+                    pattern="^[^@\s]+@altrium\.com$"
+                    title="Use an @altrium.com email address"
+                    autocomplete="email"
                 >
 
             </div>
@@ -632,10 +648,41 @@ Employees | Altrium PerformanceFlow
             </div>
 
 
+            <!-- ACCOUNT ROLE -->
+
+            <div class="form-group">
+
+                <label for="accountRole">
+                    System Role
+                </label>
+
+                <select
+                    id="accountRole"
+                    name="role"
+                    required
+                >
+                    <option value="Employee" selected>
+                        Employee
+                    </option>
+                    <option value="Supervisor">
+                        Supervisor
+                    </option>
+                    <option value="Manager">
+                        Manager
+                    </option>
+                </select>
+
+                <small class="field-help">
+                    This controls the workspace and actions available after sign-in.
+                </small>
+
+            </div>
+
+
 
             <!-- SUPERVISOR -->
 
-            <div class="form-group">
+            <div class="form-group" id="supervisorField">
 
                 <label for="supervisor">
                     Supervisor
@@ -665,8 +712,8 @@ Employees | Altrium PerformanceFlow
 
 
                 <small class="field-help">
-                    Supervisors will become available here
-                    once supervisor accounts exist.
+                    Required for employees participating in a review.
+                    Create a Supervisor account first if the list is empty.
                 </small>
 
             </div>
@@ -709,16 +756,26 @@ Employees | Altrium PerformanceFlow
                     Temporary Password
                 </label>
 
-                <input
-                    type="password"
-                    id="temporaryPassword"
-                    name="password"
-                    placeholder="Minimum 8 characters"
-                >
+                <div class="form-password-shell">
+                    <input
+                        type="password"
+                        id="temporaryPassword"
+                        name="password"
+                        placeholder="Minimum 8 characters"
+                        autocomplete="new-password"
+                    >
+                    <button
+                        type="button"
+                        class="form-password-toggle"
+                        data-password-toggle="temporaryPassword"
+                        aria-label="Show temporary password"
+                        aria-pressed="false"
+                    >Show</button>
+                </div>
 
 
                 <small class="field-help">
-                    The employee will use this password
+                    The account holder will use this password
                     for their first login.
                 </small>
 
@@ -748,7 +805,7 @@ Employees | Altrium PerformanceFlow
                 class="primary-button"
                 id="createEmployeeButton"
             >
-                Create Profile
+                Create Account
             </button>
 
 

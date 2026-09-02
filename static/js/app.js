@@ -3,19 +3,23 @@ const passwordInput = document.getElementById("password");
 const togglePassword = document.getElementById("togglePassword");
 
 
-togglePassword.addEventListener("click", function () {
+togglePassword?.addEventListener("click", function () {
 
     if (passwordInput.type === "password") {
 
         passwordInput.type = "text";
 
         togglePassword.textContent = "Hide";
+        togglePassword.setAttribute("aria-label", "Hide password");
+        togglePassword.setAttribute("aria-pressed", "true");
 
     } else {
 
         passwordInput.type = "password";
 
         togglePassword.textContent = "Show";
+        togglePassword.setAttribute("aria-label", "Show password");
+        togglePassword.setAttribute("aria-pressed", "false");
 
     }
 
@@ -44,9 +48,10 @@ function validateEmail() {
         return false;
     }
 
-    if (!email.includes("@") || !email.includes(".")) {
+    if (!/^[^@\s]+@altrium\.com$/i.test(email)) {
 
-        emailError.textContent = "Please enter a valid email address.";
+        emailError.textContent =
+            "Please use your @altrium.com email address.";
 
         emailInput.classList.add("input-error");
 

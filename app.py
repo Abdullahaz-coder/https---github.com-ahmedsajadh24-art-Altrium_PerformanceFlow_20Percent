@@ -47,6 +47,24 @@ LOGIN_ATTEMPT_WINDOW_SECONDS = 15 * 60
 login_attempts = {}
 
 
+def is_altrium_email(email):
+    if not isinstance(email, str):
+        return False
+
+    normalized_email = email.strip().lower()
+
+    if normalized_email.count("@") != 1:
+        return False
+
+    local_part, domain = normalized_email.split("@", 1)
+
+    return (
+        bool(local_part)
+        and domain == "altrium.com"
+        and not any(character.isspace() for character in local_part)
+    )
+
+
 @app.before_request
 def protect_unsafe_requests():
 
@@ -2232,6 +2250,15 @@ def login():
 
         password = request.form.get("password", "")
 
+        if not is_altrium_email(email):
+            error = "Please use your @altrium.com email address."
+            recent_attempts.append(now)
+
+            return render_template(
+                "login.html",
+                error=error
+            ), 400
+
         connection = get_db_connection()
 
         user = connection.execute(
@@ -2319,7 +2346,10 @@ def dashboard():
 
             FROM employees
 
-            WHERE status = 'Active'
+            JOIN users ON users.id = employees.user_id
+
+            WHERE employees.status = 'Active'
+            AND users.role = 'Employee'
             """
         ).fetchone()["total"]
 
@@ -2975,7 +3005,8 @@ def employees():
             employees.hire_date,
             employees.status,
             users.full_name,
-            users.email
+            users.email,
+            users.role
 
         FROM employees
 
@@ -3041,6 +3072,7 @@ def employee_profile(employee_id):
 
             users.full_name,
             users.email,
+            users.role,
 
             supervisor.full_name AS supervisor_name
 
@@ -3153,6 +3185,12 @@ def edit_employee(employee_id):
     ).strip()
 
 
+    status = request.form.get(
+        "status",
+        ""
+    ).strip()
+
+
     # =====================================
     # VALIDATION
     # =====================================
@@ -3164,6 +3202,7 @@ def edit_employee(employee_id):
         or not department
         or not job_title
         or not hire_date
+        or not status
     ):
 
         flash(
@@ -3179,13 +3218,25 @@ def edit_employee(employee_id):
         )
 
 
-    if (
-        "@" not in email
-        or "." not in email
-    ):
+    if not is_altrium_email(email):
 
         flash(
-            "Please enter a valid email address.",
+            "Please enter a valid @altrium.com email address.",
+            "error"
+        )
+
+        return redirect(
+            url_for(
+                "employee_profile",
+                employee_id=employee_id
+            )
+        )
+
+
+    if status not in {"Active", "Inactive"}:
+
+        flash(
+            "Please select a valid employee status.",
             "error"
         )
 
@@ -3236,12 +3287,15 @@ def edit_employee(employee_id):
         current_employee = connection.execute(
             """
             SELECT
-                id,
-                user_id
+                employees.id,
+                employees.user_id,
+                users.role
 
             FROM employees
 
-            WHERE id = ?
+            JOIN users ON users.id = employees.user_id
+
+            WHERE employees.id = ?
             """,
 
             (employee_id,)
@@ -3264,6 +3318,9 @@ def edit_employee(employee_id):
 
 
         user_id = current_employee["user_id"]
+
+        if current_employee["role"] != "Employee":
+            supervisor_id = None
 
 
         # =====================================
@@ -3418,7 +3475,8 @@ def edit_employee(employee_id):
                 department = ?,
                 job_title = ?,
                 hire_date = ?,
-                supervisor_id = ?
+                supervisor_id = ?,
+                status = ?
 
             WHERE id = ?
             """,
@@ -3429,6 +3487,7 @@ def edit_employee(employee_id):
                 job_title,
                 hire_date,
                 supervisor_id,
+                status,
                 employee_id
             )
         )
@@ -3511,6 +3570,12 @@ def add_employee():
     ).strip()
 
 
+    account_role = request.form.get(
+        "role",
+        "Employee"
+    ).strip()
+
+
     supervisor_id = request.form.get(
         "supervisor_id",
         ""
@@ -3526,6 +3591,23 @@ def add_employee():
     # =====================================
     # BASIC VALIDATION
     # =====================================
+
+    allowed_account_roles = {
+        "Employee",
+        "Supervisor",
+        "Manager"
+    }
+
+    if account_role not in allowed_account_roles:
+
+        flash(
+            "Please select a valid account role.",
+            "error"
+        )
+
+        return redirect(
+            url_for("employees")
+        )
 
     if (
         not full_name
@@ -3547,13 +3629,10 @@ def add_employee():
         )
 
 
-    if (
-        "@" not in email
-        or "." not in email
-    ):
+    if not is_altrium_email(email):
 
         flash(
-            "Please enter a valid email address.",
+            "Please enter a valid @altrium.com email address.",
             "error"
         )
 
@@ -3574,7 +3653,11 @@ def add_employee():
         )
 
 
-    if supervisor_id:
+    if account_role != "Employee":
+
+        supervisor_id = None
+
+    elif supervisor_id:
 
         try:
             supervisor_id = int(
@@ -3719,7 +3802,7 @@ def add_employee():
                 full_name,
                 email,
                 hashed_password,
-                "Employee"
+                account_role
             )
         )
 
@@ -3762,7 +3845,10 @@ def add_employee():
 
 
         flash(
-            f"{full_name}'s performance profile was created successfully.",
+            (
+                f"{full_name}'s {account_role.lower()} account "
+                "and performance profile were created successfully."
+            ),
             "success"
         )
 
@@ -6097,6 +6183,8 @@ def review_cycle_workspace(cycle_id):
 
         WHERE employees.status = 'Active'
 
+        AND users.role = 'Employee'
+
         AND employees.id NOT IN (
 
             SELECT
@@ -6806,7 +6894,7 @@ def close_review_cycle(cycle_id):
             """
             SELECT id, cycle_name, status
             FROM review_cycles
-            WHERE id = ?
+            WHERE review_cycles.id = ?
             """,
             (cycle_id,)
         ).fetchone()
@@ -7372,13 +7460,17 @@ def assign_cycle_employees(cycle_id):
 
             employee = connection.execute(
                 """
-                SELECT id
+                SELECT employees.id
 
                 FROM employees
 
-                WHERE id = ?
+                JOIN users ON users.id = employees.user_id
 
-                AND status = 'Active'
+                WHERE employees.id = ?
+
+                AND employees.status = 'Active'
+
+                AND users.role = 'Employee'
                 """,
 
                 (employee_id,)

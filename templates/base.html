@@ -12,6 +12,12 @@
 
     <meta name="csrf-token" content="{{ csrf_token }}">
 
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="{{ url_for('static', filename='img/brand/altrium-logo-white.svg') }}"
+    >
+
 
     <title>
 
@@ -505,7 +511,7 @@
                 {% if request.endpoint not in (
                     'employees',
                     'employee_profile',
-                    'performance_workspace',
+                    'manage_performance',
                     'review_cycles',
                     'review_cycle_workspace'
                 ) %}

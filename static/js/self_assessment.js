@@ -68,6 +68,12 @@ const uploadEvidenceButton =
     );
 
 
+const evidenceUploadForm =
+    document.getElementById(
+        "evidenceUploadForm"
+    );
+
+
 if (evidenceFileInput) {
 
     evidenceFileInput.addEventListener(
@@ -152,7 +158,9 @@ removeEvidenceForms.forEach(
 
         form.addEventListener(
             "submit",
-            function (event) {
+            async function (event) {
+
+                event.preventDefault();
 
                 const confirmed =
                     confirm(
@@ -162,7 +170,53 @@ removeEvidenceForms.forEach(
 
                 if (!confirmed) {
 
-                    event.preventDefault();
+                    return;
+
+                }
+
+
+                const removeButton =
+                    form.querySelector(
+                        'button[type="submit"]'
+                    );
+
+
+                if (removeButton) {
+
+                    removeButton.disabled = true;
+
+                }
+
+
+                try {
+
+                    await saveCurrentAssessmentDraft();
+
+
+                    HTMLFormElement.prototype.submit.call(
+                        form
+                    );
+
+                }
+
+
+                catch (error) {
+
+                    if (removeButton) {
+
+                        removeButton.disabled = false;
+
+                    }
+
+
+                    showDraftSaveStatus(
+                        (
+                            "Evidence was not removed because "
+                            + "the draft could not be saved. "
+                            + error.message
+                        ),
+                        "error"
+                    );
 
                 }
 
@@ -295,16 +349,6 @@ if (
         "click",
         async function () {
 
-            const reviewId =
-                assessmentWorkspace
-                    .dataset
-                    .reviewId;
-
-
-            const assessmentData =
-                collectAssessmentData();
-
-
             const originalText =
                 saveAssessmentDraft
                     .textContent;
@@ -320,42 +364,7 @@ if (
 
             try {
 
-                const response =
-                    await fetch(
-                        `/reviews/${reviewId}/self-assessment/save`,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    assessmentData
-                                )
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (
-                    !response.ok
-                    ||
-                    !data.success
-                ) {
-
-                    throw new Error(
-                        data.message
-                        ||
-                        "Unable to save draft."
-                    );
-
-                }
+                await saveCurrentAssessmentDraft();
 
 
                 saveAssessmentDraft.textContent =
@@ -443,6 +452,161 @@ const returnToAssessment =
     document.getElementById(
         "returnToAssessment"
     );
+
+
+// Keep the modal relative to the browser viewport. The assessment page uses
+// animated layout containers, which otherwise become the positioning context
+// for fixed children and can push the dialog to the right of the screen.
+if (
+    submissionGate
+    &&
+    submissionGateBackdrop
+) {
+
+    document.body.append(
+        submissionGateBackdrop,
+        submissionGate
+    );
+
+}
+
+
+async function saveCurrentAssessmentDraft() {
+
+    if (!assessmentWorkspace) {
+
+        throw new Error(
+            "The self-assessment workspace is unavailable."
+        );
+
+    }
+
+
+    const reviewId =
+        assessmentWorkspace.dataset.reviewId;
+
+
+    const response =
+        await fetch(
+            `/reviews/${reviewId}/self-assessment/save`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify(
+                        collectAssessmentData()
+                    )
+            }
+        );
+
+
+    let data;
+
+
+    try {
+
+        data = await response.json();
+
+    }
+
+
+    catch (error) {
+
+        throw new Error(
+            "The server returned an unexpected response."
+        );
+
+    }
+
+
+    if (
+        !response.ok
+        ||
+        !data.success
+    ) {
+
+        throw new Error(
+            data.message
+            ||
+            "Unable to save draft."
+        );
+
+    }
+
+
+    return data;
+
+}
+
+
+if (
+    evidenceUploadForm
+    &&
+    uploadEvidenceButton
+) {
+
+    evidenceUploadForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const originalText =
+                uploadEvidenceButton.textContent;
+
+
+            uploadEvidenceButton.disabled = true;
+
+            uploadEvidenceButton.textContent =
+                "Saving draft...";
+
+
+            try {
+
+                await saveCurrentAssessmentDraft();
+
+
+                uploadEvidenceButton.textContent =
+                    "Uploading...";
+
+
+                HTMLFormElement.prototype.submit.call(
+                    evidenceUploadForm
+                );
+
+            }
+
+
+            catch (error) {
+
+                uploadEvidenceButton.textContent =
+                    originalText;
+
+                uploadEvidenceButton.disabled =
+                    !evidenceFileInput.files[0];
+
+
+                showDraftSaveStatus(
+                    (
+                        "Evidence was not uploaded because "
+                        + "the draft could not be saved. "
+                        + error.message
+                    ),
+                    "error"
+                );
+
+            }
+
+        }
+    );
+
+}
 
 
 const confirmAssessmentSubmission =
@@ -715,6 +879,9 @@ function openSubmissionGate() {
     document.body.style.overflow =
         "hidden";
 
+
+    closeSubmissionGate?.focus();
+
 }
 
 
@@ -737,6 +904,9 @@ function closeSubmissionGatePanel() {
 
     document.body.style.overflow =
         "";
+
+
+    submitAssessment?.focus();
 
 }
 
@@ -780,6 +950,24 @@ if (submissionGateBackdrop) {
     );
 
 }
+
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        if (
+            event.key === "Escape"
+            &&
+            submissionGate?.classList.contains("open")
+        ) {
+
+            closeSubmissionGatePanel();
+
+        }
+
+    }
+);
 
 
 /* ========================================

@@ -121,6 +121,10 @@ editEmployeeForm.addEventListener(
             document.getElementById("editJobTitle").value.trim();
 
 
+        const status =
+            document.getElementById("editStatus").value;
+
+
 
         if (
             !fullName ||
@@ -128,7 +132,8 @@ editEmployeeForm.addEventListener(
             !email ||
             !hireDate ||
             !department ||
-            !jobTitle
+            !jobTitle ||
+            !status
         ) {
 
             event.preventDefault();
@@ -142,16 +147,12 @@ editEmployeeForm.addEventListener(
 
 
 
-        if (
-            !email.includes("@")
-            ||
-            !email.includes(".")
-        ) {
+        if (!/^[^@\s]+@altrium\.com$/i.test(email)) {
 
             event.preventDefault();
 
             alert(
-                "Please enter a valid email address."
+                "Please enter a valid @altrium.com email address."
             );
 
             return;

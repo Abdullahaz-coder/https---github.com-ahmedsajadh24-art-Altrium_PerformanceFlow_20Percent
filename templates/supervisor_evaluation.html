@@ -652,18 +652,23 @@ Supervisor Evaluation | Altrium PerformanceFlow
     <div
         class="submission-gate-backdrop"
         id="supervisorSubmissionGateBackdrop"
+        aria-hidden="true"
     ></div>
 
     <section
         class="submission-gate"
         id="supervisorSubmissionGate"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="supervisorSubmissionGateTitle"
+        aria-describedby="supervisorSubmissionGateDescription"
     >
 
         <div class="submission-gate-header">
             <div>
                 <span class="eyebrow">FINAL SUBMISSION GATE</span>
-                <h2>Submit supervisor evaluation?</h2>
-                <p>
+                <h2 id="supervisorSubmissionGateTitle">Submit supervisor evaluation?</h2>
+                <p id="supervisorSubmissionGateDescription">
                     Confirm that every judgment is complete before locking
                     the evaluation and moving the review forward.
                 </p>

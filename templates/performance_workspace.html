@@ -59,7 +59,7 @@
 
 
 
-    <div class="blueprint-status">
+    <div class="blueprint-status{% if employee['status'] == 'Inactive' %} inactive-blueprint-status{% endif %}">
 
         <span>
             PROFILE STATUS

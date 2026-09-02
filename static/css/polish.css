@@ -1204,6 +1204,12 @@ body.page-exiting .workspace-content {
         padding-bottom: 96px;
     }
 
+    .assessment-studio-dock,
+    .peer-review-dock,
+    .supervisor-evaluation-dock {
+        bottom: 88px;
+    }
+
     .search-area:focus-within {
         width: 72%;
     }

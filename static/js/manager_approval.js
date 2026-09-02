@@ -42,6 +42,14 @@ const confirmManagerDecision = document.getElementById(
     "confirmManagerDecision"
 );
 
+const cancelManagerDecision = document.getElementById(
+    "cancelManagerDecision"
+);
+
+if (managerConfirmBackdrop && managerConfirmDialog) {
+    document.body.append(managerConfirmBackdrop, managerConfirmDialog);
+}
+
 let pendingManagerDecision = null;
 
 
@@ -103,6 +111,8 @@ function closeManagerConfirmation() {
     managerConfirmBackdrop?.classList.remove("visible");
     managerConfirmDialog?.classList.remove("visible");
     managerConfirmDialog?.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    managerDecisionNote?.focus();
 }
 
 
@@ -138,6 +148,8 @@ function openManagerConfirmation(decision) {
     managerConfirmBackdrop?.classList.add("visible");
     managerConfirmDialog?.classList.add("visible");
     managerConfirmDialog?.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    cancelManagerDecision?.focus();
 }
 
 
@@ -228,7 +240,7 @@ document.getElementById("closeManagerConfirm")?.addEventListener(
     closeManagerConfirmation
 );
 
-document.getElementById("cancelManagerDecision")?.addEventListener(
+cancelManagerDecision?.addEventListener(
     "click",
     closeManagerConfirmation
 );

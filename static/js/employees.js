@@ -17,6 +17,75 @@ const closeDrawerButton =
 const cancelEmployeeButton =
     document.getElementById("cancelEmployeeButton");
 
+const accountRole =
+    document.getElementById("accountRole");
+
+const supervisorField =
+    document.getElementById("supervisorField");
+
+const supervisorSelect =
+    document.getElementById("supervisor");
+
+
+function updateSupervisorField() {
+
+    const isEmployee =
+        accountRole?.value === "Employee";
+
+    if (supervisorField) {
+        supervisorField.hidden = !isEmployee;
+    }
+
+    if (supervisorSelect) {
+        supervisorSelect.disabled = !isEmployee;
+
+        if (!isEmployee) {
+            supervisorSelect.value = "";
+        }
+    }
+
+}
+
+
+accountRole?.addEventListener(
+    "change",
+    updateSupervisorField
+);
+
+updateSupervisorField();
+
+
+document.querySelectorAll("[data-password-toggle]").forEach(
+    function (button) {
+
+        button.addEventListener("click", function () {
+
+            const input = document.getElementById(
+                button.dataset.passwordToggle
+            );
+
+            if (!input) {
+                return;
+            }
+
+            const willShow = input.type === "password";
+
+            input.type = willShow ? "text" : "password";
+            button.textContent = willShow ? "Hide" : "Show";
+            button.setAttribute(
+                "aria-label",
+                `${willShow ? "Hide" : "Show"} temporary password`
+            );
+            button.setAttribute(
+                "aria-pressed",
+                String(willShow)
+            );
+
+        });
+
+    }
+);
+
 
 
 function openEmployeeDrawer() {
@@ -116,6 +185,9 @@ employeeForm.addEventListener(
         const jobTitle =
             document.getElementById("jobTitle").value.trim();
 
+        const role =
+            accountRole?.value;
+
         const password =
             document.getElementById("temporaryPassword").value;
 
@@ -127,6 +199,7 @@ employeeForm.addEventListener(
             !hireDate ||
             !department ||
             !jobTitle ||
+            !role ||
             !password
         ) {
 
@@ -134,6 +207,18 @@ employeeForm.addEventListener(
 
             alert(
                 "Please complete all required fields."
+            );
+
+            return;
+        }
+
+
+        if (!/^[^@\s]+@altrium\.com$/i.test(email)) {
+
+            event.preventDefault();
+
+            alert(
+                "Please enter a valid @altrium.com email address."
             );
 
             return;
@@ -155,7 +240,7 @@ employeeForm.addEventListener(
         createEmployeeButton.disabled = true;
 
         createEmployeeButton.textContent =
-            "Creating Profile...";
+            "Creating Account...";
 
     }
 );

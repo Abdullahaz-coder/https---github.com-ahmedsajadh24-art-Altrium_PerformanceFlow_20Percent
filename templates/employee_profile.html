@@ -44,7 +44,7 @@
 
 
                 <span class="eyebrow">
-                    EMPLOYEE PROFILE
+                    {{ employee["role"]|upper }} PROFILE
                 </span>
 
 
@@ -77,7 +77,7 @@
     <div class="profile-header-actions">
 
 
-        <span class="profile-status">
+        <span class="profile-status{% if employee['status'] == 'Inactive' %} inactive-profile-status{% endif %}">
 
             {{ employee["status"] }}
 
@@ -346,7 +346,7 @@
 
 
                 <strong>
-                    Employee
+                    {{ employee["role"] }}
                 </strong>
 
 
@@ -362,7 +362,7 @@
                 </span>
 
 
-                <strong class="status-text">
+                <strong class="status-text{% if employee['status'] == 'Inactive' %} inactive-status-text{% endif %}">
                     {{ employee["status"] }}
                 </strong>
 
@@ -373,6 +373,8 @@
         </section>
 
 
+
+        {% if employee["role"] == "Employee" %}
 
         <!-- SUPERVISOR -->
 
@@ -450,7 +452,11 @@
 
         </section>
 
+        {% endif %}
 
+
+
+        {% if employee["role"] == "Employee" %}
 
         <!-- REVIEW STATUS -->
 
@@ -486,6 +492,19 @@
 
 
         </section>
+
+        {% else %}
+
+        <section class="profile-card">
+            <span class="section-label">ROLE ACCESS</span>
+            <h2>{{ employee["role"] }} workspace</h2>
+            <p class="form-helper-text">
+                This account performs {{ employee["role"]|lower }} responsibilities
+                and is not assigned to employee review cycles.
+            </p>
+        </section>
+
+        {% endif %}
 
 
     </aside>
@@ -604,6 +623,20 @@
             </div>
 
 
+            <div class="form-group">
+                <label>System Role</label>
+                <input
+                    type="text"
+                    value="{{ employee['role'] }}"
+                    readonly
+                    aria-readonly="true"
+                >
+                <small class="form-helper-text">
+                    Account roles are fixed after creation to protect workflow access.
+                </small>
+            </div>
+
+
 
             <div class="form-row">
 
@@ -655,6 +688,9 @@
                     id="editEmail"
                     name="email"
                     value="{{ employee['email'] }}"
+                    pattern="^[^@\s]+@altrium\.com$"
+                    title="Use an @altrium.com email address"
+                    autocomplete="email"
                 >
 
             </div>
@@ -790,6 +826,8 @@
 
 
 
+            {% if employee["role"] == "Employee" %}
+
             <div class="form-group">
 
                 <label for="editSupervisor">
@@ -823,6 +861,46 @@
                     {% endfor %}
 
                 </select>
+
+            </div>
+
+            {% endif %}
+
+
+            <div class="form-group">
+
+                <label for="editStatus">
+                    Employment Status
+                </label>
+
+                <select
+                    id="editStatus"
+                    name="status"
+                >
+
+                    <option
+                        value="Active"
+                        {% if employee["status"] == "Active" %}
+                            selected
+                        {% endif %}
+                    >
+                        Active
+                    </option>
+
+                    <option
+                        value="Inactive"
+                        {% if employee["status"] == "Inactive" %}
+                            selected
+                        {% endif %}
+                    >
+                        Inactive
+                    </option>
+
+                </select>
+
+                <small class="form-helper-text">
+                    Inactive employees remain in history but cannot be assigned to new review cycles.
+                </small>
 
             </div>
 

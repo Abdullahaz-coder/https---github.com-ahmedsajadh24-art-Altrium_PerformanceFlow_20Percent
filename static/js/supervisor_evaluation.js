@@ -450,6 +450,17 @@ const confirmSupervisorSubmission =
     );
 
 
+if (
+    supervisorSubmissionGate
+    && supervisorSubmissionGateBackdrop
+) {
+    document.body.append(
+        supervisorSubmissionGateBackdrop,
+        supervisorSubmissionGate
+    );
+}
+
+
 function openSupervisorSubmissionGate() {
 
     if (
@@ -515,6 +526,7 @@ function openSupervisorSubmissionGate() {
     supervisorSubmissionGate.classList.add("open");
     supervisorSubmissionGateBackdrop.classList.add("show");
     document.body.style.overflow = "hidden";
+    closeSupervisorSubmissionGate?.focus();
 }
 
 
@@ -531,6 +543,7 @@ function closeSupervisorSubmissionGatePanel() {
     supervisorSubmissionGate.classList.remove("open");
     supervisorSubmissionGateBackdrop.classList.remove("show");
     document.body.style.overflow = "";
+    reviewSupervisorEvaluation?.focus();
 }
 
 
@@ -561,6 +574,16 @@ if (supervisorSubmissionGateBackdrop) {
         closeSupervisorSubmissionGatePanel
     );
 }
+
+
+document.addEventListener("keydown", function (event) {
+    if (
+        event.key === "Escape"
+        && supervisorSubmissionGate?.classList.contains("open")
+    ) {
+        closeSupervisorSubmissionGatePanel();
+    }
+});
 
 
 /* =========================================================

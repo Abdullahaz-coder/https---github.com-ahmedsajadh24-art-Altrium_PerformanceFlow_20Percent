@@ -1382,6 +1382,16 @@ body {
 }
 
 
+.inactive-status {
+    color: #b54708;
+
+    background: #fff4e5;
+
+    border:
+        1px solid #fed7aa;
+}
+
+
 /* ========================================
    TABLE ACTION
 ======================================== */
@@ -1825,6 +1835,58 @@ body {
 }
 
 
+.form-password-shell {
+    position: relative;
+}
+
+.form-password-shell input {
+    width: 100%;
+    padding-right: 70px;
+    box-sizing: border-box;
+}
+
+.form-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    min-width: 48px;
+    padding: 7px 8px;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 7px;
+    color: var(--indigo);
+    background: transparent;
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.form-password-toggle:hover {
+    background: #f1f0ff;
+}
+
+.form-password-toggle:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 1px;
+}
+
+
+.form-helper-text {
+    margin-top: 7px;
+
+    color: #667085;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    font-weight: 500;
+
+    line-height: 1.45;
+}
+
+
 .form-row {
     display: grid;
 
@@ -2103,6 +2165,16 @@ body {
 }
 
 
+.profile-status.inactive-profile-status {
+    color: #b54708;
+
+    background: #fff4e5;
+
+    border:
+        1px solid #fed7aa;
+}
+
+
 /* ========================================
    PROFILE LAYOUT
 ======================================== */
@@ -2244,6 +2316,11 @@ body {
 
 .status-text {
     color: #15803d;
+}
+
+
+.status-text.inactive-status-text {
+    color: #b54708;
 }
 
 
@@ -3037,6 +3114,21 @@ body {
     color: #15803d;
 
     font-size: 13px;
+}
+
+
+.blueprint-status.inactive-blueprint-status {
+    background: #fffaf0;
+
+    border-color: #fed7aa;
+
+    box-shadow:
+        0 0 0 4px rgba(245, 158, 11, 0.08);
+}
+
+
+.blueprint-status.inactive-blueprint-status strong {
+    color: #b54708;
 }
 
 
@@ -8639,8 +8731,12 @@ body {
     z-index: 40;
 
     left: 270px;
-    right: 30px;
+    right: auto;
     bottom: 20px;
+
+    width: calc(100vw - 300px);
+    max-width: calc(100vw - 300px);
+    box-sizing: border-box;
 
     display: flex;
 
@@ -8696,6 +8792,24 @@ body {
     display: flex;
 
     gap: 8px;
+
+    flex: 0 0 auto;
+
+    margin-left: auto;
+}
+
+
+.assessment-dock-actions .primary-button,
+.assessment-dock-actions .secondary-button {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 120px;
+
+    white-space: nowrap;
 }
 
 
@@ -8714,7 +8828,39 @@ body {
 
     .assessment-studio-dock {
         left: 20px;
-        right: 20px;
+        right: auto;
+
+        width: calc(100vw - 40px);
+
+        max-width: calc(100vw - 40px);
+    }
+
+}
+
+
+@media (max-width: 620px) {
+
+    .assessment-studio-dock {
+        align-items: stretch;
+
+        flex-direction: column;
+
+        gap: 10px;
+    }
+
+
+    .assessment-dock-actions {
+        width: 100%;
+
+        margin-left: 0;
+    }
+
+
+    .assessment-dock-actions .primary-button,
+    .assessment-dock-actions .secondary-button {
+        flex: 1 1 0;
+
+        min-width: 0;
     }
 
 }
@@ -10165,6 +10311,9 @@ body {
     left: 50%;
     z-index: 1201;
     width: min(520px, calc(100% - 32px));
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
     visibility: hidden;
     padding: 30px;
     transform: translate(-50%, -46%);
@@ -13026,8 +13175,11 @@ span::after {
     z-index: 40;
 
     left: 270px;
-    right: 30px;
+    right: auto;
     bottom: 20px;
+    width: calc(100vw - 300px);
+    max-width: calc(100vw - 300px);
+    box-sizing: border-box;
 
     display: flex;
 
@@ -13087,8 +13239,14 @@ span::after {
 
 .peer-review-dock-actions {
     display: flex;
-
+    flex: 0 0 auto;
+    margin-left: auto;
     gap: 8px;
+}
+
+.peer-review-dock-actions button {
+    min-width: 120px;
+    white-space: nowrap;
 }
 
 
@@ -13197,7 +13355,9 @@ span::after {
 
     .peer-review-dock {
         left: 20px;
-        right: 20px;
+        right: auto;
+        width: calc(100vw - 40px);
+        max-width: calc(100vw - 40px);
     }
 
 }
@@ -13882,8 +14042,11 @@ span::after {
     position: fixed;
     z-index: 40;
     left: 270px;
-    right: 30px;
+    right: auto;
     bottom: 20px;
+    width: calc(100vw - 300px);
+    max-width: calc(100vw - 300px);
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -13911,7 +14074,14 @@ span::after {
 
 .supervisor-evaluation-dock-actions {
     display: flex;
+    flex: 0 0 auto;
+    margin-left: auto;
     gap: 8px;
+}
+
+.supervisor-evaluation-dock-actions button {
+    min-width: 120px;
+    white-space: nowrap;
 }
 
 .supervisor-evaluation-dock-actions button:disabled {
@@ -13993,7 +14163,9 @@ span::after {
 
     .supervisor-evaluation-dock {
         left: 20px;
-        right: 20px;
+        right: auto;
+        width: calc(100vw - 40px);
+        max-width: calc(100vw - 40px);
     }
 }
 
@@ -14028,10 +14200,12 @@ span::after {
 
     .supervisor-evaluation-dock-actions {
         width: 100%;
+        margin-left: 0;
     }
 
     .supervisor-evaluation-dock-actions button {
         flex: 1;
+        min-width: 0;
     }
 }
 
@@ -14749,6 +14923,21 @@ span::after {
 }
 
 @media (max-width: 650px) {
+
+    .peer-review-dock {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .peer-review-dock-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .peer-review-dock-actions button {
+        flex: 1;
+        min-width: 0;
+    }
     .security-hero {
         align-items: flex-start;
         padding: 21px;

@@ -101,7 +101,7 @@ My Team | Altrium PerformanceFlow
             </div>
 
 
-            <span class="status-badge active-status">
+            <span class="status-badge {% if employee['status'] == 'Inactive' %}inactive-status{% else %}active-status{% endif %}">
 
                 {{ employee["status"] }}
 

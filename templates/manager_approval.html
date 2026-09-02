@@ -361,9 +361,17 @@ Management Approval | Altrium PerformanceFlow
 {% endif %}
 
 
-<div class="manager-confirm-backdrop" id="managerConfirmBackdrop"></div>
+<div class="manager-confirm-backdrop" id="managerConfirmBackdrop" aria-hidden="true"></div>
 
-<section class="manager-confirm-dialog" id="managerConfirmDialog" aria-hidden="true">
+<section
+    class="manager-confirm-dialog"
+    id="managerConfirmDialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="managerConfirmTitle"
+    aria-describedby="managerConfirmMessage"
+    aria-hidden="true"
+>
     <button
         type="button"
         class="manager-confirm-close"

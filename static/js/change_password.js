@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             input.type = isVisible ? "password" : "text";
             button.textContent = isVisible ? "Show" : "Hide";
+            button.setAttribute("aria-pressed", String(!isVisible));
             button.setAttribute(
                 "aria-label",
                 `${isVisible ? "Show" : "Hide"} ${input.labels[0].textContent.toLowerCase()}`

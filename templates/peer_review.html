@@ -819,12 +819,17 @@ Peer Review | Altrium PerformanceFlow
 <div
     class="submission-gate-backdrop"
     id="peerSubmissionGateBackdrop"
+    aria-hidden="true"
 ></div>
 
 
 <section
     class="submission-gate"
     id="peerSubmissionGate"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="peerSubmissionGateTitle"
+    aria-describedby="peerSubmissionGateDescription"
 >
 
 
@@ -838,12 +843,12 @@ Peer Review | Altrium PerformanceFlow
             </span>
 
 
-            <h2>
+            <h2 id="peerSubmissionGateTitle">
                 Submit confidential peer feedback?
             </h2>
 
 
-            <p>
+            <p id="peerSubmissionGateDescription">
                 Confirm that every observation is complete
                 before locking this peer review.
             </p>

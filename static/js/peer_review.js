@@ -381,6 +381,14 @@ const confirmPeerReviewSubmission =
     );
 
 
+if (peerSubmissionGate && peerSubmissionGateBackdrop) {
+    document.body.append(
+        peerSubmissionGateBackdrop,
+        peerSubmissionGate
+    );
+}
+
+
 function calculatePeerSubmissionReadiness() {
 
     const peerReviewData =
@@ -613,6 +621,8 @@ function openPeerSubmissionGate() {
     document.body.style.overflow =
         "hidden";
 
+    closePeerSubmissionGate?.focus();
+
 }
 
 
@@ -639,6 +649,8 @@ function closePeerSubmissionGatePanel() {
 
     document.body.style.overflow =
         "";
+
+    submitPeerReview?.focus();
 
 }
 
@@ -681,6 +693,16 @@ if (peerSubmissionGateBackdrop) {
     );
 
 }
+
+
+document.addEventListener("keydown", function (event) {
+    if (
+        event.key === "Escape"
+        && peerSubmissionGate?.classList.contains("open")
+    ) {
+        closePeerSubmissionGatePanel();
+    }
+});
 
 
 if (
