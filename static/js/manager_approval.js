@@ -46,6 +46,10 @@ const cancelManagerDecision = document.getElementById(
     "cancelManagerDecision"
 );
 
+const changeRequestRecipientCards = document.querySelectorAll(
+    "[data-recipient-card]"
+);
+
 if (managerConfirmBackdrop && managerConfirmDialog) {
     document.body.append(managerConfirmBackdrop, managerConfirmDialog);
 }
@@ -81,26 +85,53 @@ function setManagerDecisionStatus(message, state = "neutral") {
 
 function updateManagerDecisionReadiness() {
 
-    if (!managerDecisionNote) {
-        return;
-    }
-
-    const hasNote = managerDecisionNote.value.trim().length > 0;
+    const hasNote = managerDecisionNote?.value.trim().length > 0;
+    const privateRequests = getPrivateChangeRequests();
+    const hasCompletePrivateRequests =
+        privateRequests.length > 0
+        && privateRequests.every(
+            function (request) {
+                return request.private_note.length > 0;
+            }
+        );
 
     if (approveManagerReview) {
         approveManagerReview.disabled = !hasNote;
     }
 
     if (requestManagerChanges) {
-        requestManagerChanges.disabled = !hasNote;
+        requestManagerChanges.disabled = !hasCompletePrivateRequests;
     }
 
     setManagerDecisionStatus(
-        hasNote
-            ? "Decision note ready"
-            : "A decision note is required.",
-        hasNote ? "ready" : "neutral"
+        hasCompletePrivateRequests
+            ? `${privateRequests.length} private request(s) ready to send`
+            : (
+                hasNote
+                    ? "Approval note ready"
+                    : "Add an approval note, or select recipients and add private notes."
+            ),
+        (hasNote || hasCompletePrivateRequests) ? "ready" : "neutral"
     );
+}
+
+
+function getPrivateChangeRequests() {
+
+    return Array.from(changeRequestRecipientCards)
+        .filter(function (card) {
+            return card.querySelector("[data-change-recipient]")?.checked;
+        })
+        .map(function (card) {
+            return {
+                recipient_user_id: Number(
+                    card.querySelector("[data-change-recipient]").value
+                ),
+                private_note: card.querySelector("[data-change-note]")
+                    .value
+                    .trim()
+            };
+        });
 }
 
 
@@ -118,12 +149,27 @@ function closeManagerConfirmation() {
 
 function openManagerConfirmation(decision) {
 
-    if (!managerDecisionNote?.value.trim()) {
+    if (decision === "approve" && !managerDecisionNote?.value.trim()) {
+        setManagerDecisionStatus("Please enter an approval note first.", "error");
+        managerDecisionNote?.focus();
+        return;
+    }
+
+    if (
+        decision === "return"
+        && (
+            !getPrivateChangeRequests().length
+            || getPrivateChangeRequests().some(
+                function (request) {
+                    return !request.private_note;
+                }
+            )
+        )
+    ) {
         setManagerDecisionStatus(
-            "Please enter a decision note first.",
+            "Select at least one contributor and add a private note for each one.",
             "error"
         );
-        managerDecisionNote?.focus();
         return;
     }
 
@@ -139,8 +185,8 @@ function openManagerConfirmation(decision) {
     } else {
         managerConfirmTitle.textContent = "Return this review for changes?";
         managerConfirmMessage.textContent =
-            "The supervisor evaluation will reopen with your decision " +
-            "note and must be submitted again.";
+            "Each selected contributor will receive only their own private " +
+            "note and can update only their part of the review.";
         confirmManagerDecision.textContent = "Request Changes";
         confirmManagerDecision.classList.add("confirm-return");
     }
@@ -187,9 +233,11 @@ async function submitManagerDecision() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                decision_note: managerDecisionNote.value.trim()
-            })
+        body: JSON.stringify(
+            decision === "approve"
+                ? { decision_note: managerDecisionNote.value.trim() }
+                : { change_requests: getPrivateChangeRequests() }
+        )
         });
 
         const data = await readManagerResponse(response);
@@ -215,6 +263,22 @@ managerDecisionNote?.addEventListener(
     "input",
     updateManagerDecisionReadiness
 );
+
+changeRequestRecipientCards.forEach(function (card) {
+    const checkbox = card.querySelector("[data-change-recipient]");
+    const note = card.querySelector("[data-change-note]");
+
+    checkbox?.addEventListener("change", function () {
+        note.disabled = !checkbox.checked;
+        card.classList.toggle("selected", checkbox.checked);
+        if (!checkbox.checked) {
+            note.value = "";
+        }
+        updateManagerDecisionReadiness();
+    });
+
+    note?.addEventListener("input", updateManagerDecisionReadiness);
+});
 
 approveManagerReview?.addEventListener(
     "click",

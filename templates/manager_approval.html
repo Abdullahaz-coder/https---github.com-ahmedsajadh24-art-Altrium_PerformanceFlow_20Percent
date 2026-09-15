@@ -285,26 +285,58 @@ Management Approval | Altrium PerformanceFlow
             <span class="eyebrow">MANAGEMENT DECISION</span>
             <h2>Record the final decision</h2>
             <p>
-                Explain why the evidence supports approval, or state the
-                exact changes the supervisor must make. This note becomes
-                part of the review audit trail.
+                Approve the review, or send private revision notes to one
+                or more contributors without exposing their feedback to
+                anyone else.
             </p>
         </div>
 
         <div class="manager-decision-form">
             <label for="managerDecisionNote">
-                DECISION NOTE <span>Required</span>
+                APPROVAL NOTE <span>Required to approve</span>
             </label>
 
             <textarea
                 id="managerDecisionNote"
                 maxlength="3000"
-                placeholder="Record your evidence-based decision..."
+                placeholder="Record the evidence-based reason for approval..."
             ></textarea>
+
+            <div class="change-request-composer" id="changeRequestComposer">
+                <div class="change-request-composer-heading">
+                    <span>PRIVATE CHANGE REQUESTS</span>
+                    <p>Select one or more contributors. Each person sees only their own note.</p>
+                </div>
+
+                <div class="change-request-recipient-grid">
+                    {% for recipient in change_request_recipients %}
+                        <article class="change-request-recipient" data-recipient-card>
+                            <label class="change-request-toggle">
+                                <input
+                                    type="checkbox"
+                                    data-change-recipient
+                                    value="{{ recipient['user_id'] }}"
+                                >
+                                <span>
+                                    <strong>{{ recipient["role"] }}</strong>
+                                    <small>{{ recipient["name"] }}</small>
+                                </span>
+                            </label>
+                            <p>{{ recipient["description"] }}</p>
+                            <textarea
+                                data-change-note
+                                maxlength="3000"
+                                disabled
+                                placeholder="Write a private, clear request for {{ recipient['name'] }}..."
+                            ></textarea>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
 
             <div class="manager-decision-footer">
                 <span id="managerDecisionStatus">
-                    A decision note is required.
+                    Add an approval note, or select recipients and add private notes.
                 </span>
 
                 <div>
@@ -343,6 +375,18 @@ Management Approval | Altrium PerformanceFlow
                 <p>{{ review["decision_note"] }}</p>
             {% else %}
                 <p>The assigned manager has not recorded a decision yet.</p>
+            {% endif %}
+
+            {% if user_role == "Manager" and manager_change_requests %}
+                <div class="manager-change-request-record">
+                    {% for request in manager_change_requests %}
+                        <article>
+                            <span>{{ request["recipient_role"] }} · {{ request["recipient_name"] }}</span>
+                            <strong>{{ request["status"] }}</strong>
+                            <p>{{ request["private_note"] }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
             {% endif %}
 
             {% if review["decided_at"] %}

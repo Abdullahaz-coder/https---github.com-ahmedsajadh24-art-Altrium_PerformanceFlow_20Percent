@@ -88,6 +88,19 @@ Peer Review | Altrium PerformanceFlow
 </section>
 
 
+{% if private_change_request %}
+    <section class="manager-return-notice private-change-notice">
+        <div class="manager-return-symbol">↺</div>
+        <div>
+            <span>PRIVATE MANAGEMENT REQUEST</span>
+            <strong>{{ private_change_request["manager_name"] }} requested an update from you.</strong>
+            <p>{{ private_change_request["private_note"] }}</p>
+            <small>This note is private to you and the assigned manager.</small>
+        </div>
+    </section>
+{% endif %}
+
+
 
 <!-- =====================================================
      CONFIDENTIALITY BAR

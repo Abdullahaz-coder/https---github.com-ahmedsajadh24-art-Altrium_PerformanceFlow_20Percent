@@ -1358,6 +1358,9 @@ def submit_self_assessment(employee_review_id):
 
                 employee_reviews.supervisor_id,
 
+                employee_reviews.status
+                    AS employee_review_status,
+
                 employee_reviews.employee_name_snapshot,
 
                 review_cycles.cycle_name,
@@ -1429,6 +1432,13 @@ def submit_self_assessment(employee_review_id):
             review[
                 "self_assessment_id"
             ]
+        )
+
+
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
         )
 
 
@@ -1743,21 +1753,28 @@ def submit_self_assessment(employee_review_id):
         # ADVANCE REVIEW WORKFLOW
         # =====================================
 
-        connection.execute(
-            """
-            UPDATE employee_reviews
+        if private_change_request is None:
+            connection.execute(
+                """
+                UPDATE employee_reviews
 
-            SET
-                status = 'Self Assessment Submitted',
-                updated_at = CURRENT_TIMESTAMP
+                SET
+                    status = 'Self Assessment Submitted',
+                    updated_at = CURRENT_TIMESTAMP
 
-            WHERE id = ?
-            """,
+                WHERE id = ?
+                """,
 
-            (
-                employee_review_id,
+                (
+                    employee_review_id,
+                )
             )
-        )
+        else:
+            complete_private_manager_change_request(
+                connection,
+                employee_review_id,
+                session["user_id"]
+            )
 
 
         # =====================================
@@ -2961,6 +2978,13 @@ def self_assessment_studio(employee_review_id):
         ).fetchall()
 
 
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
+
+
         return render_template(
             "self_assessment.html",
 
@@ -2971,6 +2995,8 @@ def self_assessment_studio(employee_review_id):
             baseline_items=baseline_items,
 
             evidence_files=evidence_files,
+
+            private_change_request=private_change_request,
 
             user_name=session["user_name"],
 
@@ -7281,7 +7307,6 @@ def schedule_review_cycle(cycle_id):
             )
         )
 
-
         # =====================================
         # AUDIT HISTORY
         # =====================================
@@ -9822,6 +9847,13 @@ def peer_review_studio(employee_review_id):
         ).fetchone()
 
 
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
+
+
         return render_template(
             "peer_review.html",
 
@@ -9832,6 +9864,8 @@ def peer_review_studio(employee_review_id):
             baseline_items=baseline_items,
 
             reviewer_progress=reviewer_progress,
+
+            private_change_request=private_change_request,
 
             user_name=session["user_name"],
 
@@ -9998,6 +10032,13 @@ def save_peer_review_draft(employee_review_id):
             }), 404
 
 
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
+
+
         if (
             review["peer_review_status"]
             != "Draft"
@@ -10020,6 +10061,13 @@ def save_peer_review_draft(employee_review_id):
                 "message":
                     "This review cycle is no longer active."
             }), 409
+
+
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
 
 
         peer_review_id = review[
@@ -10494,9 +10542,17 @@ def submit_peer_review(employee_review_id):
             }), 409
 
 
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
+
+
         if (
             review["employee_review_status"]
             != "Peer Review In Progress"
+            and private_change_request is None
         ):
 
             return jsonify({
@@ -10859,6 +10915,14 @@ def submit_peer_review(employee_review_id):
         )
 
 
+        if private_change_request is not None:
+            complete_private_manager_change_request(
+                connection,
+                employee_review_id,
+                session["user_id"]
+            )
+
+
         # =====================================
         # REVIEWER CONFIRMATION
         # =====================================
@@ -11016,7 +11080,7 @@ def submit_peer_review(employee_review_id):
         # ALL REVIEWERS COMPLETE: ADVANCE CASE
         # =====================================
 
-        if peer_phase_complete:
+        if peer_phase_complete and private_change_request is None:
 
             connection.execute(
                 """
@@ -11499,6 +11563,7 @@ def supervisor_evaluation_workspace(employee_review_id):
             "Supervisor Evaluation In Progress",
             "Supervisor Evaluation Submitted",
             "Manager Approval Pending",
+            "Changes Requested",
             "Approved",
             "Completed"
         )
@@ -11765,20 +11830,11 @@ def supervisor_evaluation_workspace(employee_review_id):
                 []
             ).append(feedback)
 
-        manager_feedback = connection.execute(
-            """
-            SELECT
-                manager_approvals.status,
-                manager_approvals.decision_note,
-                manager_approvals.decided_at,
-                users.full_name AS manager_name
-            FROM manager_approvals
-            JOIN users
-                ON users.id = manager_approvals.manager_id
-            WHERE manager_approvals.employee_review_id = ?
-            """,
-            (employee_review_id,)
-        ).fetchone()
+        manager_feedback = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
 
         return render_template(
             "supervisor_evaluation.html",
@@ -11855,6 +11911,13 @@ def save_supervisor_evaluation_draft(employee_review_id):
                 "message": "Supervisor evaluation not found."
             }), 404
 
+
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
+
         if review["evaluation_status"] != "Draft":
             return jsonify({
                 "success": False,
@@ -11870,6 +11933,7 @@ def save_supervisor_evaluation_draft(employee_review_id):
         if (
             review["employee_review_status"]
             != "Supervisor Evaluation In Progress"
+            and private_change_request is None
         ):
             return jsonify({
                 "success": False,
@@ -11968,9 +12032,17 @@ def submit_supervisor_evaluation(employee_review_id):
                 "message": "This review cycle is no longer active."
             }), 409
 
+        private_change_request = get_private_manager_change_request(
+            connection,
+            employee_review_id,
+            session["user_id"]
+        )
+
+
         if (
             review["employee_review_status"]
             != "Supervisor Evaluation In Progress"
+            and private_change_request is None
         ):
             return jsonify({
                 "success": False,
@@ -12056,17 +12128,18 @@ def submit_supervisor_evaluation(employee_review_id):
             (review["supervisor_evaluation_id"],)
         )
 
-        connection.execute(
-            """
-            UPDATE employee_reviews
-            SET
-                status = 'Supervisor Evaluation Submitted',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-            AND status = 'Supervisor Evaluation In Progress'
-            """,
-            (employee_review_id,)
-        )
+        if private_change_request is None:
+            connection.execute(
+                """
+                UPDATE employee_reviews
+                SET
+                    status = 'Supervisor Evaluation Submitted',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                AND status = 'Supervisor Evaluation In Progress'
+                """,
+                (employee_review_id,)
+            )
 
         connection.execute(
             """
@@ -12084,6 +12157,14 @@ def submit_supervisor_evaluation(employee_review_id):
                 session["user_id"]
             )
         )
+
+
+        if private_change_request is not None:
+            complete_private_manager_change_request(
+                connection,
+                employee_review_id,
+                session["user_id"]
+            )
 
         connection.execute(
             """
@@ -12155,7 +12236,7 @@ def submit_supervisor_evaluation(employee_review_id):
             """
         ).fetchone()
 
-        if manager is not None:
+        if manager is not None and private_change_request is None:
             connection.execute(
                 """
                 INSERT INTO manager_approvals
@@ -12248,13 +12329,16 @@ def submit_supervisor_evaluation(employee_review_id):
                 )
             )
 
-        hr_users = connection.execute(
-            """
-            SELECT id
-            FROM users
-            WHERE role = 'HR'
-            """
-        ).fetchall()
+        hr_users = []
+
+        if private_change_request is None:
+            hr_users = connection.execute(
+                """
+                SELECT id
+                FROM users
+                WHERE role = 'HR'
+                """
+            ).fetchall()
 
         for hr_user in hr_users:
             connection.execute(
@@ -12456,6 +12540,194 @@ def parse_manager_decision_note(data):
     return decision_note
 
 
+def ensure_manager_change_request_schema(connection):
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS manager_change_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_review_id INTEGER NOT NULL,
+            recipient_user_id INTEGER NOT NULL,
+            recipient_role TEXT NOT NULL,
+            private_note TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Pending',
+            requested_by INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            FOREIGN KEY (employee_review_id) REFERENCES employee_reviews(id),
+            FOREIGN KEY (recipient_user_id) REFERENCES users(id),
+            FOREIGN KEY (requested_by) REFERENCES users(id),
+            CHECK (recipient_role IN ('Employee', 'Peer Reviewer', 'Supervisor')),
+            CHECK (status IN ('Pending', 'Completed'))
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_manager_change_request_recipient
+        ON manager_change_requests
+        (employee_review_id, recipient_user_id, status)
+        """
+    )
+
+
+def get_private_manager_change_request(
+    connection,
+    employee_review_id,
+    recipient_user_id
+):
+
+    ensure_manager_change_request_schema(connection)
+
+    return connection.execute(
+        """
+        SELECT
+            manager_change_requests.id,
+            'Changes Requested' AS status,
+            manager_change_requests.recipient_role,
+            manager_change_requests.private_note,
+            manager_change_requests.private_note AS decision_note,
+            manager_change_requests.created_at,
+            users.full_name AS manager_name
+        FROM manager_change_requests
+        JOIN users
+            ON users.id = manager_change_requests.requested_by
+        WHERE manager_change_requests.employee_review_id = ?
+        AND manager_change_requests.recipient_user_id = ?
+        AND manager_change_requests.status = 'Pending'
+        ORDER BY manager_change_requests.id DESC
+        LIMIT 1
+        """,
+        (employee_review_id, recipient_user_id)
+    ).fetchone()
+
+
+def complete_private_manager_change_request(
+    connection,
+    employee_review_id,
+    recipient_user_id
+):
+
+    ensure_manager_change_request_schema(connection)
+
+    completion = connection.execute(
+        """
+        UPDATE manager_change_requests
+        SET
+            status = 'Completed',
+            completed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE employee_review_id = ?
+        AND recipient_user_id = ?
+        AND status = 'Pending'
+        """,
+        (employee_review_id, recipient_user_id)
+    )
+
+    if not completion.rowcount:
+        return False
+
+    pending_count = connection.execute(
+        """
+        SELECT COUNT(*) AS total
+        FROM manager_change_requests
+        WHERE employee_review_id = ?
+        AND status = 'Pending'
+        """,
+        (employee_review_id,)
+    ).fetchone()["total"]
+
+    if pending_count:
+        return False
+
+    approval = connection.execute(
+        """
+        SELECT
+            manager_approvals.manager_id,
+            employee_reviews.review_cycle_id,
+            employee_reviews.employee_name_snapshot
+        FROM manager_approvals
+        JOIN employee_reviews
+            ON employee_reviews.id = manager_approvals.employee_review_id
+        WHERE manager_approvals.employee_review_id = ?
+        AND manager_approvals.status = 'Changes Requested'
+        """,
+        (employee_review_id,)
+    ).fetchone()
+
+    if approval is None:
+        return False
+
+    connection.execute(
+        """
+        UPDATE manager_approvals
+        SET
+            status = 'Pending',
+            decision_note = NULL,
+            decided_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE employee_review_id = ?
+        """,
+        (employee_review_id,)
+    )
+    connection.execute(
+        """
+        UPDATE employee_reviews
+        SET
+            status = 'Supervisor Evaluation Submitted',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (employee_review_id,)
+    )
+    connection.execute(
+        """
+        INSERT INTO review_actions
+        (
+            review_cycle_id, employee_review_id, assigned_to, action_type,
+            title, description, status, priority
+        )
+        VALUES (?, ?, ?, 'MANAGER_APPROVAL', ?, ?, 'Pending', 'High')
+        ON CONFLICT(
+            review_cycle_id, employee_review_id, assigned_to, action_type
+        )
+        DO UPDATE SET
+            title = excluded.title,
+            description = excluded.description,
+            status = 'Pending',
+            priority = 'High',
+            completed_at = NULL
+        """,
+        (
+            approval["review_cycle_id"],
+            employee_review_id,
+            approval["manager_id"],
+            f"Approve {approval['employee_name_snapshot']}'s Review",
+            "All requested contributor updates are complete. Record the final decision."
+        )
+    )
+    connection.execute(
+        """
+        INSERT INTO notifications
+        (
+            user_id, review_cycle_id, employee_review_id,
+            notification_type, title, message
+        )
+        VALUES (?, ?, ?, 'MANAGER_CHANGES_COMPLETED', ?, ?)
+        """,
+        (
+            approval["manager_id"],
+            approval["review_cycle_id"],
+            employee_review_id,
+            "Requested changes completed",
+            f"All requested updates for {approval['employee_name_snapshot']}'s review are ready for your final decision."
+        )
+    )
+
+    return True
+
+
 @app.route(
     "/reviews/<int:employee_review_id>/manager-approval"
 )
@@ -12479,6 +12751,8 @@ def manager_approval_workspace(employee_review_id):
             flash("Management approval record not found.", "error")
             return redirect(url_for("dashboard"))
 
+        ensure_manager_change_request_schema(connection)
+
         if (
             session["user_role"] == "Manager"
             and review["manager_id"] != session["user_id"]
@@ -12497,6 +12771,7 @@ def manager_approval_workspace(employee_review_id):
             "Supervisor Evaluation Submitted",
             "Manager Approval Pending",
             "Supervisor Evaluation In Progress",
+            "Changes Requested",
             "Approved",
             "Completed"
         )
@@ -12690,6 +12965,72 @@ def manager_approval_workspace(employee_review_id):
 
         manager_options = []
 
+        change_request_recipients = []
+        manager_change_requests = []
+
+        if session["user_role"] == "Manager":
+            change_request_recipients = [
+                {
+                    "user_id": review["employee_user_id"],
+                    "role": "Employee",
+                    "name": review["employee_name_snapshot"],
+                    "description": "Reopen the self-assessment and supporting evidence."
+                },
+                {
+                    "user_id": review["supervisor_id"],
+                    "role": "Supervisor",
+                    "name": review["supervisor_name"],
+                    "description": "Reopen the supervisor evaluation and recommendation."
+                }
+            ]
+
+            peer_recipients = connection.execute(
+                """
+                SELECT DISTINCT
+                    peer_review_assignments.reviewer_user_id AS user_id,
+                    users.full_name
+                FROM peer_review_assignments
+                JOIN peer_reviews
+                    ON peer_reviews.peer_assignment_id
+                        = peer_review_assignments.id
+                JOIN users
+                    ON users.id = peer_review_assignments.reviewer_user_id
+                WHERE peer_review_assignments.employee_review_id = ?
+                AND peer_review_assignments.status = 'Submitted'
+                AND peer_reviews.status = 'Submitted'
+                ORDER BY users.full_name
+                """,
+                (employee_review_id,)
+            ).fetchall()
+
+            change_request_recipients.extend(
+                {
+                    "user_id": peer["user_id"],
+                    "role": "Peer Reviewer",
+                    "name": peer["full_name"],
+                    "description": "Reopen this confidential peer feedback only."
+                }
+                for peer in peer_recipients
+            )
+
+            manager_change_requests = connection.execute(
+                """
+                SELECT
+                    manager_change_requests.recipient_role,
+                    manager_change_requests.private_note,
+                    manager_change_requests.status,
+                    manager_change_requests.created_at,
+                    manager_change_requests.completed_at,
+                    users.full_name AS recipient_name
+                FROM manager_change_requests
+                JOIN users
+                    ON users.id = manager_change_requests.recipient_user_id
+                WHERE manager_change_requests.employee_review_id = ?
+                ORDER BY manager_change_requests.id DESC
+                """,
+                (employee_review_id,)
+            ).fetchall()
+
         if session["user_role"] == "HR":
             manager_options = connection.execute(
                 """
@@ -12708,6 +13049,8 @@ def manager_approval_workspace(employee_review_id):
             evidence_files=evidence_files,
             readonly=readonly,
             manager_options=manager_options,
+            change_request_recipients=change_request_recipients,
+            manager_change_requests=manager_change_requests,
             user_name=session["user_name"],
             user_role=session["user_role"]
         )
@@ -13174,40 +13517,25 @@ def approve_manager_review(employee_review_id):
 def request_manager_review_changes(employee_review_id):
 
     if "user_id" not in session:
-        return jsonify({
-            "success": False,
-            "message": "Authentication required."
-        }), 401
+        return jsonify({"success": False, "message": "Authentication required."}), 401
 
     if session["user_role"] != "Manager":
-        return jsonify({
-            "success": False,
-            "message": "Only the assigned manager can return this review."
-        }), 403
+        return jsonify({"success": False, "message": "Only the assigned manager can request changes."}), 403
 
-    try:
-        decision_note = parse_manager_decision_note(
-            request.get_json(silent=True)
-        )
-    except ValueError as error:
-        return jsonify({
-            "success": False,
-            "message": str(error)
-        }), 400
+    payload = request.get_json(silent=True)
+    requests_payload = payload.get("change_requests") if isinstance(payload, dict) else None
+
+    if not isinstance(requests_payload, list) or not requests_payload:
+        return jsonify({"success": False, "message": "Select at least one recipient and add their private note."}), 400
 
     connection = get_db_connection()
 
     try:
-        review = get_manager_approval_context(
-            connection,
-            employee_review_id
-        )
+        ensure_manager_change_request_schema(connection)
+        review = get_manager_approval_context(connection, employee_review_id)
 
         if review is None or review["manager_id"] != session["user_id"]:
-            return jsonify({
-                "success": False,
-                "message": "Management approval not found."
-            }), 404
+            return jsonify({"success": False, "message": "Management approval not found."}), 404
 
         if (
             review["cycle_status"] != "Active"
@@ -13218,10 +13546,53 @@ def request_manager_review_changes(employee_review_id):
                 "Manager Approval Pending"
             )
         ):
-            return jsonify({
-                "success": False,
-                "message": "This review can no longer be returned."
-            }), 409
+            return jsonify({"success": False, "message": "This review can no longer be returned."}), 409
+
+        allowed_recipients = {
+            review["employee_user_id"]: "Employee",
+            review["supervisor_id"]: "Supervisor"
+        }
+        peer_rows = connection.execute(
+            """
+            SELECT peer_review_assignments.reviewer_user_id
+            FROM peer_review_assignments
+            JOIN peer_reviews
+                ON peer_reviews.peer_assignment_id = peer_review_assignments.id
+            WHERE peer_review_assignments.employee_review_id = ?
+            AND peer_review_assignments.status = 'Submitted'
+            AND peer_reviews.status = 'Submitted'
+            """,
+            (employee_review_id,)
+        ).fetchall()
+        allowed_recipients.update(
+            {peer["reviewer_user_id"]: "Peer Reviewer" for peer in peer_rows}
+        )
+
+        change_requests = []
+        seen_recipients = set()
+        for requested_change in requests_payload:
+            if not isinstance(requested_change, dict):
+                raise ValueError("Invalid change request.")
+            try:
+                recipient_user_id = int(requested_change.get("recipient_user_id"))
+            except (TypeError, ValueError):
+                raise ValueError("Select a valid change-request recipient.")
+            private_note = requested_change.get("private_note", "")
+            if not isinstance(private_note, str) or not private_note.strip():
+                raise ValueError("Every selected recipient needs a private note.")
+            private_note = private_note.strip()
+            if len(private_note) > 3000:
+                raise ValueError("A private note must be 3,000 characters or fewer.")
+            if recipient_user_id not in allowed_recipients:
+                raise ValueError("A selected recipient is not part of this review.")
+            if recipient_user_id in seen_recipients:
+                raise ValueError("Each person can receive only one request at a time.")
+            seen_recipients.add(recipient_user_id)
+            change_requests.append((
+                recipient_user_id,
+                allowed_recipients[recipient_user_id],
+                private_note
+            ))
 
         connection.execute(
             """
@@ -13235,170 +13606,176 @@ def request_manager_review_changes(employee_review_id):
             AND status = 'Pending'
             """,
             (
-                decision_note,
+                f"Private changes requested from {len(change_requests)} contributor(s).",
                 review["manager_approval_id"]
             )
         )
-
-        connection.execute(
-            """
-            UPDATE supervisor_evaluations
-            SET
-                status = 'Draft',
-                submitted_at = NULL,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-            AND status = 'Submitted'
-            """,
-            (review["supervisor_evaluation_id"],)
-        )
-
         connection.execute(
             """
             UPDATE employee_reviews
-            SET
-                status = 'Supervisor Evaluation In Progress',
-                updated_at = CURRENT_TIMESTAMP
+            SET status = 'Changes Requested', updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
             """,
             (employee_review_id,)
         )
-
         connection.execute(
             """
             UPDATE review_actions
-            SET
-                status = 'Completed',
-                completed_at = CURRENT_TIMESTAMP
+            SET status = 'Completed', completed_at = CURRENT_TIMESTAMP
             WHERE employee_review_id = ?
-            AND action_type IN (
-                'MANAGER_APPROVAL',
-                'MANAGER_APPROVAL_COORDINATION'
-            )
+            AND action_type IN ('MANAGER_APPROVAL', 'MANAGER_APPROVAL_COORDINATION')
             AND status != 'Completed'
             """,
             (employee_review_id,)
         )
 
-        connection.execute(
-            """
-            INSERT INTO review_actions
-            (
-                review_cycle_id,
-                employee_review_id,
-                assigned_to,
-                action_type,
-                title,
-                description,
-                status,
-                priority
-            )
-            VALUES (?, ?, ?, ?, ?, ?, 'Pending', 'High')
-            ON CONFLICT(
-                review_cycle_id,
-                employee_review_id,
-                assigned_to,
-                action_type
-            )
-            DO UPDATE SET
-                title = excluded.title,
-                description = excluded.description,
-                status = 'Pending',
-                priority = 'High',
-                completed_at = NULL
-            """,
-            (
-                review["review_cycle_id"],
-                employee_review_id,
-                review["supervisor_id"],
-                "SUPERVISOR_EVALUATION",
+        for recipient_user_id, recipient_role, private_note in change_requests:
+            connection.execute(
+                """
+                INSERT INTO manager_change_requests
                 (
-                    f"Revise {review['employee_name_snapshot']}'s "
-                    "Evaluation"
-                ),
+                    employee_review_id, recipient_user_id, recipient_role,
+                    private_note, requested_by
+                )
+                VALUES (?, ?, ?, ?, ?)
+                """,
                 (
-                    "Management requested changes. Review the decision "
-                    "note, update the evaluation and submit it again."
+                    employee_review_id,
+                    recipient_user_id,
+                    recipient_role,
+                    private_note,
+                    session["user_id"]
                 )
             )
-        )
 
-        recipients = (
-            (
-                review["supervisor_id"],
-                "MANAGER_CHANGES_REQUESTED",
-                "Evaluation Changes Requested",
-                (
-                    f"Management returned "
-                    f"{review['employee_name_snapshot']}'s evaluation. "
-                    "Open it to review the decision note and revise it."
+            if recipient_role == "Employee":
+                connection.execute(
+                    """
+                    UPDATE self_assessments
+                    SET status = 'Draft', submitted_at = NULL,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE employee_review_id = ?
+                    """,
+                    (employee_review_id,)
                 )
-            ),
-            (
-                review["employee_user_id"],
-                "MANAGER_CHANGES_REQUESTED",
-                "Review Returned for Revision",
-                (
-                    f"Your {review['cycle_name']} review was returned "
-                    "to your supervisor for revision."
+                action_type = "SELF_ASSESSMENT"
+                title = "Update Self-Assessment"
+                description = "Management requested a private update to your self-assessment."
+            elif recipient_role == "Peer Reviewer":
+                connection.execute(
+                    """
+                    UPDATE peer_reviews
+                    SET status = 'Draft', submitted_at = NULL,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE peer_assignment_id IN (
+                        SELECT id FROM peer_review_assignments
+                        WHERE employee_review_id = ? AND reviewer_user_id = ?
+                    )
+                    """,
+                    (employee_review_id, recipient_user_id)
                 )
-            ),
-            (
-                session["user_id"],
-                "MANAGER_RETURN_CONFIRMED",
-                "Review Returned",
+                connection.execute(
+                    """
+                    UPDATE peer_review_assignments
+                    SET status = 'In Progress'
+                    WHERE employee_review_id = ? AND reviewer_user_id = ?
+                    """,
+                    (employee_review_id, recipient_user_id)
+                )
+                action_type = "PEER_REVIEW"
+                title = "Update Confidential Peer Feedback"
+                description = "Management requested a private update to your confidential peer feedback."
+            else:
+                connection.execute(
+                    """
+                    UPDATE supervisor_evaluations
+                    SET status = 'Draft', submitted_at = NULL,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE employee_review_id = ?
+                    """,
+                    (employee_review_id,)
+                )
+                action_type = "SUPERVISOR_EVALUATION"
+                title = "Update Supervisor Evaluation"
+                description = "Management requested a private update to your evaluation."
+
+            connection.execute(
+                """
+                INSERT INTO review_actions
                 (
-                    f"{review['employee_name_snapshot']}'s review was "
-                    "returned to the supervisor."
+                    review_cycle_id, employee_review_id, assigned_to,
+                    action_type, title, description, status, priority
+                )
+                VALUES (?, ?, ?, ?, ?, ?, 'Pending', 'High')
+                ON CONFLICT(
+                    review_cycle_id, employee_review_id, assigned_to, action_type
+                )
+                DO UPDATE SET
+                    title = excluded.title,
+                    description = excluded.description,
+                    status = 'Pending',
+                    priority = 'High',
+                    completed_at = NULL
+                """,
+                (
+                    review["review_cycle_id"],
+                    employee_review_id,
+                    recipient_user_id,
+                    action_type,
+                    title,
+                    description
                 )
             )
-        )
-
-        for user_id, notification_type, title, message in recipients:
             connection.execute(
                 """
                 INSERT INTO notifications
                 (
-                    user_id,
-                    review_cycle_id,
-                    employee_review_id,
-                    notification_type,
-                    title,
-                    message
+                    user_id, review_cycle_id, employee_review_id,
+                    notification_type, title, message
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, 'MANAGER_PRIVATE_CHANGE_REQUEST', ?, ?)
                 """,
                 (
-                    user_id,
+                    recipient_user_id,
                     review["review_cycle_id"],
                     employee_review_id,
-                    notification_type,
-                    title,
-                    message
+                    "Private update requested",
+                    "Management has requested a private update to your part of this review."
                 )
             )
 
-        connection.commit()
-
-        flash(
-            "The review was returned to the supervisor for revision.",
-            "success"
+        connection.execute(
+            """
+            INSERT INTO notifications
+            (
+                user_id, review_cycle_id, employee_review_id,
+                notification_type, title, message
+            )
+            VALUES (?, ?, ?, 'MANAGER_CHANGE_REQUEST_CREATED', ?, ?)
+            """,
+            (
+                session["user_id"],
+                review["review_cycle_id"],
+                employee_review_id,
+                "Private change requests sent",
+                f"{len(change_requests)} contributor(s) were asked to update their section."
+            )
         )
 
+        connection.commit()
         return jsonify({
             "success": True,
-            "message": "Changes requested successfully.",
+            "message": "Private change requests sent.",
             "redirect_url": url_for("dashboard")
         })
 
+    except ValueError as error:
+        connection.rollback()
+        return jsonify({"success": False, "message": str(error)}), 400
     except sqlite3.Error as error:
         connection.rollback()
-        print("Manager return error:", error)
-        return jsonify({
-            "success": False,
-            "message": "The review could not be returned."
-        }), 500
-
+        print("Manager change request error:", error)
+        return jsonify({"success": False, "message": "The private change requests could not be sent."}), 500
     finally:
         connection.close()
 

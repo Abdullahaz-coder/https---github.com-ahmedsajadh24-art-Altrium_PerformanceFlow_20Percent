@@ -13244,6 +13244,120 @@ span::after {
     gap: 8px;
 }
 
+.change-request-composer {
+    margin: 22px 0 18px;
+    padding: 18px;
+    border: 1px solid #dbe6e0;
+    border-radius: 14px;
+    background: #f8fbf9;
+}
+
+.change-request-composer-heading span {
+    color: #35634f;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.change-request-composer-heading p {
+    margin: 6px 0 16px;
+    color: #65756c;
+    font-size: .88rem;
+    line-height: 1.5;
+}
+
+.change-request-recipient-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.change-request-recipient {
+    padding: 14px;
+    border: 1px solid #dce5e0;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.change-request-recipient.selected {
+    border-color: #529676;
+    box-shadow: 0 0 0 3px rgba(82, 150, 118, .11);
+}
+
+.change-request-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    letter-spacing: 0 !important;
+}
+
+.change-request-toggle input {
+    width: 17px;
+    height: 17px;
+    accent-color: #247653;
+}
+
+.change-request-toggle strong,
+.change-request-toggle small {
+    display: block;
+}
+
+.change-request-toggle strong {
+    color: #294034;
+    font-size: .88rem;
+}
+
+.change-request-toggle small,
+.change-request-recipient > p {
+    color: #718078;
+    font-size: .8rem;
+}
+
+.change-request-recipient > p {
+    margin: 8px 0;
+    line-height: 1.45;
+}
+
+.change-request-recipient textarea {
+    min-height: 86px;
+    margin: 0;
+    background: #fcfefd;
+}
+
+.change-request-recipient textarea:disabled {
+    cursor: not-allowed;
+    background: #f2f5f3;
+}
+
+.manager-change-request-record {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.manager-change-request-record article {
+    padding: 12px;
+    border: 1px solid #e1e7e3;
+    border-radius: 11px;
+    background: #fafcfb;
+}
+
+.manager-change-request-record article > span,
+.manager-change-request-record article > strong {
+    display: inline-block;
+    margin: 0 8px 0 0;
+}
+
+.manager-change-request-record article > strong {
+    color: #a34c31;
+    font-size: .78rem;
+}
+
+.manager-change-request-record article > p {
+    margin: 7px 0 0;
+}
+
 .peer-review-dock-actions button {
     min-width: 120px;
     white-space: nowrap;

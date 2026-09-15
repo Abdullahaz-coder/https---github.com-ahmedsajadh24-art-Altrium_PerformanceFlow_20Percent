@@ -889,6 +889,71 @@ connection.execute(
 
 
 # ==========================================
+# PRIVATE MANAGER CHANGE REQUESTS
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS manager_change_requests (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        employee_review_id INTEGER NOT NULL,
+
+        recipient_user_id INTEGER NOT NULL,
+
+        recipient_role TEXT NOT NULL,
+
+        private_note TEXT NOT NULL,
+
+        status TEXT NOT NULL DEFAULT 'Pending',
+
+        requested_by INTEGER NOT NULL,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        completed_at TIMESTAMP,
+
+        FOREIGN KEY (employee_review_id)
+            REFERENCES employee_reviews(id),
+
+        FOREIGN KEY (recipient_user_id)
+            REFERENCES users(id),
+
+        FOREIGN KEY (requested_by)
+            REFERENCES users(id),
+
+        CHECK (
+            recipient_role IN (
+                'Employee',
+                'Peer Reviewer',
+                'Supervisor'
+            )
+        ),
+
+        CHECK (
+            status IN (
+                'Pending',
+                'Completed'
+            )
+        )
+
+    )
+    """
+)
+
+connection.execute(
+    """
+    CREATE INDEX IF NOT EXISTS idx_manager_change_request_recipient
+    ON manager_change_requests
+    (employee_review_id, recipient_user_id, status)
+    """
+)
+
+
+# ==========================================
 # FINAL REVIEW ACKNOWLEDGEMENTS
 # ==========================================
 

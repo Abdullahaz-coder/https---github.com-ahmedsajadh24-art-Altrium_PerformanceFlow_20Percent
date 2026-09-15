@@ -574,6 +574,96 @@ class WorkflowRegressionTests(unittest.TestCase):
         finally:
             connection.close()
 
+    def test_manager_can_send_private_change_requests_to_multiple_people(self):
+        fixture = self.create_cycle_review(
+            review_status="Manager Approval Pending",
+            cycle_status="Active",
+        )
+        connection = self.get_test_connection()
+        try:
+            manager = connection.execute(
+                """
+                INSERT INTO users (full_name, email, password, role)
+                VALUES ('Change Request Manager', 'change.manager@altrium.com',
+                        'unused', 'Manager')
+                """
+            )
+            manager_id = manager.lastrowid
+            connection.execute(
+                """
+                INSERT INTO supervisor_evaluations
+                    (employee_review_id, supervisor_id, status,
+                     overall_rating, performance_summary, key_strengths,
+                     development_priorities, support_plan, recommendation)
+                VALUES (?, ?, 'Submitted', 4, 'Summary', 'Strengths',
+                        'Priorities', 'Support', 'Meets Expectations')
+                """,
+                (fixture["review_id"], self.supervisor_user_id),
+            )
+            connection.execute(
+                """
+                INSERT INTO manager_approvals
+                    (employee_review_id, manager_id, status)
+                VALUES (?, ?, 'Pending')
+                """,
+                (fixture["review_id"], manager_id),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+        self.sign_in_as(manager_id, "Manager", "Change Request Manager")
+        response = self.client.post(
+            f"/reviews/{fixture['review_id']}/manager-approval/request-changes",
+            json={
+                "change_requests": [
+                    {
+                        "recipient_user_id": fixture["employee_user_id"],
+                        "private_note": "Please attach evidence for the goal.",
+                    },
+                    {
+                        "recipient_user_id": self.supervisor_user_id,
+                        "private_note": "Please clarify the support plan.",
+                    },
+                ]
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["success"])
+
+        connection = self.get_test_connection()
+        try:
+            requests = connection.execute(
+                """
+                SELECT recipient_user_id, recipient_role, private_note, status
+                FROM manager_change_requests
+                WHERE employee_review_id = ?
+                ORDER BY recipient_user_id
+                """,
+                (fixture["review_id"],),
+            ).fetchall()
+            approval = connection.execute(
+                "SELECT status FROM manager_approvals WHERE employee_review_id = ?",
+                (fixture["review_id"],),
+            ).fetchone()
+            review = connection.execute(
+                "SELECT status FROM employee_reviews WHERE id = ?",
+                (fixture["review_id"],),
+            ).fetchone()
+
+            self.assertEqual(len(requests), 2)
+            self.assertEqual(
+                {request["recipient_role"] for request in requests},
+                {"Employee", "Supervisor"},
+            )
+            self.assertTrue(
+                all(request["status"] == "Pending" for request in requests)
+            )
+            self.assertEqual(approval["status"], "Changes Requested")
+            self.assertEqual(review["status"], "Changes Requested")
+        finally:
+            connection.close()
+
     def test_hr_can_change_employee_status_without_deleting_history(self):
         connection = self.get_test_connection()
         try:
