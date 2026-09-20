@@ -3,7 +3,7 @@ import os
 import secrets
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import (
     Flask,
@@ -3047,12 +3047,14 @@ def employees():
     supervisors = connection.execute(
         """
         SELECT
-            id,
-            full_name
+            users.id,
+            users.full_name,
+            employees.department
 
         FROM users
+        JOIN employees ON employees.user_id = users.id
 
-        WHERE role = 'Supervisor'
+        WHERE users.role = 'Supervisor' AND employees.status = 'Active'
 
         ORDER BY full_name
         """
@@ -3121,12 +3123,14 @@ def employee_profile(employee_id):
     supervisors = connection.execute(
         """
         SELECT
-            id,
-            full_name
+            users.id,
+            users.full_name,
+            employees.department
 
         FROM users
+        JOIN employees ON employees.user_id = users.id
 
-        WHERE role = 'Supervisor'
+        WHERE users.role = 'Supervisor' AND employees.status = 'Active'
 
         ORDER BY full_name
         """
@@ -3435,15 +3439,13 @@ def edit_employee(employee_id):
 
             supervisor = connection.execute(
                 """
-                SELECT id
-
-                FROM users
-
-                WHERE id = ?
-                AND role = 'Supervisor'
+                SELECT users.id
+                FROM users JOIN employees ON employees.user_id = users.id
+                WHERE users.id = ? AND users.role = 'Supervisor'
+                AND employees.department = ? AND employees.status = 'Active'
                 """,
 
-                (supervisor_id,)
+                (supervisor_id, department)
 
             ).fetchone()
 
@@ -3451,7 +3453,7 @@ def edit_employee(employee_id):
             if supervisor is None:
 
                 flash(
-                    "The selected supervisor is invalid.",
+                    "Select an active supervisor from the employee's department.",
                     "error"
                 )
 
@@ -3774,21 +3776,19 @@ def add_employee():
 
             supervisor = connection.execute(
                 """
-                SELECT id
-
-                FROM users
-
-                WHERE id = ?
-                AND role = 'Supervisor'
+                SELECT users.id
+                FROM users JOIN employees ON employees.user_id = users.id
+                WHERE users.id = ? AND users.role = 'Supervisor'
+                AND employees.department = ? AND employees.status = 'Active'
                 """,
-                (supervisor_id,)
+                (supervisor_id, department)
             ).fetchone()
 
 
             if supervisor is None:
 
                 flash(
-                    "The selected supervisor is invalid.",
+                    "Select an active supervisor from the employee's department.",
                     "error"
                 )
 
@@ -6211,6 +6211,12 @@ def review_cycle_workspace(cycle_id):
 
         AND users.role = 'Employee'
 
+        AND EXISTS (
+            SELECT 1 FROM performance_items
+            WHERE performance_items.employee_id = employees.id
+            AND performance_items.status = 'Active'
+        )
+
         AND employees.id NOT IN (
 
             SELECT
@@ -7496,6 +7502,11 @@ def assign_cycle_employees(cycle_id):
                 AND employees.status = 'Active'
 
                 AND users.role = 'Employee'
+                AND EXISTS (
+                    SELECT 1 FROM performance_items
+                    WHERE performance_items.employee_id = employees.id
+                    AND performance_items.status = 'Active'
+                )
                 """,
 
                 (employee_id,)
@@ -7633,7 +7644,7 @@ def assign_cycle_employees(cycle_id):
         if skipped_count > 0:
 
             flash(
-                f"{skipped_count} employee(s) could not be assigned because they were unavailable or already assigned for this review year.",
+                f"{skipped_count} employee(s) could not be assigned because they have no active blueprint, are unavailable, or are already assigned for this review year.",
                 "error"
             )
 
@@ -12572,6 +12583,146 @@ def ensure_manager_change_request_schema(connection):
     )
 
 
+def ensure_par_meeting_schema(connection):
+    """Keep PB11 available for existing databases without a reset."""
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS par_meetings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_review_id INTEGER NOT NULL UNIQUE,
+            scheduled_by INTEGER NOT NULL,
+            meeting_date TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            meeting_format TEXT NOT NULL,
+            location TEXT NOT NULL,
+            agenda TEXT,
+            status TEXT NOT NULL DEFAULT 'Scheduled',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            held_at TIMESTAMP,
+            FOREIGN KEY (employee_review_id) REFERENCES employee_reviews(id),
+            FOREIGN KEY (scheduled_by) REFERENCES users(id),
+            CHECK (meeting_format IN ('In person', 'Online', 'Hybrid')),
+            CHECK (status IN ('Scheduled', 'Rescheduled', 'Held', 'Cancelled'))
+        );
+        CREATE TABLE IF NOT EXISTS par_meeting_attendees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            par_meeting_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            attendee_role TEXT NOT NULL,
+            FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            UNIQUE(par_meeting_id, user_id),
+            CHECK (attendee_role IN ('Employee', 'Supervisor', 'Manager'))
+        );
+        CREATE TABLE IF NOT EXISTS user_unavailability (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            start_at TEXT NOT NULL,
+            end_at TEXT NOT NULL,
+            reason TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            CHECK (end_at > start_at)
+        );
+        CREATE INDEX IF NOT EXISTS idx_par_meeting_availability
+        ON par_meeting_attendees(user_id, par_meeting_id);
+        CREATE INDEX IF NOT EXISTS idx_user_unavailability_window
+        ON user_unavailability(user_id, start_at, end_at);
+        """
+    )
+
+
+def get_par_meeting_context(connection, employee_review_id):
+    ensure_par_meeting_schema(connection)
+    return connection.execute(
+        """
+        SELECT employee_reviews.id AS employee_review_id,
+               employee_reviews.review_cycle_id,
+               employee_reviews.status AS review_status,
+               employee_reviews.employee_name_snapshot,
+               employee_reviews.employee_code_snapshot,
+               employee_reviews.department_snapshot,
+               employees.user_id AS employee_user_id,
+               employee_reviews.supervisor_id,
+               supervisor.full_name AS supervisor_name,
+               manager_approvals.manager_id,
+               manager.full_name AS manager_name,
+               review_cycles.cycle_name,
+               review_cycles.status AS cycle_status,
+               par_meetings.id AS par_meeting_id,
+               par_meetings.meeting_date,
+               par_meetings.start_time,
+               par_meetings.end_time,
+               par_meetings.meeting_format,
+               par_meetings.location,
+               par_meetings.agenda,
+               par_meetings.status AS par_status
+        FROM employee_reviews
+        JOIN employees ON employees.id = employee_reviews.employee_id
+        JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+        JOIN users AS supervisor ON supervisor.id = employee_reviews.supervisor_id
+        JOIN manager_approvals ON manager_approvals.employee_review_id = employee_reviews.id
+            AND manager_approvals.status = 'Approved'
+        JOIN users AS manager ON manager.id = manager_approvals.manager_id
+        LEFT JOIN par_meetings ON par_meetings.employee_review_id = employee_reviews.id
+        WHERE employee_reviews.id = ?
+        """,
+        (employee_review_id,)
+    ).fetchone()
+
+
+def can_access_par_meeting(connection, review):
+    """PAR details are private to people actually attending the meeting."""
+    if session["user_id"] in {
+        review["employee_user_id"], review["supervisor_id"]
+    }:
+        return True
+    if session["user_role"] != "Manager" or not review["par_meeting_id"]:
+        return False
+    return connection.execute(
+        """SELECT 1 FROM par_meeting_attendees
+           WHERE par_meeting_id = ? AND user_id = ? AND attendee_role = 'Manager'""",
+        (review["par_meeting_id"], session["user_id"])
+    ).fetchone() is not None
+
+
+def par_attendees(review, include_manager):
+    attendees = [
+        (review["employee_user_id"], "Employee"),
+        (review["supervisor_id"], "Supervisor")
+    ]
+    if include_manager:
+        attendees.append((review["manager_id"], "Manager"))
+    return attendees
+
+
+def valid_par_slot(connection, attendee_ids, meeting_date, start_time, end_time,
+                   excluding_meeting_id=None):
+    start_at = f"{meeting_date}T{start_time}"
+    end_at = f"{meeting_date}T{end_time}"
+    marks = ",".join("?" for _ in attendee_ids)
+    unavailable = connection.execute(
+        f"""SELECT 1 FROM user_unavailability
+            WHERE user_id IN ({marks}) AND start_at < ? AND end_at > ? LIMIT 1""",
+        (*attendee_ids, end_at, start_at)
+    ).fetchone()
+    if unavailable:
+        return False
+    query = f"""SELECT 1 FROM par_meetings
+        JOIN par_meeting_attendees ON par_meeting_attendees.par_meeting_id = par_meetings.id
+        WHERE par_meeting_attendees.user_id IN ({marks})
+        AND par_meetings.meeting_date = ?
+        AND par_meetings.status IN ('Scheduled', 'Rescheduled')
+        AND par_meetings.start_time < ? AND par_meetings.end_time > ?"""
+    parameters = [*attendee_ids, meeting_date, end_time, start_time]
+    if excluding_meeting_id:
+        query += " AND par_meetings.id != ?"
+        parameters.append(excluding_meeting_id)
+    return connection.execute(query + " LIMIT 1", parameters).fetchone() is None
+
+
 def get_private_manager_change_request(
     connection,
     employee_review_id,
@@ -13383,6 +13534,21 @@ def approve_manager_review(employee_review_id):
 
         connection.execute(
             """
+            INSERT INTO review_actions
+            (review_cycle_id, employee_review_id, assigned_to, action_type,
+             title, description, status, priority)
+            VALUES (?, ?, ?, 'PAR_MEETING', 'Arrange PAR meeting',
+                    'Check shared availability and arrange the Performance Appraisal Review meeting.',
+                    'Pending', 'High')
+            ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type)
+            DO UPDATE SET title=excluded.title, description=excluded.description,
+                status='Pending', completed_at=NULL, priority='High'
+            """,
+            (review["review_cycle_id"], employee_review_id, review["supervisor_id"])
+        )
+
+        connection.execute(
+            """
             UPDATE review_actions
             SET
                 status = 'Completed',
@@ -13781,7 +13947,265 @@ def request_manager_review_changes(employee_review_id):
 
 
 # =========================================================
-# PB11 - FINAL REVIEW OUTCOME + ACKNOWLEDGEMENT
+# PB11 - PAR MEETING + AVAILABILITY
+# =========================================================
+
+@app.route("/reviews/<int:employee_review_id>/par-meeting")
+def par_meeting_workspace(employee_review_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    connection = get_db_connection()
+    try:
+        review = get_par_meeting_context(connection, employee_review_id)
+        if review is None or not can_access_par_meeting(connection, review):
+            flash("PAR meeting not found.", "error")
+            return redirect(url_for("dashboard"))
+        attendees = []
+        if review["par_meeting_id"]:
+            attendees = connection.execute(
+                """SELECT users.full_name, par_meeting_attendees.attendee_role
+                   FROM par_meeting_attendees JOIN users ON users.id = par_meeting_attendees.user_id
+                   WHERE par_meeting_attendees.par_meeting_id = ?
+                   ORDER BY CASE par_meeting_attendees.attendee_role
+                       WHEN 'Employee' THEN 1 WHEN 'Supervisor' THEN 2 ELSE 3 END""",
+                (review["par_meeting_id"],)
+            ).fetchall()
+        manager_attending = any(attendee["attendee_role"] == "Manager" for attendee in attendees)
+        return render_template(
+            "par_meeting.html", review=review, attendees=attendees,
+            manager_attending=manager_attending,
+            can_schedule=session["user_role"] == "Supervisor" and review["supervisor_id"] == session["user_id"],
+            user_name=session["user_name"], user_role=session["user_role"]
+        )
+    finally:
+        connection.close()
+
+
+@app.route("/reviews/<int:employee_review_id>/par-meeting/availability")
+def par_meeting_availability(employee_review_id):
+    if "user_id" not in session or session["user_role"] != "Supervisor":
+        return jsonify({"success": False, "message": "Supervisor access is required."}), 403
+    meeting_date = request.args.get("date", "")
+    duration_raw = request.args.get("duration", "60")
+    manager_attends = request.args.get("manager_attends") == "true"
+    try:
+        date_value = datetime.strptime(meeting_date, "%Y-%m-%d").date()
+        duration = int(duration_raw)
+        if duration not in (30, 45, 60, 90):
+            raise ValueError
+    except ValueError:
+        return jsonify({"success": False, "message": "Choose a valid weekday and meeting duration."}), 400
+    if date_value.weekday() >= 5:
+        return jsonify({"success": True, "slots": [], "message": "PAR meetings are scheduled on weekdays, 9:00 AM–5:00 PM."})
+    connection = get_db_connection()
+    try:
+        review = get_par_meeting_context(connection, employee_review_id)
+        if (review is None or review["supervisor_id"] != session["user_id"]
+                or review["cycle_status"] != "Active"
+                or review["review_status"] not in ("Approved", "Completed")):
+            return jsonify({"success": False, "message": "PAR meeting not found."}), 404
+        attendee_ids = [user_id for user_id, _ in par_attendees(review, manager_attends)]
+        slots = []
+        current = datetime.combine(date_value, datetime.min.time()).replace(hour=9)
+        closing = current.replace(hour=17)
+        while current + timedelta(minutes=duration) <= closing:
+            end = current + timedelta(minutes=duration)
+            if valid_par_slot(connection, attendee_ids, meeting_date, current.strftime("%H:%M"), end.strftime("%H:%M"), review["par_meeting_id"]):
+                slots.append({"value": current.strftime("%H:%M"), "label": current.strftime("%I:%M %p").lstrip("0")})
+            current += timedelta(minutes=30)
+        return jsonify({"success": True, "slots": slots, "message": "" if slots else "No shared availability was found for this date."})
+    finally:
+        connection.close()
+
+
+@app.route("/reviews/<int:employee_review_id>/par-meeting/schedule", methods=["POST"])
+def schedule_par_meeting(employee_review_id):
+    if "user_id" not in session or session["user_role"] != "Supervisor":
+        flash("Only the assigned supervisor can arrange this PAR meeting.", "error")
+        return redirect(url_for("dashboard"))
+    meeting_date = request.form.get("meeting_date", "").strip()
+    start_time = request.form.get("start_time", "").strip()
+    duration_raw = request.form.get("duration", "60").strip()
+    meeting_format = request.form.get("meeting_format", "").strip()
+    location = request.form.get("location", "").strip()
+    agenda = request.form.get("agenda", "").strip()
+    manager_attends = request.form.get("manager_attends") == "on"
+    try:
+        start = datetime.strptime(f"{meeting_date} {start_time}", "%Y-%m-%d %H:%M")
+        duration = int(duration_raw)
+        if duration not in (30, 45, 60, 90) or start.weekday() >= 5 or start.hour < 9:
+            raise ValueError
+        end = start + timedelta(minutes=duration)
+        if end.hour > 17 or (end.hour == 17 and end.minute > 0):
+            raise ValueError
+    except ValueError:
+        flash("Choose a weekday time between 9:00 AM and 5:00 PM and a valid duration.", "error")
+        return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+    if meeting_format not in ("In person", "Online", "Hybrid") or not location or len(location) > 300 or len(agenda) > 3000:
+        flash("Provide a meeting format, location or link, and a concise agenda.", "error")
+        return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+    connection = get_db_connection()
+    try:
+        review = get_par_meeting_context(connection, employee_review_id)
+        if review is None or review["supervisor_id"] != session["user_id"]:
+            flash("PAR meeting not found.", "error")
+            return redirect(url_for("dashboard"))
+        if review["cycle_status"] != "Active" or review["review_status"] not in ("Approved", "Completed"):
+            flash("This review is not ready for a PAR meeting.", "error")
+            return redirect(url_for("dashboard"))
+        if review["par_status"] == "Held":
+            flash("This PAR meeting has already been marked as held.", "error")
+            return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+        attendees = par_attendees(review, manager_attends)
+        if not valid_par_slot(connection, [user_id for user_id, _ in attendees], meeting_date, start_time, end.strftime("%H:%M"), review["par_meeting_id"]):
+            flash("That time is no longer available for every attendee. Check availability again.", "error")
+            return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+        previous_attendee_ids = set()
+        if review["par_meeting_id"]:
+            previous_attendee_ids = {
+                row["user_id"] for row in connection.execute(
+                    "SELECT user_id FROM par_meeting_attendees WHERE par_meeting_id = ?",
+                    (review["par_meeting_id"],)
+                ).fetchall()
+            }
+            connection.execute("""UPDATE par_meetings SET meeting_date=?, start_time=?, end_time=?, meeting_format=?, location=?, agenda=?, status='Rescheduled', scheduled_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?""",
+                (meeting_date, start_time, end.strftime("%H:%M"), meeting_format, location, agenda, session["user_id"], review["par_meeting_id"]))
+            meeting_id = review["par_meeting_id"]
+            connection.execute("DELETE FROM par_meeting_attendees WHERE par_meeting_id = ?", (meeting_id,))
+            action_word = "rescheduled"
+        else:
+            meeting_id = connection.execute("""INSERT INTO par_meetings (employee_review_id, scheduled_by, meeting_date, start_time, end_time, meeting_format, location, agenda) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (employee_review_id, session["user_id"], meeting_date, start_time, end.strftime("%H:%M"), meeting_format, location, agenda)).lastrowid
+            action_word = "scheduled"
+        connection.executemany("INSERT INTO par_meeting_attendees (par_meeting_id, user_id, attendee_role) VALUES (?, ?, ?)",
+            [(meeting_id, user_id, role) for user_id, role in attendees])
+        connection.execute("""INSERT INTO review_actions (review_cycle_id, employee_review_id, assigned_to, action_type, title, description, status, priority)
+            VALUES (?, ?, ?, 'PAR_MEETING', 'Hold PAR meeting', 'Lead the scheduled Performance Appraisal Review meeting and record its outcome.', 'Pending', 'High')
+            ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type) DO UPDATE SET status='Pending', completed_at=NULL""",
+            (review["review_cycle_id"], employee_review_id, review["supervisor_id"]))
+        for user_id, role in attendees:
+            if user_id != session["user_id"]:
+                connection.execute("""INSERT INTO notifications (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                    VALUES (?, ?, ?, 'PAR_MEETING_SCHEDULED', 'PAR meeting ' || ?, ?)""",
+                    (user_id, review["review_cycle_id"], employee_review_id, action_word.title(),
+                     f"Your PAR meeting is {action_word} for {meeting_date} at {start.strftime('%I:%M %p')}."))
+        for user_id in previous_attendee_ids - {user_id for user_id, _ in attendees}:
+            connection.execute("""INSERT INTO notifications (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                VALUES (?, ?, ?, 'PAR_MEETING_ATTENDANCE_UPDATED', 'PAR meeting attendance updated', ?)""",
+                (user_id, review["review_cycle_id"], employee_review_id,
+                 "You are no longer required to attend this PAR meeting."))
+        connection.commit()
+        flash(f"PAR meeting {action_word}. All selected attendees were notified.", "success")
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("PAR schedule error:", error)
+        flash("The PAR meeting could not be saved.", "error")
+    finally:
+        connection.close()
+    return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+
+
+@app.route("/reviews/<int:employee_review_id>/par-meeting/held", methods=["POST"])
+def mark_par_meeting_held(employee_review_id):
+    if "user_id" not in session or session["user_role"] != "Supervisor":
+        flash("Only the assigned supervisor can update this meeting.", "error")
+        return redirect(url_for("dashboard"))
+    connection = get_db_connection()
+    try:
+        review = get_par_meeting_context(connection, employee_review_id)
+        if review is None or review["supervisor_id"] != session["user_id"] or review["par_status"] not in ("Scheduled", "Rescheduled"):
+            flash("This meeting cannot be marked as held.", "error")
+            return redirect(url_for("dashboard"))
+        connection.execute("UPDATE par_meetings SET status='Held', held_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (review["par_meeting_id"],))
+        connection.execute("UPDATE review_actions SET status='Completed', completed_at=CURRENT_TIMESTAMP WHERE employee_review_id=? AND assigned_to=? AND action_type='PAR_MEETING'", (employee_review_id, session["user_id"]))
+        connection.commit()
+        flash("PAR meeting marked as held. You can now record the outcome in PB12.", "success")
+    finally:
+        connection.close()
+    return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+
+
+@app.route("/reviews/<int:employee_review_id>/par-meeting/cancel", methods=["POST"])
+def cancel_par_meeting(employee_review_id):
+    if "user_id" not in session or session["user_role"] != "Supervisor":
+        flash("Only the assigned supervisor can cancel this meeting.", "error")
+        return redirect(url_for("dashboard"))
+    connection = get_db_connection()
+    try:
+        review = get_par_meeting_context(connection, employee_review_id)
+        if (review is None or review["supervisor_id"] != session["user_id"]
+                or review["par_status"] not in ("Scheduled", "Rescheduled")):
+            flash("This meeting cannot be cancelled.", "error")
+            return redirect(url_for("dashboard"))
+        attendee_ids = connection.execute(
+            "SELECT user_id FROM par_meeting_attendees WHERE par_meeting_id = ?",
+            (review["par_meeting_id"],)
+        ).fetchall()
+        connection.execute("UPDATE par_meetings SET status='Cancelled', updated_at=CURRENT_TIMESTAMP WHERE id=?", (review["par_meeting_id"],))
+        for attendee in attendee_ids:
+            if attendee["user_id"] != session["user_id"]:
+                connection.execute("""INSERT INTO notifications (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                    VALUES (?, ?, ?, 'PAR_MEETING_CANCELLED', 'PAR meeting cancelled', ?)""",
+                    (attendee["user_id"], review["review_cycle_id"], employee_review_id,
+                     "The scheduled PAR meeting was cancelled. The supervisor will arrange a new time."))
+        connection.commit()
+        flash("PAR meeting cancelled. You can arrange a new time when ready.", "success")
+    finally:
+        connection.close()
+    return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+
+
+@app.route("/availability", methods=["GET", "POST"])
+def availability():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    if session["user_role"] not in ("Employee", "Supervisor", "Manager"):
+        flash("Availability is available to meeting participants only.", "error")
+        return redirect(url_for("dashboard"))
+    connection = get_db_connection()
+    try:
+        ensure_par_meeting_schema(connection)
+        if request.method == "POST":
+            start_at = request.form.get("start_at", "").strip()
+            end_at = request.form.get("end_at", "").strip()
+            reason = request.form.get("reason", "").strip()
+            try:
+                start = datetime.fromisoformat(start_at)
+                end = datetime.fromisoformat(end_at)
+                if end <= start or len(reason) > 300:
+                    raise ValueError
+            except ValueError:
+                flash("Enter a valid unavailable period and optional reason.", "error")
+            else:
+                connection.execute("INSERT INTO user_unavailability (user_id, start_at, end_at, reason) VALUES (?, ?, ?, ?)", (session["user_id"], start.strftime("%Y-%m-%dT%H:%M"), end.strftime("%Y-%m-%dT%H:%M"), reason))
+                connection.commit()
+                flash("Your unavailable time was saved.", "success")
+            return redirect(url_for("availability"))
+        periods = connection.execute("SELECT id, start_at, end_at, reason FROM user_unavailability WHERE user_id=? AND end_at >= ? ORDER BY start_at", (session["user_id"], datetime.now().strftime("%Y-%m-%dT%H:%M"))).fetchall()
+        return render_template("availability.html", periods=periods, user_name=session["user_name"], user_role=session["user_role"])
+    finally:
+        connection.close()
+
+
+@app.route("/availability/<int:period_id>/delete", methods=["POST"])
+def delete_availability(period_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    if session["user_role"] not in ("Employee", "Supervisor", "Manager"):
+        return redirect(url_for("dashboard"))
+    connection = get_db_connection()
+    try:
+        ensure_par_meeting_schema(connection)
+        connection.execute("DELETE FROM user_unavailability WHERE id=? AND user_id=?", (period_id, session["user_id"]))
+        connection.commit()
+        flash("Unavailable time removed.", "success")
+    finally:
+        connection.close()
+    return redirect(url_for("availability"))
+
+
+# =========================================================
+# FINAL REVIEW OUTCOME + ACKNOWLEDGEMENT
 # =========================================================
 
 def get_final_review_outcome_context(connection, employee_review_id):

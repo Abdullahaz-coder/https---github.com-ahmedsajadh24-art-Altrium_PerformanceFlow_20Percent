@@ -167,3 +167,18 @@ editEmployeeForm.addEventListener(
 
     }
 );
+const editDepartmentSelect = document.getElementById("editDepartment");
+const editSupervisorSelect = document.getElementById("editSupervisor");
+const editSupervisorOptions = Array.from(editSupervisorSelect?.options || []).slice(1);
+
+function filterEditSupervisors() {
+    if (!editSupervisorSelect) return;
+    const selected = editSupervisorSelect.value;
+    const matching = editSupervisorOptions.filter(option => option.dataset.department === editDepartmentSelect?.value);
+    editSupervisorSelect.replaceChildren(new Option(
+        matching.length ? "Not assigned yet" : "No active supervisors in this department", ""
+    ), ...matching);
+    editSupervisorSelect.value = matching.some(option => option.value === selected) ? selected : "";
+}
+editDepartmentSelect?.addEventListener("change", filterEditSupervisors);
+filterEditSupervisors();

@@ -996,6 +996,79 @@ connection.execute(
 
 
 # ==========================================
+# PB11 - PAR MEETINGS AND AVAILABILITY
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS par_meetings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_review_id INTEGER NOT NULL UNIQUE,
+        scheduled_by INTEGER NOT NULL,
+        meeting_date TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        meeting_format TEXT NOT NULL,
+        location TEXT NOT NULL,
+        agenda TEXT,
+        status TEXT NOT NULL DEFAULT 'Scheduled',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        held_at TIMESTAMP,
+        FOREIGN KEY (employee_review_id) REFERENCES employee_reviews(id),
+        FOREIGN KEY (scheduled_by) REFERENCES users(id),
+        CHECK (meeting_format IN ('In person', 'Online', 'Hybrid')),
+        CHECK (status IN ('Scheduled', 'Rescheduled', 'Held', 'Cancelled'))
+    )
+    """
+)
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS par_meeting_attendees (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        par_meeting_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        attendee_role TEXT NOT NULL,
+        FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        UNIQUE(par_meeting_id, user_id),
+        CHECK (attendee_role IN ('Employee', 'Supervisor', 'Manager'))
+    )
+    """
+)
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS user_unavailability (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        start_at TEXT NOT NULL,
+        end_at TEXT NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        CHECK (end_at > start_at)
+    )
+    """
+)
+
+connection.execute(
+    """
+    CREATE INDEX IF NOT EXISTS idx_par_meeting_availability
+    ON par_meeting_attendees(user_id, par_meeting_id)
+    """
+)
+
+connection.execute(
+    """
+    CREATE INDEX IF NOT EXISTS idx_user_unavailability_window
+    ON user_unavailability(user_id, start_at, end_at)
+    """
+)
+
+
+# ==========================================
 # REVIEW ASSIGNMENT LIFECYCLE
 # ==========================================
 

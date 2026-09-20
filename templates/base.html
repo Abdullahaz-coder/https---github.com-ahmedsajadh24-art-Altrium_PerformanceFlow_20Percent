@@ -179,6 +179,14 @@
 
                 {% elif user_role == "Supervisor" %}
 
+                    <a
+                        href="{{ url_for('availability') }}"
+                        class="nav-link {% if request.endpoint == 'availability' %}active{% endif %}"
+                    >
+                        <span class="nav-icon">◷</span>
+                        <span class="nav-label">Availability</span>
+                    </a>
+
 
                     <a
                         href="{{ url_for('my_team') }}"
@@ -237,6 +245,14 @@
 
                 {% elif user_role == "Employee" %}
 
+                    <a
+                        href="{{ url_for('availability') }}"
+                        class="nav-link {% if request.endpoint == 'availability' %}active{% endif %}"
+                    >
+                        <span class="nav-icon">◷</span>
+                        <span class="nav-label">Availability</span>
+                    </a>
+
 
                     <a
                         href="{{ url_for('dashboard') }}"
@@ -294,6 +310,14 @@
                 ====================================== -->
 
                 {% elif user_role == "Manager" %}
+
+                    <a
+                        href="{{ url_for('availability') }}"
+                        class="nav-link {% if request.endpoint == 'availability' %}active{% endif %}"
+                    >
+                        <span class="nav-icon">◷</span>
+                        <span class="nav-label">Availability</span>
+                    </a>
 
 
                     <a

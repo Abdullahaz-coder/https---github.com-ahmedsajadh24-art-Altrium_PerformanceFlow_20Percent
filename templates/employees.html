@@ -700,7 +700,7 @@ Employees | Altrium PerformanceFlow
 
                     {% for supervisor in supervisors %}
 
-                         <option value="{{ supervisor['id'] }}">
+                         <option value="{{ supervisor['id'] }}" data-department="{{ supervisor['department'] }}">
 
                             {{ supervisor["full_name"] }}
 

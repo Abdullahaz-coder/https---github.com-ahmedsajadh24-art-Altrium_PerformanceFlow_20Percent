@@ -208,6 +208,12 @@ Final Review Outcome | Altrium PerformanceFlow
     </div>
 </section>
 
+{% if user_role == "Supervisor" %}
+    <a href="{{ url_for('par_meeting_workspace', employee_review_id=review['employee_review_id']) }}" class="flow-primary-link final-par-link">
+        Arrange PAR meeting →
+    </a>
+{% endif %}
+
 
 {% if not readonly %}
 

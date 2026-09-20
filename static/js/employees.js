@@ -26,6 +26,23 @@ const supervisorField =
 const supervisorSelect =
     document.getElementById("supervisor");
 
+const departmentSelect = document.getElementById("department");
+const supervisorOptions = Array.from(supervisorSelect?.options || []).slice(1);
+
+function filterDepartmentSupervisors() {
+    if (!supervisorSelect) return;
+    const selected = supervisorSelect.value;
+    const department = departmentSelect?.value;
+    const matching = supervisorOptions.filter(option => option.dataset.department === department);
+    supervisorSelect.replaceChildren(new Option(
+        !department ? "Select a department first" : matching.length ? "Not assigned yet" : "No active supervisors in this department",
+        ""
+    ), ...matching);
+    supervisorSelect.value = matching.some(option => option.value === selected) ? selected : "";
+    supervisorSelect.disabled = accountRole?.value !== "Employee" || !department || !matching.length;
+}
+
+departmentSelect?.addEventListener("change", filterDepartmentSupervisors);
 
 function updateSupervisorField() {
 
@@ -37,7 +54,7 @@ function updateSupervisorField() {
     }
 
     if (supervisorSelect) {
-        supervisorSelect.disabled = !isEmployee;
+        filterDepartmentSupervisors();
 
         if (!isEmployee) {
             supervisorSelect.value = "";

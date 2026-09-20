@@ -1982,6 +1982,19 @@ Flowboard | Altrium PerformanceFlow
                                 Open Final Outcome →
                             </a>
 
+                        {% elif action["action_type"] == "PAR_MEETING"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'par_meeting_workspace',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Arrange PAR →
+                            </a>
+
                         {% endif %}
 
 

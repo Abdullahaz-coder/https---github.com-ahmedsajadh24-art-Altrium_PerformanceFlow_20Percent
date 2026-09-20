@@ -10,6 +10,47 @@ from database import DATABASE_PATH
 
 class WorkflowRegressionTests(unittest.TestCase):
 
+    def test_department_supervisor_validation_on_create(self):
+        connection = self.get_test_connection()
+        hr_id = connection.execute("SELECT id FROM users WHERE role = 'HR' LIMIT 1").fetchone()[0]
+        connection.close()
+        self.sign_in_as(hr_id, "HR")
+        payload = dict(full_name="Department Test", email="department.test@altrium.com",
+                       employee_code="DEP-TEST", hire_date="2026-01-01", department="Finance",
+                       job_title="Analyst", role="Employee", password="Temporary123!",
+                       supervisor_id=str(self.supervisor_user_id))
+        self.client.post("/employees/add", data=payload)
+        connection = self.get_test_connection()
+        self.assertIsNone(connection.execute("SELECT id FROM users WHERE email = ?", (payload['email'],)).fetchone())
+        connection.close()
+        payload['department'] = 'Operations'
+        self.client.post("/employees/add", data=payload)
+        connection = self.get_test_connection()
+        self.assertIsNotNone(connection.execute("SELECT id FROM users WHERE email = ?", (payload['email'],)).fetchone())
+        connection.close()
+
+    def test_review_assignment_requires_active_blueprint(self):
+        _, employee_id = self.create_employee("Blueprint")
+        connection = self.get_test_connection()
+        hr_id = connection.execute("SELECT id FROM users WHERE role = 'HR' LIMIT 1").fetchone()[0]
+        cycle_id = connection.execute("""INSERT INTO review_cycles
+            (cycle_name, cycle_year, cycle_number, start_date, end_date, status, created_by)
+            VALUES ('Blueprint Test', 2026, 1, '2026-01-01', '2026-12-31', 'Draft', ?)""", (hr_id,)).lastrowid
+        connection.commit()
+        self.sign_in_as(hr_id, "HR")
+        for status in (None, 'Archived', 'Active'):
+            if status:
+                connection.execute("DELETE FROM performance_items WHERE employee_id = ?", (employee_id,))
+                connection.execute("""INSERT INTO performance_items
+                    (employee_id, item_type, title, description, created_by, status)
+                    VALUES (?, 'Responsibility', 'Test blueprint', 'Test', ?, ?)""",
+                    (employee_id, self.supervisor_user_id, status))
+                connection.commit()
+            self.client.post(f"/review-cycles/{cycle_id}/assign", data={'employee_ids': str(employee_id)})
+            count = connection.execute("SELECT COUNT(*) FROM review_cycle_employees WHERE employee_id = ?", (employee_id,)).fetchone()[0]
+            self.assertEqual(count, 1 if status == 'Active' else 0)
+        connection.close()
+
     def setUp(self):
         self.temporary_directory = tempfile.TemporaryDirectory()
         self.database_path = Path(
@@ -1040,6 +1081,77 @@ class WorkflowRegressionTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.get_json()["success"])
+
+        self.sign_in_as(
+            self.supervisor_user_id,
+            "Supervisor",
+            "Regression Supervisor",
+        )
+        response = self.client.post(
+            f"/reviews/{review_id}/par-meeting/schedule",
+            data={
+                "meeting_date": "2026-06-15",
+                "start_time": "10:00",
+                "duration": "60",
+                "meeting_format": "Online",
+                "location": "https://meet.altrium.test/par",
+                "agenda": "Discuss the approved review and development priorities.",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        connection = self.get_test_connection()
+        try:
+            self.assertEqual(
+                connection.execute(
+                    "SELECT status FROM par_meetings WHERE employee_review_id = ?",
+                    (review_id,),
+                ).fetchone()["status"],
+                "Scheduled",
+            )
+        finally:
+            connection.close()
+
+        # The manager was not invited, so private meeting details stay hidden.
+        self.sign_in_as(manager_user_id, "Manager", "Regression E2EManager")
+        self.assertEqual(
+            self.client.get(f"/reviews/{review_id}/par-meeting").status_code,
+            302,
+        )
+        self.sign_in_as(hr["id"], "HR", hr["full_name"])
+        self.assertEqual(
+            self.client.get(f"/reviews/{review_id}/par-meeting").status_code,
+            302,
+        )
+
+        self.sign_in_as(subject_user_id, "Employee", "Regression E2ESubject")
+        self.assertEqual(
+            self.client.post(
+                "/availability",
+                data={
+                    "start_at": "2026-06-15T11:00",
+                    "end_at": "2026-06-15T12:00",
+                    "reason": "Training",
+                },
+            ).status_code,
+            302,
+        )
+        self.sign_in_as(
+            self.supervisor_user_id,
+            "Supervisor",
+            "Regression Supervisor",
+        )
+        availability = self.client.get(
+            f"/reviews/{review_id}/par-meeting/availability?date=2026-06-15&duration=60&manager_attends=false"
+        )
+        self.assertEqual(availability.status_code, 200)
+        unavailable_slots = {slot["value"] for slot in availability.get_json()["slots"]}
+        # The current meeting is intentionally kept selectable during a reschedule.
+        self.assertNotIn("11:00", unavailable_slots)
+
+        response = self.client.post(
+            f"/reviews/{review_id}/par-meeting/held"
+        )
+        self.assertEqual(response.status_code, 302)
 
         self.sign_in_as(subject_user_id, "Employee", "Regression E2ESubject")
         outcome = self.client.get(f"/reviews/{review_id}/final-outcome")
