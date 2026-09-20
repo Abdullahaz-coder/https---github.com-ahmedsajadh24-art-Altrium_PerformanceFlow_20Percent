@@ -2333,6 +2333,14 @@ def dashboard():
 
     connection = get_db_connection()
 
+    # A few PAR meetings may have been marked as held before the outcome
+    # workflow was introduced. Recreate their next, pending supervisor task
+    # before the Action Stream is built.
+    sync_par_workflow_actions(connection)
+    ensure_pdp_schema(connection)
+    sync_pdp_progress_actions(connection)
+    connection.commit()
+
 
     # =====================================
     # DEFAULT DASHBOARD DATA
@@ -12585,11 +12593,98 @@ def ensure_manager_change_request_schema(connection):
 
 def ensure_par_meeting_schema(connection):
     """Keep PB11 available for existing databases without a reset."""
+    existing_meetings = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'par_meetings'"
+    ).fetchone()
+    if existing_meetings and "employee_review_id INTEGER NOT NULL UNIQUE" in existing_meetings["sql"]:
+        # Databases created before PB12 do not yet have the outcome table.
+        connection.execute(
+            """CREATE TABLE IF NOT EXISTS par_meeting_outcomes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                par_meeting_id INTEGER NOT NULL UNIQUE,
+                recorded_by INTEGER NOT NULL,
+                discussion_summary TEXT NOT NULL,
+                confirmed_strengths TEXT,
+                development_priorities TEXT,
+                employee_comments TEXT,
+                agreed_actions TEXT NOT NULL,
+                outcome TEXT NOT NULL,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+                FOREIGN KEY (recorded_by) REFERENCES users(id),
+                CHECK (outcome IN ('PDP Required', 'No PDP Required'))
+            )"""
+        )
+        # PB11 originally allowed one meeting per review. Preserve those records
+        # while upgrading to a meeting history that supports follow-up PARs.
+        connection.executescript(
+            """
+            PRAGMA foreign_keys = OFF;
+            BEGIN;
+            ALTER TABLE par_meeting_outcomes RENAME TO par_meeting_outcomes_legacy;
+            ALTER TABLE par_meeting_attendees RENAME TO par_meeting_attendees_legacy;
+            ALTER TABLE par_meetings RENAME TO par_meetings_legacy;
+            CREATE TABLE par_meetings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_review_id INTEGER NOT NULL,
+                scheduled_by INTEGER NOT NULL,
+                meeting_date TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT NOT NULL,
+                meeting_format TEXT NOT NULL,
+                location TEXT NOT NULL,
+                agenda TEXT,
+                status TEXT NOT NULL DEFAULT 'Scheduled',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                held_at TIMESTAMP,
+                FOREIGN KEY (employee_review_id) REFERENCES employee_reviews(id),
+                FOREIGN KEY (scheduled_by) REFERENCES users(id),
+                CHECK (meeting_format IN ('In person', 'Online', 'Hybrid')),
+                CHECK (status IN ('Scheduled', 'Rescheduled', 'Held', 'Cancelled'))
+            );
+            CREATE TABLE par_meeting_attendees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                par_meeting_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                attendee_role TEXT NOT NULL,
+                FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                UNIQUE(par_meeting_id, user_id),
+                CHECK (attendee_role IN ('Employee', 'Supervisor', 'Manager'))
+            );
+            CREATE TABLE par_meeting_outcomes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                par_meeting_id INTEGER NOT NULL UNIQUE,
+                recorded_by INTEGER NOT NULL,
+                discussion_summary TEXT NOT NULL,
+                confirmed_strengths TEXT,
+                development_priorities TEXT,
+                employee_comments TEXT,
+                agreed_actions TEXT NOT NULL,
+                outcome TEXT NOT NULL,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+                FOREIGN KEY (recorded_by) REFERENCES users(id),
+                CHECK (outcome IN ('PDP Required', 'No PDP Required'))
+            );
+            INSERT INTO par_meetings SELECT * FROM par_meetings_legacy;
+            INSERT INTO par_meeting_attendees SELECT * FROM par_meeting_attendees_legacy;
+            INSERT INTO par_meeting_outcomes SELECT * FROM par_meeting_outcomes_legacy;
+            DROP TABLE par_meeting_outcomes_legacy;
+            DROP TABLE par_meeting_attendees_legacy;
+            DROP TABLE par_meetings_legacy;
+            COMMIT;
+            PRAGMA foreign_keys = ON;
+            """
+        )
     connection.executescript(
         """
         CREATE TABLE IF NOT EXISTS par_meetings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            employee_review_id INTEGER NOT NULL UNIQUE,
+            employee_review_id INTEGER NOT NULL,
             scheduled_by INTEGER NOT NULL,
             meeting_date TEXT NOT NULL,
             start_time TEXT NOT NULL,
@@ -12626,12 +12721,178 @@ def ensure_par_meeting_schema(connection):
             FOREIGN KEY (user_id) REFERENCES users(id),
             CHECK (end_at > start_at)
         );
+        CREATE TABLE IF NOT EXISTS par_meeting_outcomes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            par_meeting_id INTEGER NOT NULL UNIQUE,
+            recorded_by INTEGER NOT NULL,
+            discussion_summary TEXT NOT NULL,
+            confirmed_strengths TEXT,
+            development_priorities TEXT,
+            employee_comments TEXT,
+            agreed_actions TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+            FOREIGN KEY (recorded_by) REFERENCES users(id),
+            CHECK (outcome IN ('PDP Required', 'No PDP Required'))
+        );
         CREATE INDEX IF NOT EXISTS idx_par_meeting_availability
         ON par_meeting_attendees(user_id, par_meeting_id);
         CREATE INDEX IF NOT EXISTS idx_user_unavailability_window
         ON user_unavailability(user_id, start_at, end_at);
         """
     )
+
+
+def ensure_pdp_schema(connection):
+    """Create PB13 tables for existing project databases without a reset."""
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS pdp_plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_review_id INTEGER NOT NULL UNIQUE,
+            created_by INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            focus_area TEXT NOT NULL,
+            overall_goal TEXT NOT NULL,
+            success_measure TEXT NOT NULL,
+            target_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (employee_review_id) REFERENCES employee_reviews(id),
+            FOREIGN KEY (created_by) REFERENCES users(id),
+            CHECK (status IN ('Draft', 'Active', 'Completed'))
+        );
+        CREATE TABLE IF NOT EXISTS pdp_activities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pdp_plan_id INTEGER NOT NULL,
+            activity TEXT NOT NULL,
+            support_needed TEXT,
+            target_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Not Started',
+            employee_progress_note TEXT,
+            employee_updated_at TIMESTAMP,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (pdp_plan_id) REFERENCES pdp_plans(id) ON DELETE CASCADE,
+            CHECK (status IN ('Not Started', 'In Progress', 'Completed'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_pdp_activities_plan
+        ON pdp_activities(pdp_plan_id, sort_order);
+        """
+    )
+    activity_columns = {
+        column["name"]
+        for column in connection.execute("PRAGMA table_info(pdp_activities)").fetchall()
+    }
+    if "employee_progress_note" not in activity_columns:
+        connection.execute("ALTER TABLE pdp_activities ADD COLUMN employee_progress_note TEXT")
+    if "employee_updated_at" not in activity_columns:
+        connection.execute("ALTER TABLE pdp_activities ADD COLUMN employee_updated_at TIMESTAMP")
+
+
+def sync_par_workflow_actions(connection):
+    """Make sure every held PAR meeting has its next supervisor action.
+
+    This also safely repairs meetings that were completed before PB12
+    (recording PAR outcomes) was added to the product.
+    """
+    ensure_par_meeting_schema(connection)
+    pending_outcomes = connection.execute(
+        """
+        SELECT employee_reviews.id AS employee_review_id,
+               employee_reviews.review_cycle_id,
+               employee_reviews.supervisor_id
+        FROM employee_reviews
+        JOIN review_cycles
+            ON review_cycles.id = employee_reviews.review_cycle_id
+        JOIN par_meetings
+            ON par_meetings.id = (
+                SELECT latest_meeting.id
+                FROM par_meetings AS latest_meeting
+                WHERE latest_meeting.employee_review_id = employee_reviews.id
+                ORDER BY latest_meeting.id DESC
+                LIMIT 1
+            )
+        LEFT JOIN par_meeting_outcomes
+            ON par_meeting_outcomes.par_meeting_id = par_meetings.id
+        WHERE review_cycles.status = 'Active'
+          AND par_meetings.status = 'Held'
+          AND par_meeting_outcomes.id IS NULL
+        """
+    ).fetchall()
+
+    for review in pending_outcomes:
+        connection.execute(
+            """
+            INSERT INTO review_actions
+                (review_cycle_id, employee_review_id, assigned_to, action_type,
+                 title, description, status, priority)
+            VALUES (?, ?, ?, 'PAR_OUTCOME', 'Record PAR meeting outcome',
+                    'Document the PAR discussion and agreed development actions.',
+                    'Pending', 'High')
+            ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type)
+            DO UPDATE SET
+                title = excluded.title,
+                description = excluded.description,
+                status = 'Pending',
+                priority = 'High',
+                completed_at = NULL
+            """,
+            (
+                review["review_cycle_id"],
+                review["employee_review_id"],
+                review["supervisor_id"],
+            ),
+        )
+
+
+def sync_pdp_progress_actions(connection):
+    """Keep the employee progress task aligned with every active PDP."""
+    ensure_pdp_schema(connection)
+    plans = connection.execute(
+        """
+        SELECT pdp_plans.id AS pdp_plan_id,
+               pdp_plans.employee_review_id,
+               employee_reviews.review_cycle_id,
+               employees.user_id AS employee_user_id,
+               NOT EXISTS (
+                   SELECT 1 FROM pdp_activities
+                   WHERE pdp_activities.pdp_plan_id = pdp_plans.id
+                     AND pdp_activities.status != 'Completed'
+               ) AS all_activities_complete
+        FROM pdp_plans
+        JOIN employee_reviews ON employee_reviews.id = pdp_plans.employee_review_id
+        JOIN employees ON employees.id = employee_reviews.employee_id
+        JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+        WHERE pdp_plans.status = 'Active'
+          AND review_cycles.status = 'Active'
+        """
+    ).fetchall()
+    for plan in plans:
+        complete = bool(plan["all_activities_complete"])
+        connection.execute(
+            """
+            INSERT INTO review_actions
+                (review_cycle_id, employee_review_id, assigned_to, action_type,
+                 title, description, status, priority, completed_at)
+            VALUES (?, ?, ?, 'PDP_PROGRESS', 'Update PDP progress',
+                    'Review your development activities and share your latest progress.',
+                    ?, 'Normal', CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END)
+            ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type)
+            DO UPDATE SET
+                title=excluded.title,
+                description=excluded.description,
+                status=excluded.status,
+                priority='Normal',
+                completed_at=excluded.completed_at
+            """,
+            (plan["review_cycle_id"], plan["employee_review_id"], plan["employee_user_id"],
+             "Completed" if complete else "Pending", int(complete)),
+        )
 
 
 def get_par_meeting_context(connection, employee_review_id):
@@ -12666,7 +12927,13 @@ def get_par_meeting_context(connection, employee_review_id):
         JOIN manager_approvals ON manager_approvals.employee_review_id = employee_reviews.id
             AND manager_approvals.status = 'Approved'
         JOIN users AS manager ON manager.id = manager_approvals.manager_id
-        LEFT JOIN par_meetings ON par_meetings.employee_review_id = employee_reviews.id
+        LEFT JOIN par_meetings ON par_meetings.id = (
+            SELECT latest_meeting.id
+            FROM par_meetings AS latest_meeting
+            WHERE latest_meeting.employee_review_id = employee_reviews.id
+            ORDER BY latest_meeting.id DESC
+            LIMIT 1
+        )
         WHERE employee_reviews.id = ?
         """,
         (employee_review_id,)
@@ -13971,10 +14238,23 @@ def par_meeting_workspace(employee_review_id):
                 (review["par_meeting_id"],)
             ).fetchall()
         manager_attending = any(attendee["attendee_role"] == "Manager" for attendee in attendees)
+        outcome = None
+        if review["par_meeting_id"]:
+            outcome = connection.execute(
+                """SELECT par_meeting_outcomes.*, users.full_name AS recorded_by_name
+                   FROM par_meeting_outcomes
+                   JOIN users ON users.id = par_meeting_outcomes.recorded_by
+                   WHERE par_meeting_outcomes.par_meeting_id = ?""",
+                (review["par_meeting_id"],)
+            ).fetchone()
         return render_template(
-            "par_meeting.html", review=review, attendees=attendees,
+            "par_meeting.html", review=review, attendees=attendees, outcome=outcome,
             manager_attending=manager_attending,
             can_schedule=session["user_role"] == "Supervisor" and review["supervisor_id"] == session["user_id"],
+            is_follow_up=review["par_status"] in ("Held", "Cancelled"),
+            can_record_outcome=(session["user_role"] == "Supervisor"
+                                and review["supervisor_id"] == session["user_id"]
+                                and review["par_status"] == "Held"),
             user_name=session["user_name"], user_role=session["user_role"]
         )
     finally:
@@ -14054,14 +14334,15 @@ def schedule_par_meeting(employee_review_id):
             flash("This review is not ready for a PAR meeting.", "error")
             return redirect(url_for("dashboard"))
         if review["par_status"] == "Held":
-            flash("This PAR meeting has already been marked as held.", "error")
-            return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+            # A held meeting is a permanent record; a later meeting is a new follow-up.
+            review = dict(review)
+            review["par_meeting_id"] = None
         attendees = par_attendees(review, manager_attends)
         if not valid_par_slot(connection, [user_id for user_id, _ in attendees], meeting_date, start_time, end.strftime("%H:%M"), review["par_meeting_id"]):
             flash("That time is no longer available for every attendee. Check availability again.", "error")
             return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
         previous_attendee_ids = set()
-        if review["par_meeting_id"]:
+        if review["par_meeting_id"] and review["par_status"] in ("Scheduled", "Rescheduled"):
             previous_attendee_ids = {
                 row["user_id"] for row in connection.execute(
                     "SELECT user_id FROM par_meeting_attendees WHERE par_meeting_id = ?",
@@ -14118,11 +14399,450 @@ def mark_par_meeting_held(employee_review_id):
             return redirect(url_for("dashboard"))
         connection.execute("UPDATE par_meetings SET status='Held', held_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (review["par_meeting_id"],))
         connection.execute("UPDATE review_actions SET status='Completed', completed_at=CURRENT_TIMESTAMP WHERE employee_review_id=? AND assigned_to=? AND action_type='PAR_MEETING'", (employee_review_id, session["user_id"]))
+        connection.execute(
+            """INSERT INTO review_actions
+                (review_cycle_id, employee_review_id, assigned_to, action_type,
+                 title, description, status, priority)
+                VALUES (?, ?, ?, 'PAR_OUTCOME', 'Record PAR meeting outcome',
+                        'Document the agreed discussion points and next development actions.',
+                        'Pending', 'High')
+                ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type)
+                DO UPDATE SET status='Pending', completed_at=NULL, priority='High'""",
+            (review["review_cycle_id"], employee_review_id, review["supervisor_id"])
+        )
         connection.commit()
         flash("PAR meeting marked as held. You can now record the outcome in PB12.", "success")
     finally:
         connection.close()
     return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+
+
+@app.route("/reviews/<int:employee_review_id>/par-meeting/outcome", methods=["POST"])
+def record_par_meeting_outcome(employee_review_id):
+    if "user_id" not in session or session["user_role"] != "Supervisor":
+        flash("Only the assigned supervisor can record this PAR outcome.", "error")
+        return redirect(url_for("dashboard"))
+
+    fields = {
+        "discussion_summary": request.form.get("discussion_summary", "").strip(),
+        "confirmed_strengths": request.form.get("confirmed_strengths", "").strip(),
+        "development_priorities": request.form.get("development_priorities", "").strip(),
+        "employee_comments": request.form.get("employee_comments", "").strip(),
+        "agreed_actions": request.form.get("agreed_actions", "").strip(),
+        "outcome": request.form.get("outcome", "").strip(),
+    }
+    if (not fields["discussion_summary"] or not fields["agreed_actions"]
+            or fields["outcome"] not in ("PDP Required", "No PDP Required")
+            or any(len(value) > 3000 for value in fields.values())):
+        flash("Add the discussion summary, agreed actions and a valid meeting outcome.", "error")
+        return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+
+    connection = get_db_connection()
+    try:
+        review = get_par_meeting_context(connection, employee_review_id)
+        if (review is None or review["supervisor_id"] != session["user_id"]
+                or review["par_status"] != "Held"):
+            flash("The PAR meeting must be marked as held before recording its outcome.", "error")
+            return redirect(url_for("dashboard"))
+
+        connection.execute(
+            """INSERT INTO par_meeting_outcomes
+                (par_meeting_id, recorded_by, discussion_summary, confirmed_strengths,
+                 development_priorities, employee_comments, agreed_actions, outcome)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(par_meeting_id) DO UPDATE SET
+                    recorded_by=excluded.recorded_by,
+                    discussion_summary=excluded.discussion_summary,
+                    confirmed_strengths=excluded.confirmed_strengths,
+                    development_priorities=excluded.development_priorities,
+                    employee_comments=excluded.employee_comments,
+                    agreed_actions=excluded.agreed_actions,
+                    outcome=excluded.outcome,
+                    updated_at=CURRENT_TIMESTAMP""",
+            (review["par_meeting_id"], session["user_id"], fields["discussion_summary"],
+             fields["confirmed_strengths"], fields["development_priorities"],
+             fields["employee_comments"], fields["agreed_actions"], fields["outcome"])
+        )
+        connection.execute(
+            """UPDATE review_actions SET status='Completed', completed_at=CURRENT_TIMESTAMP
+                WHERE employee_review_id=? AND assigned_to=? AND action_type='PAR_OUTCOME'
+                AND status != 'Completed'""",
+            (employee_review_id, session["user_id"])
+        )
+        if fields["outcome"] == "PDP Required":
+            connection.execute(
+                """INSERT INTO review_actions
+                    (review_cycle_id, employee_review_id, assigned_to, action_type,
+                     title, description, status, priority)
+                    VALUES (?, ?, ?, 'PDP_CREATION', 'Create employee PDP',
+                            'Create a development plan from the agreed PAR actions.', 'Pending', 'High')
+                    ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type)
+                    DO UPDATE SET status='Pending', completed_at=NULL, priority='High'""",
+                (review["review_cycle_id"], employee_review_id, review["supervisor_id"])
+            )
+        else:
+            connection.execute(
+                """UPDATE review_actions SET status='Completed', completed_at=CURRENT_TIMESTAMP
+                    WHERE employee_review_id=? AND assigned_to=? AND action_type='PDP_CREATION'""",
+                (employee_review_id, session["user_id"]),
+            )
+
+        attendee_ids = connection.execute(
+            "SELECT user_id FROM par_meeting_attendees WHERE par_meeting_id = ?",
+            (review["par_meeting_id"],)
+        ).fetchall()
+        for attendee in attendee_ids:
+            if attendee["user_id"] != session["user_id"]:
+                connection.execute(
+                    """INSERT INTO notifications
+                        (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                        VALUES (?, ?, ?, 'PAR_OUTCOME_RECORDED', 'PAR meeting outcome recorded', ?)""",
+                    (attendee["user_id"], review["review_cycle_id"], employee_review_id,
+                     f"The PAR meeting outcome for {review['employee_name_snapshot']} is now available.")
+                )
+        connection.commit()
+        flash("PAR meeting outcome recorded and shared with the meeting attendees.", "success")
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("PAR outcome error:", error)
+        flash("The PAR meeting outcome could not be saved.", "error")
+    finally:
+        connection.close()
+
+    return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
+
+
+def get_pdp_context(connection, employee_review_id):
+    ensure_pdp_schema(connection)
+    return connection.execute(
+        """
+        SELECT employee_reviews.id AS employee_review_id,
+               employee_reviews.review_cycle_id,
+               employee_reviews.supervisor_id,
+               employee_reviews.employee_name_snapshot,
+               employee_reviews.employee_code_snapshot,
+               employee_reviews.department_snapshot,
+               employees.user_id AS employee_user_id,
+               review_cycles.cycle_name,
+               review_cycles.status AS cycle_status,
+               pdp_plans.id AS pdp_plan_id,
+               pdp_plans.title,
+               pdp_plans.focus_area,
+               pdp_plans.overall_goal,
+               pdp_plans.success_measure,
+               pdp_plans.target_date,
+               pdp_plans.status AS pdp_status
+        FROM employee_reviews
+        JOIN employees ON employees.id = employee_reviews.employee_id
+        JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+        LEFT JOIN pdp_plans
+            ON pdp_plans.employee_review_id = employee_reviews.id
+        WHERE employee_reviews.id = ?
+          AND (
+              pdp_plans.id IS NOT NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM par_meetings
+                  JOIN par_meeting_outcomes
+                      ON par_meeting_outcomes.par_meeting_id = par_meetings.id
+                  WHERE par_meetings.employee_review_id = employee_reviews.id
+                    AND par_meeting_outcomes.outcome = 'PDP Required'
+              )
+          )
+        """,
+        (employee_review_id,),
+    ).fetchone()
+
+
+@app.route("/reviews/<int:employee_review_id>/pdp", methods=["GET", "POST"])
+def pdp_workspace(employee_review_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    connection = get_db_connection()
+    try:
+        review = get_pdp_context(connection, employee_review_id)
+        can_manage = (
+            review is not None
+            and session["user_role"] == "Supervisor"
+            and review["supervisor_id"] == session["user_id"]
+        )
+        can_update_progress = (
+            review is not None
+            and review["pdp_plan_id"] is not None
+            and session["user_role"] == "Employee"
+            and review["employee_user_id"] == session["user_id"]
+        )
+        can_monitor = review is not None and session["user_role"] == "HR"
+        if not can_manage and not can_update_progress and not can_monitor:
+            flash("This Personal Development Plan is not available to your account.", "error")
+            return redirect(url_for("dashboard"))
+
+        if request.method == "POST" and can_manage:
+            plan_fields = {
+                "title": request.form.get("title", "").strip(),
+                "focus_area": request.form.get("focus_area", "").strip(),
+                "overall_goal": request.form.get("overall_goal", "").strip(),
+                "success_measure": request.form.get("success_measure", "").strip(),
+                "target_date": request.form.get("target_date", "").strip(),
+            }
+            activities = []
+            raw_activities = request.form.getlist("activity")
+            raw_support = request.form.getlist("support_needed")
+            raw_dates = request.form.getlist("activity_target_date")
+            for index, activity in enumerate(raw_activities):
+                activity = activity.strip()
+                support = raw_support[index].strip() if index < len(raw_support) else ""
+                target_date = raw_dates[index].strip() if index < len(raw_dates) else ""
+                if activity or support or target_date:
+                    activities.append((activity, support, target_date))
+
+            if (not all(plan_fields.values())
+                    or any(len(value) > 3000 for value in plan_fields.values())
+                    or not activities
+                    or any(not activity or not target_date or len(activity) > 1000 or len(support) > 1000
+                           for activity, support, target_date in activities)):
+                flash("Complete the PDP summary and add at least one development activity with a target date.", "error")
+                return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
+
+            connection.execute(
+                """
+                INSERT INTO pdp_plans
+                    (employee_review_id, created_by, title, focus_area, overall_goal,
+                     success_measure, target_date, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')
+                ON CONFLICT(employee_review_id) DO UPDATE SET
+                    created_by=excluded.created_by,
+                    title=excluded.title,
+                    focus_area=excluded.focus_area,
+                    overall_goal=excluded.overall_goal,
+                    success_measure=excluded.success_measure,
+                    target_date=excluded.target_date,
+                    status='Active',
+                    updated_at=CURRENT_TIMESTAMP
+                """,
+                (employee_review_id, session["user_id"], plan_fields["title"],
+                 plan_fields["focus_area"], plan_fields["overall_goal"],
+                 plan_fields["success_measure"], plan_fields["target_date"]),
+            )
+            plan = connection.execute(
+                "SELECT id FROM pdp_plans WHERE employee_review_id = ?",
+                (employee_review_id,),
+            ).fetchone()
+            connection.execute("DELETE FROM pdp_activities WHERE pdp_plan_id = ?", (plan["id"],))
+            connection.executemany(
+                """
+                INSERT INTO pdp_activities
+                    (pdp_plan_id, activity, support_needed, target_date, sort_order)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                [(plan["id"], activity, support, target_date, position)
+                 for position, (activity, support, target_date) in enumerate(activities, start=1)],
+            )
+            connection.execute(
+                """
+                UPDATE review_actions
+                SET status='Completed', completed_at=CURRENT_TIMESTAMP
+                WHERE employee_review_id=? AND assigned_to=? AND action_type='PDP_CREATION'
+                """,
+                (employee_review_id, session["user_id"]),
+            )
+            connection.execute(
+                """
+                INSERT INTO notifications
+                    (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                VALUES (?, ?, ?, 'PDP_CREATED', 'Your development plan is ready', ?)
+                """,
+                (review["employee_user_id"], review["review_cycle_id"], employee_review_id,
+                 "Your supervisor has created a Personal Development Plan from your PAR meeting."),
+            )
+            connection.execute(
+                """
+                INSERT INTO review_actions
+                    (review_cycle_id, employee_review_id, assigned_to, action_type,
+                     title, description, status, priority)
+                VALUES (?, ?, ?, 'PDP_PROGRESS', 'Update PDP progress',
+                        'Review your development activities and share your latest progress.',
+                        'Pending', 'Normal')
+                ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type)
+                DO UPDATE SET status='Pending', completed_at=NULL, priority='Normal'
+                """,
+                (review["review_cycle_id"], employee_review_id, review["employee_user_id"]),
+            )
+            connection.commit()
+            flash("Personal Development Plan saved and shared with the employee.", "success")
+            return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
+
+        activities = []
+        if review["pdp_plan_id"]:
+            activities = connection.execute(
+                """SELECT * FROM pdp_activities WHERE pdp_plan_id = ?
+                   ORDER BY sort_order, id""",
+                (review["pdp_plan_id"],),
+            ).fetchall()
+        return render_template(
+            "pdp_workspace.html", review=review, activities=activities,
+            can_manage=can_manage, can_update_progress=can_update_progress,
+            can_monitor=can_monitor,
+            user_name=session["user_name"], user_role=session["user_role"],
+        )
+    finally:
+        connection.close()
+
+
+@app.route("/reviews/<int:employee_review_id>/pdp/progress", methods=["POST"])
+def update_pdp_progress(employee_review_id):
+    if "user_id" not in session or session["user_role"] != "Employee":
+        flash("Only the employee can update their PDP progress.", "error")
+        return redirect(url_for("dashboard"))
+
+    connection = get_db_connection()
+    try:
+        review = get_pdp_context(connection, employee_review_id)
+        if (review is None or review["pdp_plan_id"] is None
+                or review["employee_user_id"] != session["user_id"]):
+            flash("This Personal Development Plan is not available to your account.", "error")
+            return redirect(url_for("dashboard"))
+
+        activity_ids = request.form.getlist("activity_id")
+        statuses = request.form.getlist("activity_status")
+        notes = request.form.getlist("employee_progress_note")
+        allowed_statuses = {"Not Started", "In Progress", "Completed"}
+        if (not activity_ids or len(activity_ids) != len(statuses)
+                or len(activity_ids) != len(notes)
+                or any(status not in allowed_statuses for status in statuses)
+                or any(len(note.strip()) > 3000 for note in notes)):
+            flash("Check the progress updates and try again.", "error")
+            return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
+
+        permitted_ids = {
+            str(row["id"])
+            for row in connection.execute(
+                "SELECT id FROM pdp_activities WHERE pdp_plan_id = ?",
+                (review["pdp_plan_id"],),
+            ).fetchall()
+        }
+        if set(activity_ids) != permitted_ids:
+            flash("One or more PDP activities could not be verified.", "error")
+            return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
+
+        connection.executemany(
+            """
+            UPDATE pdp_activities
+            SET status=?, employee_progress_note=?, employee_updated_at=CURRENT_TIMESTAMP,
+                updated_at=CURRENT_TIMESTAMP
+            WHERE id=? AND pdp_plan_id=?
+            """,
+            [(status, note.strip(), activity_id, review["pdp_plan_id"])
+             for activity_id, status, note in zip(activity_ids, statuses, notes)],
+        )
+        all_complete = all(status == "Completed" for status in statuses)
+        connection.execute(
+            """
+            UPDATE review_actions
+            SET status=?, completed_at=CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END
+            WHERE employee_review_id=? AND assigned_to=? AND action_type='PDP_PROGRESS'
+            """,
+            ("Completed" if all_complete else "Pending", int(all_complete),
+             employee_review_id, session["user_id"]),
+        )
+        connection.execute(
+            """
+            INSERT INTO notifications
+                (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+            VALUES (?, ?, ?, 'PDP_PROGRESS_UPDATED', 'PDP progress updated', ?)
+            """,
+            (review["supervisor_id"], review["review_cycle_id"], employee_review_id,
+             f"{review['employee_name_snapshot']} has updated their development plan progress."),
+        )
+        connection.commit()
+        flash("Your PDP progress has been saved and shared with your supervisor.", "success")
+    except sqlite3.Error as error:
+        connection.rollback()
+        print("PDP progress error:", error)
+        flash("Your PDP progress could not be saved.", "error")
+    finally:
+        connection.close()
+    return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
+
+
+@app.route("/development-pulse")
+def development_pulse():
+    if "user_id" not in session or session["user_role"] not in ("Supervisor", "HR"):
+        flash("Development Pulse is available to supervisors and HR.", "error")
+        return redirect(url_for("dashboard"))
+
+    connection = get_db_connection()
+    try:
+        ensure_pdp_schema(connection)
+        scope_condition = ""
+        parameters = []
+        if session["user_role"] == "Supervisor":
+            scope_condition = "AND employee_reviews.supervisor_id = ?"
+            parameters.append(session["user_id"])
+        plans = connection.execute(
+            f"""
+            SELECT pdp_plans.id AS pdp_plan_id,
+                   employee_reviews.id AS employee_review_id,
+                   employee_reviews.employee_name_snapshot,
+                   employee_reviews.employee_code_snapshot,
+                   employee_reviews.department_snapshot,
+                   users.full_name AS supervisor_name,
+                   pdp_plans.title, pdp_plans.focus_area, pdp_plans.target_date,
+                   COUNT(pdp_activities.id) AS activity_total,
+                   SUM(CASE WHEN pdp_activities.status = 'Completed' THEN 1 ELSE 0 END) AS completed_total,
+                   SUM(CASE WHEN pdp_activities.status = 'In Progress' THEN 1 ELSE 0 END) AS in_progress_total,
+                   SUM(CASE WHEN pdp_activities.status != 'Completed'
+                             AND date(pdp_activities.target_date) < date('now') THEN 1 ELSE 0 END) AS overdue_total,
+                   MAX(pdp_activities.employee_updated_at) AS last_employee_update
+            FROM pdp_plans
+            JOIN employee_reviews ON employee_reviews.id = pdp_plans.employee_review_id
+            JOIN users ON users.id = employee_reviews.supervisor_id
+            JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+            LEFT JOIN pdp_activities ON pdp_activities.pdp_plan_id = pdp_plans.id
+            WHERE pdp_plans.status = 'Active'
+              AND review_cycles.status = 'Active'
+              {scope_condition}
+            GROUP BY pdp_plans.id
+            ORDER BY overdue_total DESC, last_employee_update DESC, pdp_plans.target_date ASC
+            """,
+            parameters,
+        ).fetchall()
+        plan_cards = []
+        for plan in plans:
+            card = dict(plan)
+            card["activity_total"] = card["activity_total"] or 0
+            card["completed_total"] = card["completed_total"] or 0
+            card["in_progress_total"] = card["in_progress_total"] or 0
+            card["overdue_total"] = card["overdue_total"] or 0
+            card["progress_percent"] = round(
+                (card["completed_total"] / card["activity_total"] * 100)
+                if card["activity_total"] else 0
+            )
+            card["needs_attention"] = card["overdue_total"] > 0 or (
+                card["activity_total"] > 0 and card["in_progress_total"] == 0
+                and card["completed_total"] == 0
+            )
+            plan_cards.append(card)
+
+        view = request.args.get("view", "all")
+        if view == "attention":
+            visible_plans = [card for card in plan_cards if card["needs_attention"]]
+        elif view == "moving":
+            visible_plans = [card for card in plan_cards if card["in_progress_total"] > 0]
+        else:
+            view = "all"
+            visible_plans = plan_cards
+
+        return render_template(
+            "development_pulse.html", plans=visible_plans, view=view,
+            total_plans=len(plan_cards),
+            moving_plans=sum(card["in_progress_total"] > 0 for card in plan_cards),
+            attention_plans=sum(card["needs_attention"] for card in plan_cards),
+            user_name=session["user_name"], user_role=session["user_role"],
+        )
+    finally:
+        connection.close()
 
 
 @app.route("/reviews/<int:employee_review_id>/par-meeting/cancel", methods=["POST"])

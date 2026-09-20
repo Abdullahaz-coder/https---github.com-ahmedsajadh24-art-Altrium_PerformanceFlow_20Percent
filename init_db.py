@@ -753,7 +753,7 @@ connection.execute(
 
         id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        employee_review_id INTEGER NOT NULL UNIQUE,
+        employee_review_id INTEGER NOT NULL,
 
         supervisor_id INTEGER NOT NULL,
 
@@ -1055,6 +1055,27 @@ connection.execute(
 
 connection.execute(
     """
+    CREATE TABLE IF NOT EXISTS par_meeting_outcomes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        par_meeting_id INTEGER NOT NULL UNIQUE,
+        recorded_by INTEGER NOT NULL,
+        discussion_summary TEXT NOT NULL,
+        confirmed_strengths TEXT,
+        development_priorities TEXT,
+        employee_comments TEXT,
+        agreed_actions TEXT NOT NULL,
+        outcome TEXT NOT NULL,
+        recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (par_meeting_id) REFERENCES par_meetings(id),
+        FOREIGN KEY (recorded_by) REFERENCES users(id),
+        CHECK (outcome IN ('PDP Required', 'No PDP Required'))
+    )
+    """
+)
+
+connection.execute(
+    """
     CREATE INDEX IF NOT EXISTS idx_par_meeting_availability
     ON par_meeting_attendees(user_id, par_meeting_id)
     """
@@ -1064,6 +1085,52 @@ connection.execute(
     """
     CREATE INDEX IF NOT EXISTS idx_user_unavailability_window
     ON user_unavailability(user_id, start_at, end_at)
+    """
+)
+
+
+# ==========================================
+# PERSONAL DEVELOPMENT PLANS (PB13)
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS pdp_plans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_review_id INTEGER NOT NULL UNIQUE,
+        created_by INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        focus_area TEXT NOT NULL,
+        overall_goal TEXT NOT NULL,
+        success_measure TEXT NOT NULL,
+        target_date TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_review_id) REFERENCES employee_reviews(id),
+        FOREIGN KEY (created_by) REFERENCES users(id),
+        CHECK (status IN ('Draft', 'Active', 'Completed'))
+    )
+    """
+)
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS pdp_activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pdp_plan_id INTEGER NOT NULL,
+        activity TEXT NOT NULL,
+        support_needed TEXT,
+        target_date TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Not Started',
+        employee_progress_note TEXT,
+        employee_updated_at TIMESTAMP,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pdp_plan_id) REFERENCES pdp_plans(id) ON DELETE CASCADE,
+        CHECK (status IN ('Not Started', 'In Progress', 'Completed'))
+    )
     """
 )
 

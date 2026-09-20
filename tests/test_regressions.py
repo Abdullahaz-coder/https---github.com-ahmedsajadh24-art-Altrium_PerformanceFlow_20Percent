@@ -1152,6 +1152,71 @@ class WorkflowRegressionTests(unittest.TestCase):
             f"/reviews/{review_id}/par-meeting/held"
         )
         self.assertEqual(response.status_code, 302)
+        response = self.client.post(
+            f"/reviews/{review_id}/par-meeting/outcome",
+            data={
+                "discussion_summary": "Reviewed the final outcome and agreed a practical development focus.",
+                "confirmed_strengths": "Reliable delivery and constructive teamwork.",
+                "development_priorities": "Deepen deployment planning skills.",
+                "employee_comments": "The employee agreed with the development focus.",
+                "agreed_actions": "Complete a deployment-planning course and lead one supervised release.",
+                "outcome": "PDP Required",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        connection = self.get_test_connection()
+        try:
+            recorded_outcome = connection.execute(
+                """SELECT outcome FROM par_meeting_outcomes
+                   JOIN par_meetings ON par_meetings.id = par_meeting_outcomes.par_meeting_id
+                   WHERE par_meetings.employee_review_id = ?""",
+                (review_id,),
+            ).fetchone()
+            self.assertEqual(recorded_outcome["outcome"], "PDP Required")
+            self.assertEqual(
+                connection.execute(
+                    """SELECT status FROM review_actions
+                       WHERE employee_review_id = ? AND action_type = 'PDP_CREATION'""",
+                    (review_id,),
+                ).fetchone()["status"],
+                "Pending",
+            )
+        finally:
+            connection.close()
+
+        # A completed PAR is retained while a later follow-up becomes a new record.
+        response = self.client.post(
+            f"/reviews/{review_id}/par-meeting/schedule",
+            data={
+                "meeting_date": "2026-06-16",
+                "start_time": "13:00",
+                "duration": "30",
+                "meeting_format": "In person",
+                "location": "Meeting Room 2",
+                "agenda": "Follow up on the agreed development actions.",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.post(f"/reviews/{review_id}/par-meeting/held").status_code, 302)
+        self.assertEqual(
+            self.client.post(
+                f"/reviews/{review_id}/par-meeting/outcome",
+                data={
+                    "discussion_summary": "Follow-up conversation completed.",
+                    "confirmed_strengths": "Progress against the first actions.",
+                    "development_priorities": "Continue the agreed plan.",
+                    "employee_comments": "The employee confirmed the next step.",
+                    "agreed_actions": "Continue the agreed development activity.",
+                    "outcome": "No PDP Required",
+                },
+            ).status_code,
+            302,
+        )
+        connection = self.get_test_connection()
+        try:
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM par_meetings WHERE employee_review_id = ?", (review_id,)).fetchone()[0], 2)
+        finally:
+            connection.close()
 
         self.sign_in_as(subject_user_id, "Employee", "Regression E2ESubject")
         outcome = self.client.get(f"/reviews/{review_id}/final-outcome")
@@ -1187,6 +1252,7 @@ class WorkflowRegressionTests(unittest.TestCase):
                 """
                 SELECT COUNT(*) FROM review_actions
                 WHERE employee_review_id = ? AND status = 'Pending'
+                AND action_type != 'PDP_CREATION'
                 """,
                 (review_id,),
             ).fetchone()[0]

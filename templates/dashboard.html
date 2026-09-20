@@ -1995,6 +1995,45 @@ Flowboard | Altrium PerformanceFlow
                                 Arrange PAR →
                             </a>
 
+                        {% elif action["action_type"] == "PAR_OUTCOME"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'par_meeting_workspace',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Record outcome →
+                            </a>
+
+                        {% elif action["action_type"] == "PDP_CREATION"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'pdp_workspace',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Create PDP →
+                            </a>
+
+                        {% elif action["action_type"] == "PDP_PROGRESS"
+                                and action["employee_review_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'pdp_workspace',
+                                    employee_review_id=action['employee_review_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Update PDP →
+                            </a>
+
                         {% endif %}
 
 

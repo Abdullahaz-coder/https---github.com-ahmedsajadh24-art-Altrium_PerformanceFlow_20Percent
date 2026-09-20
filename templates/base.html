@@ -187,6 +187,14 @@
                         <span class="nav-label">Availability</span>
                     </a>
 
+                    <a
+                        href="{{ url_for('development_pulse') }}"
+                        class="nav-link {% if request.endpoint in ('development_pulse', 'pdp_workspace') %}active{% endif %}"
+                    >
+                        <span class="nav-icon">◌</span>
+                        <span class="nav-label">Development</span>
+                    </a>
+
 
                     <a
                         href="{{ url_for('my_team') }}"
@@ -251,6 +259,14 @@
                     >
                         <span class="nav-icon">◷</span>
                         <span class="nav-label">Availability</span>
+                    </a>
+
+                    <a
+                        href="{{ url_for('development_pulse') }}"
+                        class="nav-link {% if request.endpoint in ('development_pulse', 'pdp_workspace') %}active{% endif %}"
+                    >
+                        <span class="nav-icon">◌</span>
+                        <span class="nav-label">Development</span>
                     </a>
 
 

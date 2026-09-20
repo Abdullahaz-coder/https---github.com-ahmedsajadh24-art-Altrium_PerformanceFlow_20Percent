@@ -15141,6 +15141,23 @@ span::after {
     line-height: 1.55;
 }
 
+.par-outcome-summary {
+    margin-top: 22px;
+    padding: 20px;
+    border-left: 3px solid #6544e8;
+    border-radius: 0 14px 14px 0;
+    background: #f7f6ff;
+}
+
+.par-outcome-summary span {
+    color: #5d40d7;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.par-outcome-summary p { margin: 9px 0 0; color: #28344a; line-height: 1.6; }
+
 .par-status-chip {
     align-self: start;
     padding: 8px 12px;
@@ -15195,8 +15212,99 @@ span::after {
 .par-period p { margin: 7px 0 0; color: #66738a; }
 .final-par-link { display: inline-flex; margin: 0 0 24px; }
 
+/* PB13 – Personal Development Plan */
+.pdp-console { margin-top: 24px; }
+.pdp-form label {
+    display: grid;
+    gap: 8px;
+    color: #293650;
+    font-size: 13px;
+    font-weight: 750;
+}
+.pdp-form input,
+.pdp-form textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid #d7ddeb;
+    border-radius: 12px;
+    background: #fbfcff;
+    color: #1d293d;
+    font: inherit;
+}
+.pdp-form textarea { min-height: 104px; resize: vertical; }
+.pdp-activities-heading {
+    margin: 30px 0 14px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e8f0;
+}
+.pdp-activities-heading p { margin: 8px 0 0; color: #68758c; font-size: 13px; }
+.pdp-activity-row {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr 150px;
+    gap: 14px;
+    margin: 0 0 14px;
+    padding: 18px;
+    border: 1px solid #e0e5f0;
+    border-radius: 16px;
+    background: #f9faff;
+}
+.pdp-activity-row legend {
+    padding: 0 5px;
+    color: #5940d6;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .1em;
+}
+.pdp-activity-row legend span { color: #8490a5; letter-spacing: 0; }
+.pdp-plan-summary {
+    display: grid;
+    grid-template-columns: 1.4fr 1.4fr .8fr;
+    gap: 14px;
+    margin: 24px 0;
+}
+.pdp-plan-summary > div {
+    padding: 18px;
+    border-radius: 15px;
+    background: #f7f8fc;
+}
+.pdp-plan-summary span,
+.pdp-progress-row p span {
+    display: block;
+    margin-bottom: 7px;
+    color: #687691;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .1em;
+}
+.pdp-plan-summary p { margin: 0; color: #2b3750; line-height: 1.55; }
+.pdp-progress-row {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 14px 22px;
+    margin: 0 0 16px;
+    padding: 20px;
+    border: 1px solid #e0e5f0;
+    border-radius: 16px;
+    background: #fbfcff;
+}
+.pdp-progress-row legend {
+    padding: 0 5px;
+    color: #5940d6;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .1em;
+}
+.pdp-activity-title { display: grid; gap: 5px; }
+.pdp-activity-title strong { color: #1e2a3d; }
+.pdp-activity-title span { color: #68758c; font-size: 12px; }
+.pdp-progress-row p { margin: 0; color: #53617a; font-size: 13px; line-height: 1.5; }
+.pdp-progress-row label:last-child { grid-column: 1 / -1; }
+
 @media (max-width: 700px) {
     .par-detail-card { padding: 22px; }
     .par-detail-grid, .par-form-grid { grid-template-columns: 1fr; }
     .par-held-form, .par-period { align-items: stretch; flex-direction: column; }
+    .pdp-activity-row { grid-template-columns: 1fr; }
+    .pdp-plan-summary, .pdp-progress-row { grid-template-columns: 1fr; }
 }
