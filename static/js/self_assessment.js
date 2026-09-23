@@ -983,19 +983,8 @@ if (
         "click",
         async function () {
 
-            console.log(
-                "Submit & Lock clicked"
-            );
-
-
             const readiness =
                 calculateSubmissionReadiness();
-
-
-            console.log(
-                "Submission readiness:",
-                readiness
-            );
 
 
             if (!readiness.ready) {
@@ -1011,12 +1000,6 @@ if (
 
             const reviewId =
                 assessmentWorkspace.dataset.reviewId;
-
-
-            console.log(
-                "Submitting review ID:",
-                reviewId
-            );
 
 
             confirmAssessmentSubmission.disabled =
@@ -1047,20 +1030,8 @@ if (
                     );
 
 
-                console.log(
-                    "Response status:",
-                    response.status
-                );
-
-
                 const responseText =
                     await response.text();
-
-
-                console.log(
-                    "Server response:",
-                    responseText
-                );
 
 
                 let data;
@@ -1114,12 +1085,6 @@ if (
             }
 
             catch (error) {
-
-                console.error(
-                    "Submission error:",
-                    error
-                );
-
 
                 confirmAssessmentSubmission.disabled =
                     false;

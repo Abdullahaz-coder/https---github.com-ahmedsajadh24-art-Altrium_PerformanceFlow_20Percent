@@ -1,0 +1,447 @@
+/* Shared finishing rules after the legacy page styles. */
+[hidden] { display: none !important; }
+button, input, select, textarea { font-family: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid #7865ed; outline-offset: 3px; }
+.pdp-console { display: block; }
+.pdp-header h1 { font-size: clamp(28px, 3vw, 42px); overflow-wrap: anywhere; }
+.pdp-header + .manager-review-context { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pdp-console > .manager-decision-form { margin-top: 24px; }
+.manager-decision-copy h2 { color: #1f2b40; }
+.manager-decision-copy p { color: #59677d; opacity: 1; }
+.manager-decision-copy .eyebrow { color: #6244db; }
+.manager-decision-console .flow-secondary-link { color: #5037c8; background: #f3f0ff; border-color: #ddd6ff; }
+.manager-decision-form > *, .pdp-activity-row > *, .records-filter-bar > * { min-width: 0; }
+.pdp-activity-progress { grid-column: 1 / -1; border-top: 1px solid #e0e5f0; padding-top: 12px; }
+.pdp-activity-progress strong { color: #5037c8; font-size: 13px; }
+.pdp-activity-progress p { color: #59677d; margin-top: 5px; line-height: 1.6; }
+.closure-help { margin-top: 10px; max-width: 460px; color: #5b6578; font-size: 13px; line-height: 1.6; }
+.signal-open-link { display: inline-block; margin: 10px 0 0 12px; color: #543bd8; font-size: 13px; font-weight: 700; }
+.pulse-plan-card, .pdp-monitor-row, .records-vault-panel { min-width: 0; overflow-wrap: anywhere; }
+.pdp-status.completed, .pulse-completed { color: #137948; background: #e6f6ed; }
+
+/* Sprint 2 workspaces: use a single calm content rhythm instead of narrow
+   inputs floating inside oversized two-column panels. */
+.page-availability .manager-approval-header h1,
+.page-par-meeting-workspace .manager-approval-header h1,
+.page-pdp-workspace .manager-approval-header h1 {
+    font-size: clamp(34px, 3.5vw, 52px);
+    letter-spacing: -0.045em;
+}
+
+.page-availability .manager-decision-console,
+.page-par-meeting-workspace .par-outcome-console,
+.page-pdp-workspace .pdp-console {
+    display: block;
+    margin-top: 24px;
+    padding: clamp(24px, 3vw, 38px);
+    border: 1px solid #e0e5ef;
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at 96% 0%, rgba(111, 82, 241, .08), transparent 28%),
+        #ffffff;
+    box-shadow: 0 16px 40px rgba(31, 42, 68, .06);
+}
+
+.page-pdp-workspace .manager-approval-header,
+.page-pdp-workspace .manager-review-context,
+.page-pdp-workspace .pdp-console {
+    max-width: 1240px;
+    margin-inline: auto;
+}
+
+.page-availability .manager-decision-copy,
+.page-par-meeting-workspace .par-outcome-console .manager-decision-copy,
+.page-pdp-workspace .pdp-console .manager-decision-copy {
+    max-width: 720px;
+}
+
+.page-availability .manager-decision-copy h2,
+.page-par-meeting-workspace .par-outcome-console .manager-decision-copy h2,
+.page-pdp-workspace .pdp-console .manager-decision-copy h2 {
+    margin: 8px 0 7px;
+    color: #1e2a40;
+    font-size: clamp(25px, 2.2vw, 34px);
+    letter-spacing: -0.035em;
+}
+
+.page-availability .manager-decision-copy p,
+.page-par-meeting-workspace .par-outcome-console .manager-decision-copy p,
+.page-pdp-workspace .pdp-console .manager-decision-copy p {
+    margin: 0;
+    color: #60708a;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.page-availability .availability-form,
+.page-par-meeting-workspace .par-outcome-form,
+.page-pdp-workspace .pdp-editor-form,
+.page-pdp-workspace .pdp-progress-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 24px;
+    margin-top: 26px;
+    padding: clamp(20px, 2.2vw, 28px);
+    border: 1px solid #e7eaf2;
+    border-radius: 20px;
+    background: #fbfcff;
+}
+
+.page-availability .availability-form .par-form-grid,
+.page-par-meeting-workspace .par-outcome-form .par-form-grid,
+.page-pdp-workspace .pdp-editor-form .par-form-grid {
+    grid-column: 1 / -1;
+}
+
+/* Do not stretch a short date control to the height of its neighbouring
+   narrative field. Keep both labels and their controls aligned at the top. */
+.page-pdp-workspace .pdp-editor-form .par-form-grid {
+    align-items: start;
+}
+
+.page-pdp-workspace .pdp-editor-form .par-form-grid > label {
+    align-self: start;
+    align-content: start;
+    grid-template-rows: auto auto;
+}
+
+.page-pdp-workspace .pdp-editor-form input[type="date"] {
+    height: 50px;
+    min-height: 50px;
+    align-self: start;
+}
+
+.page-availability .availability-form > label,
+.page-par-meeting-workspace .par-outcome-form > label,
+.page-pdp-workspace .pdp-editor-form > label,
+.page-pdp-workspace .pdp-progress-form > label {
+    grid-column: 1 / -1;
+}
+
+.page-availability .availability-form label,
+.page-par-meeting-workspace .par-outcome-form label,
+.page-pdp-workspace .pdp-editor-form label,
+.page-pdp-workspace .pdp-progress-form label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    min-width: 0;
+    gap: 9px;
+    color: #31405a;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.page-availability .availability-form input,
+.page-par-meeting-workspace .par-outcome-form input,
+.page-par-meeting-workspace .par-outcome-form select,
+.page-par-meeting-workspace .par-outcome-form textarea,
+.page-pdp-workspace .pdp-editor-form input,
+.page-pdp-workspace .pdp-editor-form textarea,
+.page-pdp-workspace .pdp-progress-form input,
+.page-pdp-workspace .pdp-progress-form select,
+.page-pdp-workspace .pdp-progress-form textarea {
+    width: 100%;
+    min-width: 0;
+    min-height: 50px;
+    padding: 13px 15px;
+    border: 1px solid #d7ddec;
+    border-radius: 13px;
+    background: #ffffff;
+    color: #1f2c43;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: normal;
+    line-height: 1.5;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+
+.page-availability .availability-form textarea,
+.page-par-meeting-workspace .par-outcome-form textarea,
+.page-pdp-workspace .pdp-editor-form textarea,
+.page-pdp-workspace .pdp-progress-form textarea {
+    min-height: 122px;
+    line-height: 1.55;
+}
+
+.page-availability .availability-form .manager-decision-footer,
+.page-par-meeting-workspace .par-outcome-form .manager-decision-footer,
+.page-pdp-workspace .pdp-editor-form .manager-decision-footer,
+.page-pdp-workspace .pdp-progress-form .manager-decision-footer {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 4px;
+    padding-top: 20px;
+    border-top: 1px solid #e4e8f1;
+}
+
+.page-availability .availability-form .manager-approve-button,
+.page-par-meeting-workspace .par-outcome-form .manager-approve-button,
+.page-pdp-workspace .pdp-editor-form .manager-approve-button,
+.page-pdp-workspace .pdp-progress-form .manager-approve-button,
+.page-par-meeting-workspace .par-schedule-form .manager-approve-button {
+    min-height: 50px;
+    padding: 0 22px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #5138df, #7048ed);
+    box-shadow: 0 10px 22px rgba(83, 56, 223, .22);
+}
+
+.page-par-meeting-workspace .par-scheduler:not(.availability-console) {
+    grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr);
+    gap: clamp(24px, 3vw, 48px);
+    padding: clamp(24px, 3vw, 38px);
+    border: 1px solid #e0e5ef;
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at 96% 0%, rgba(111, 82, 241, .09), transparent 27%),
+        #ffffff;
+    box-shadow: 0 16px 40px rgba(31, 42, 68, .06);
+}
+
+.page-par-meeting-workspace .par-scheduler:not(.availability-console) > .manager-decision-copy {
+    align-self: start;
+    padding-top: 8px;
+}
+
+.page-par-meeting-workspace .par-scheduler:not(.availability-console) > .manager-decision-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 22px;
+    padding: 26px;
+    border: 1px solid #e7eaf2;
+    border-radius: 20px;
+    background: #fbfcff;
+}
+
+.page-par-meeting-workspace .par-schedule-form > .par-form-grid,
+.page-par-meeting-workspace .par-schedule-form > .final-confirmation-check,
+.page-par-meeting-workspace .par-schedule-form > .par-check-button,
+.page-par-meeting-workspace .par-schedule-form > label,
+.page-par-meeting-workspace .par-schedule-form > .par-availability-message,
+.page-par-meeting-workspace .par-schedule-form > .manager-decision-footer {
+    grid-column: 1 / -1;
+}
+
+.page-par-meeting-workspace .par-schedule-form > label,
+.page-par-meeting-workspace .par-schedule-form .par-form-grid label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    min-width: 0;
+    gap: 9px;
+    color: #31405a;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.page-par-meeting-workspace .par-schedule-form input,
+.page-par-meeting-workspace .par-schedule-form select,
+.page-par-meeting-workspace .par-schedule-form textarea {
+    width: 100%;
+    min-height: 50px;
+    padding: 13px 15px;
+    border: 1px solid #d7ddec;
+    border-radius: 13px;
+    background: #ffffff;
+    color: #1f2c43;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: normal;
+    line-height: 1.5;
+}
+
+.page-par-meeting-workspace .par-schedule-form textarea { min-height: 112px; }
+.page-par-meeting-workspace .par-schedule-form .final-confirmation-check { padding: 13px 15px; margin: 0; border: 1px solid #ddd8ff; border-radius: 13px; background: #f5f3ff; }
+.page-par-meeting-workspace .par-schedule-form .par-check-button { width: fit-content; margin: 0; padding: 10px 14px; border-radius: 12px; }
+.page-par-meeting-workspace .par-schedule-form .par-availability-message { margin: 0; padding: 11px 13px; border-radius: 12px; background: #f2f5fb; color: #5d6b83; }
+.page-par-meeting-workspace .par-schedule-form .manager-decision-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 2px; padding-top: 20px; border-top: 1px solid #e4e8f1; }
+
+.page-pdp-workspace .pdp-editor-form .pdp-activities-heading,
+.page-pdp-workspace .pdp-progress-form .pdp-activities-heading { grid-column: 1 / -1; }
+.page-pdp-workspace .pdp-progress-form .pdp-activities-heading {
+    margin: 0 0 4px;
+    padding-top: 0;
+    border-top: 0;
+}
+.page-pdp-workspace .pdp-editor-form .pdp-activity-row,
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row { grid-column: 1 / -1; margin: 0; padding: 20px; border-color: #e1e6f0; background: #ffffff; }
+.page-pdp-workspace .pdp-editor-form .pdp-activity-row label,
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row label { grid-column: auto; }
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+}
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row label {
+    align-self: start;
+    align-content: start;
+    grid-template-rows: auto auto;
+}
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row select {
+    height: 50px;
+    min-height: 50px;
+    align-self: start;
+}
+
+/* Matching form interactions across the review workspaces. */
+.page-availability .availability-form :is(input, textarea),
+.page-par-meeting-workspace :is(.par-schedule-form, .par-outcome-form) :is(input, select, textarea),
+.page-pdp-workspace :is(.pdp-editor-form, .pdp-progress-form) :is(input, select, textarea) {
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.page-availability .availability-form :is(input, textarea):hover,
+.page-par-meeting-workspace :is(.par-schedule-form, .par-outcome-form) :is(input, select, textarea):hover,
+.page-pdp-workspace :is(.pdp-editor-form, .pdp-progress-form) :is(input, select, textarea):hover {
+    border-color: #b7bde0;
+}
+
+.page-pdp-workspace .pdp-editor-form .pdp-activity-row,
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.page-pdp-workspace .pdp-editor-form .pdp-activity-row:focus-within,
+.page-pdp-workspace .pdp-progress-form .pdp-progress-row:focus-within {
+    border-color: #c5bdff;
+    box-shadow: 0 6px 20px rgba(83, 56, 223, .06);
+}
+
+.page-review-cycle-workspace .cycle-launch-gate {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 18px;
+    padding: 18px;
+    border-color: #e0e5ef;
+    border-radius: 20px;
+    box-shadow: 0 10px 28px rgba(29, 41, 65, .045);
+}
+
+.page-review-cycle-workspace .launch-gate-action {
+    padding: 22px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #172039, #111827);
+}
+
+.page-review-cycle-workspace .launch-gate-action > strong { font-size: 18px; }
+.page-review-cycle-workspace .launch-gate-action > p { color: #bac4d5; font-size: 13px; }
+.page-review-cycle-workspace .schedule-cycle-button { min-height: 44px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 12px; }
+.page-review-cycle-workspace .schedule-cycle-button:disabled { opacity: .55; background: #dbe1ea; color: #39455a; }
+.page-review-cycle-workspace .eligible-employee { padding: 14px; border-radius: 14px; }
+.page-review-cycle-workspace .eligible-person strong { font-size: 14px; }
+.page-review-cycle-workspace .eligible-person span { font-size: 13px; }
+
+@media (max-width: 980px) {
+    .page-par-meeting-workspace .par-scheduler:not(.availability-console) { grid-template-columns: 1fr; }
+    .page-review-cycle-workspace .cycle-launch-gate { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+    .page-availability .availability-form,
+    .page-par-meeting-workspace .par-outcome-form,
+    .page-par-meeting-workspace .par-scheduler:not(.availability-console) > .manager-decision-form,
+    .page-pdp-workspace .pdp-editor-form,
+    .page-pdp-workspace .pdp-progress-form { grid-template-columns: 1fr; }
+    .page-pdp-workspace .pdp-progress-form .pdp-progress-row { grid-template-columns: 1fr; }
+
+    .page-availability .availability-form .manager-decision-footer,
+    .page-par-meeting-workspace .par-outcome-form .manager-decision-footer,
+    .page-par-meeting-workspace .par-schedule-form .manager-decision-footer,
+    .page-pdp-workspace .pdp-editor-form .manager-decision-footer,
+    .page-pdp-workspace .pdp-progress-form .manager-decision-footer { align-items: stretch; flex-direction: column; }
+
+    .page-availability .availability-form .manager-approve-button,
+    .page-par-meeting-workspace .par-outcome-form .manager-approve-button,
+    .page-par-meeting-workspace .par-schedule-form .manager-approve-button,
+    .page-pdp-workspace .pdp-editor-form .manager-approve-button,
+    .page-pdp-workspace .pdp-progress-form .manager-approve-button { width: 100%; }
+}
+
+/* Cohort counters keep the HR journey honest when reviews progress at different speeds. */
+.journey-stage > div { min-width: 0; flex: 1; }
+.journey-stage-meta { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+.journey-stage-metric { display: inline-flex; align-items: baseline; gap: 3px; padding: 3px 6px; border-radius: 999px; background: #f0f2f7; color: #738098; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.journey-stage-metric b { color: #344158; font-size: 12px; }
+.journey-stage.live .journey-stage-metric { background: #ebe7ff; color: #6048db; }
+.journey-stage.live .journey-stage-metric b { color: #4932c7; }
+.journey-stage.complete .journey-stage-metric { background: #e8f8ee; color: #16814a; }
+.journey-stage.complete .journey-stage-metric b { color: #137142; }
+
+/* Signal Center: notifications should read as calm, complete cards—not a stream of compressed labels. */
+.signal-center { width: min(468px, calc(100vw - 32px)); background: #f8f9fc; border-color: #e1e5ef; }
+.signal-center-header { padding: 28px 28px 21px; background: #fff; }
+.signal-center-header h2 { margin-top: 7px; color: #17233a; font-size: 24px; letter-spacing: -0.035em; }
+.signal-center-header p { margin-top: 7px; max-width: 320px; color: #647189; font-size: 13px; }
+.signal-center-close { width: 38px; height: 38px; border-radius: 12px; background: #f5f6fa; color: #28354c; transition: background .18s ease, transform .18s ease; }
+.signal-center-close:hover { background: #ece9ff; color: #5138d4; transform: rotate(4deg); }
+.signal-control-bar { padding: 13px 28px; background: #fff; }
+.signal-live-state { color: #52617a; font-size: 13px; }
+.mark-all-signals { padding: 7px 0; font-size: 13px; }
+.signal-feed { padding: 16px; background: #f8f9fc; }
+.signal-item { grid-template-columns: 42px minmax(0, 1fr); gap: 13px; margin-bottom: 10px; padding: 16px; border: 1px solid #e6e9f1; border-radius: 16px; background: #fff; cursor: pointer; box-shadow: 0 2px 7px rgba(24, 34, 57, .025); transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.signal-item:last-child { margin-bottom: 0; }
+.signal-item:hover { background: #fff; border-color: #cfc7ff; box-shadow: 0 9px 24px rgba(48, 38, 105, .08); transform: translateY(-1px); }
+.signal-item.unread { background: linear-gradient(135deg, #fbfaff 0%, #fff 72%); border-color: #d9d2ff; }
+.signal-item.unread::after { top: 18px; right: 17px; width: 7px; height: 7px; box-shadow: 0 0 0 4px #f0edff; }
+.signal-icon { width: 42px; height: 42px; border-radius: 13px; background: #f0f2f7; color: #6f7c91; }
+.signal-item.unread .signal-icon { background: #eeeaff; color: #543bd8; }
+.signal-content { min-width: 0; }
+.signal-meta { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 12px; margin: 0 14px 7px 0; }
+.signal-type { color: #573ee0; font-size: 11px; line-height: 1.3; letter-spacing: .09em; overflow-wrap: anywhere; }
+.signal-cycle { max-width: 132px; padding: 4px 7px; border-radius: 999px; background: #f3f4f8; color: #708099; font-size: 11px; line-height: 1.25; text-align: right; overflow-wrap: anywhere; }
+.signal-content h3 { padding: 0; color: #202b40; font-size: 15px; line-height: 1.35; }
+.signal-content p { margin-top: 5px; padding: 0; color: #62718a; font-size: 13px; line-height: 1.55; }
+.signal-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 13px; }
+.signal-time { margin: 0; color: #8a96a9; font-size: 12px; }
+.signal-open-link { margin: 0; color: #5138d4; font-size: 12px; line-height: 1.3; white-space: nowrap; }
+.signal-open-link:hover { color: #3d27b8; text-decoration-thickness: 2px; }
+@media (min-width: 781px) {
+    .nav-rail:focus-within { width: 220px; }
+    .nav-rail:focus-within .nav-brand { width: 190px; }
+    .nav-rail:focus-within .nav-label { opacity: 1; transform: none; }
+    .application:has(.nav-rail:hover) > .workspace,
+    .application:has(.nav-rail:focus-within) > .workspace { padding-left: 240px; }
+}
+@media (max-width: 780px) {
+    .nav-rail { height: 76px; }
+    .nav-link { flex: 0 0 74px; width: 74px; height: 58px; flex-direction: column; justify-content: center; gap: 3px; }
+    .nav-label { display: block; opacity: 1; transform: none; font-size: 12px; white-space: normal; text-align: center; line-height: 1.15; }
+    .navigation { scrollbar-width: thin; scrollbar-color: #8c7bdf transparent; padding-bottom: 4px; }
+    .navigation::-webkit-scrollbar { display: block; height: 3px; }
+    .navigation::-webkit-scrollbar-thumb { background: #8c7bdf; border-radius: 3px; }
+    .nav-link::after { opacity: 0; }
+    .nav-link.active::after, .nav-rail:hover .nav-link.active::after { opacity: 1; }
+    .nav-bottom .nav-link { flex-basis: 58px; width: 58px; min-width: 58px; }
+    .workspace-content { padding-bottom: 114px; }
+    .assessment-studio-dock, .peer-review-dock, .supervisor-evaluation-dock { bottom: 98px; }
+    .records-vault-hero { padding: 24px; }
+    .records-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pulse-hero { flex-direction: column; align-items: stretch; }
+    .pulse-stat-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+    .pdp-header + .manager-review-context { grid-template-columns: 1fr; }
+    .manager-review-context, .par-form-grid, .par-detail-grid, .pdp-plan-summary { grid-template-columns: minmax(0, 1fr); }
+    .records-summary, .records-filter-bar { grid-template-columns: minmax(0, 1fr); }
+    .manager-decision-footer { align-items: stretch; }
+    .manager-decision-footer button { width: 100%; }
+    .signal-center { width: calc(100vw - 16px); }
+    .signal-center-header { padding: 23px 20px 18px; }
+    .signal-control-bar { padding: 12px 20px; }
+    .signal-feed { padding: 12px; }
+    .signal-item { grid-template-columns: 38px minmax(0, 1fr); gap: 11px; padding: 14px; }
+    .signal-icon { width: 38px; height: 38px; border-radius: 12px; }
+    .signal-meta { grid-template-columns: 1fr; gap: 5px; margin-right: 16px; }
+    .signal-cycle { max-width: none; width: fit-content; text-align: left; }
+    .signal-footer { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .journey-stage-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .nav-rail, .nav-label, .workspace { transition: none; }
+}

@@ -71,33 +71,13 @@
             });
         });
 
-        if (reduceMotion.matches || !("IntersectionObserver" in window)) {
-            sections.forEach((section) => section.classList.add("is-visible"));
-            selectAll("[data-motion-group]").forEach((group) =>
-                group.classList.add("is-visible")
-            );
-            body.classList.add("motion-ready");
-            return;
-        }
-
-        const observer = new IntersectionObserver((entries, currentObserver) => {
-            entries.forEach((entry) => {
-                if (!entry.isIntersecting) {
-                    return;
-                }
-
-                entry.target.classList.add("is-visible");
-                currentObserver.unobserve(entry.target);
-            });
-        }, {
-            threshold: 0.08,
-            rootMargin: "0px 0px -5% 0px"
-        });
-
-        sections.forEach((section) => observer.observe(section));
-        selectAll("[data-motion-group]").forEach((group) => observer.observe(group));
-
-        window.requestAnimationFrame(() => body.classList.add("motion-ready"));
+        // Long forms and dashboards must never leave off-screen content hidden
+        // until it crosses an observer threshold. Reveal once on page entry only.
+        sections.forEach((section) => section.classList.add("is-visible"));
+        selectAll("[data-motion-group]").forEach((group) =>
+            group.classList.add("is-visible")
+        );
+        body.classList.add("motion-ready");
     };
 
     const setupSurfaceSpotlights = () => {

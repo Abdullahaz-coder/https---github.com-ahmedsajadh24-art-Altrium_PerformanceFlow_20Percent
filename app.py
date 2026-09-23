@@ -3,6 +3,7 @@ import os
 import secrets
 import time
 import uuid
+import hashlib
 from datetime import datetime, timedelta
 
 from flask import (
@@ -63,6 +64,41 @@ def is_altrium_email(email):
         and domain == "altrium.com"
         and not any(character.isspace() for character in local_part)
     )
+
+
+@app.before_request
+def refresh_account_access():
+    """Apply account changes immediately, including on existing sessions."""
+    if 'user_id' not in session or request.endpoint == 'static':
+        return None
+    connection = get_db_connection()
+    try:
+        account = connection.execute(
+            """SELECT users.id, users.full_name, users.role, users.password, employees.status
+               FROM users LEFT JOIN employees ON employees.user_id = users.id
+               WHERE users.id = ?""", (session['user_id'],),
+        ).fetchone()
+    finally:
+        connection.close()
+    if account is None or account['status'] == 'Inactive':
+        session.clear()
+        if request.is_json:
+            return jsonify(success=False, message='Your account is no longer active. Contact HR.'), 401
+        flash('Your account is no longer active. Contact HR.', 'error')
+        return redirect(url_for('login'))
+    if not secrets.compare_digest(session.get('_credential_version', ''), credential_version(account['password'])):
+        session.clear()
+        if request.is_json:
+            return jsonify(success=False, message='Please sign in again. Your account credentials have changed.'), 401
+        flash('Please sign in again to continue securely.', 'error')
+        return redirect(url_for('login'))
+    session['user_role'] = account['role']
+    session['user_name'] = account['full_name']
+
+
+def credential_version(password_hash):
+    """Invalidate existing sessions after a password change without storing its hash in cookies."""
+    return hashlib.sha256(password_hash.encode('utf-8')).hexdigest()
 
 
 @app.before_request
@@ -1978,6 +2014,8 @@ def notification_feed():
 
             notifications.notification_type,
 
+            notifications.employee_review_id,
+
             notifications.title,
 
             notifications.message,
@@ -2032,15 +2070,26 @@ def notification_feed():
     ).fetchone()["total"]
 
 
-    connection.close()
-
-
     notification_data = []
 
 
     for notification in notifications:
 
+        target_url = url_for('dashboard')
+        review_id = notification['employee_review_id']
+        if review_id and notification['notification_type'].startswith('PAR_'):
+            context = get_par_meeting_context(connection, review_id)
+            if context and can_access_par_meeting(connection, context):
+                target_url = url_for('par_meeting_workspace', employee_review_id=review_id)
+        elif review_id and notification['notification_type'].startswith('PDP_'):
+            context = get_pdp_context(connection, review_id)
+            if context and (session['user_role'] == 'HR' or session['user_id'] in
+                            (context['employee_user_id'], context['supervisor_id'])):
+                target_url = url_for('pdp_workspace', employee_review_id=review_id)
+
         notification_data.append({
+
+            'target_url': target_url,
 
             "id":
                 notification["id"],
@@ -2066,6 +2115,7 @@ def notification_feed():
         })
 
 
+    connection.close()
     return jsonify({
 
         "success": True,
@@ -2280,8 +2330,9 @@ def login():
 
         user = connection.execute(
             """
-            SELECT * FROM users
-            WHERE email = ?
+            SELECT users.*, employees.status AS account_status FROM users
+            LEFT JOIN employees ON employees.user_id = users.id
+            WHERE lower(users.email) = ?
             """,
             (email,)
         ).fetchone()
@@ -2305,13 +2356,19 @@ def login():
 
         else:
 
+            if user['account_status'] == 'Inactive':
+                recent_attempts.append(now)
+                return render_template('login.html', error='This account is inactive. Contact HR for assistance.'), 403
             login_attempts.pop(client_key, None)
+            session.clear()
+            session['_csrf_token'] = secrets.token_urlsafe(32)
 
             session["user_id"] = user["id"]
 
             session["user_name"] = user["full_name"]
 
             session["user_role"] = user["role"]
+            session['_credential_version'] = credential_version(user['password'])
 
             return redirect(url_for("dashboard"))
 
@@ -2339,6 +2396,7 @@ def dashboard():
     sync_par_workflow_actions(connection)
     ensure_pdp_schema(connection)
     sync_pdp_progress_actions(connection)
+    dispatch_workflow_reminders(connection)
     connection.commit()
 
 
@@ -2357,6 +2415,18 @@ def dashboard():
     supervisor_active_reviews = 0
 
     manager_pending_approvals = 0
+
+    hr_active_pdp_count = 0
+
+    hr_pdp_attention_count = 0
+
+    hr_pdp_in_progress_count = 0
+
+    # The organisation journey is calculated from the active cohort, not
+    # hard-coded to self-assessment. A cycle can contain reviews at different
+    # points, so the earliest unfinished stage represents what must clear
+    # before the organisation can move on as a whole.
+    journey_stages = []
 
 
     # =====================================
@@ -2423,6 +2493,105 @@ def dashboard():
             LIMIT 1
             """
         ).fetchone()
+
+        if current_active_cycle:
+            status_rows = connection.execute(
+                """
+                SELECT status, COUNT(*) AS total
+                FROM employee_reviews
+                WHERE review_cycle_id = ?
+                GROUP BY status
+                """,
+                (current_active_cycle["id"],),
+            ).fetchall()
+            status_counts = {
+                row["status"]: row["total"] for row in status_rows
+            }
+
+            def review_stage(status):
+                if status in ("Not Started", "Self Assessment In Progress", "Changes Requested"):
+                    return 2
+                if status in ("Self Assessment Submitted", "Peer Review In Progress"):
+                    return 3
+                if status in ("Peer Review Completed", "Supervisor Evaluation In Progress"):
+                    return 4
+                if status in ("Supervisor Evaluation Submitted", "Manager Approval Pending"):
+                    return 5
+                return 6
+
+            stage_counts = {stage: 0 for stage in range(2, 7)}
+            for status, total in status_counts.items():
+                stage_counts[review_stage(status)] += total
+
+            unfinished_stages = [
+                stage for stage in range(2, 6) if stage_counts[stage]
+            ]
+            journey_current_stage = min(unfinished_stages) if unfinished_stages else 5
+            journey_complete = (
+                current_active_cycle["review_count"] > 0
+                and stage_counts[6] == current_active_cycle["review_count"]
+                and status_counts.get("Completed", 0) == current_active_cycle["review_count"]
+            )
+
+            stage_copy = {
+                2: ("Self Assessment", "Employee reflection and evidence"),
+                3: ("Peer Review", "Confidential colleague feedback"),
+                4: ("Supervisor", "Evidence-based evaluation"),
+                5: ("Approval", "Manager decision and outcome"),
+            }
+            for stage in range(2, 6):
+                if journey_complete or stage < journey_current_stage:
+                    state, state_label = "complete", "COMPLETE"
+                elif stage == journey_current_stage:
+                    state, state_label = "live", "CURRENT"
+                else:
+                    state = "queued"
+                    state_label = "NEXT" if stage == journey_current_stage + 1 else "LATER"
+
+                count = stage_counts[stage]
+                if state == "complete":
+                    detail = "Complete across the active review cohort"
+                    metric, metric_label = "✓", "Clear"
+                elif count:
+                    detail = f"{count} review{'s' if count != 1 else ''} at this stage"
+                    metric, metric_label = str(count), "active"
+                elif stage == 3:
+                    detail = "Waiting for peer assignments"
+                    metric, metric_label = "0", "waiting"
+                else:
+                    detail = "Waiting for the preceding stage"
+                    metric, metric_label = "0", "waiting"
+
+                title, subtitle = stage_copy[stage]
+                journey_stages.append({
+                    "number": f"0{stage}", "title": title,
+                    "subtitle": subtitle, "detail": detail,
+                    "state": state, "state_label": state_label,
+                    "metric": metric, "metric_label": metric_label,
+                })
+
+        pdp_signals = connection.execute(
+                """
+                SELECT
+                    COUNT(DISTINCT pdp_plans.id) AS active_plans,
+                    COUNT(DISTINCT CASE WHEN pdp_activities.status = 'In Progress'
+                        THEN pdp_plans.id END) AS moving_plans,
+                    COUNT(DISTINCT CASE WHEN pdp_activities.status != 'Completed'
+                         AND date(pdp_activities.target_date) < date('now')
+                        THEN pdp_plans.id END) AS overdue_plans
+                FROM pdp_plans
+                JOIN employee_reviews
+                    ON employee_reviews.id = pdp_plans.employee_review_id
+                LEFT JOIN pdp_activities
+                    ON pdp_activities.pdp_plan_id = pdp_plans.id
+                JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+                WHERE review_cycles.status IN ('Active', 'Closed')
+                  AND pdp_plans.status = 'Active'
+                """
+            ).fetchone()
+        hr_active_pdp_count = pdp_signals["active_plans"] or 0
+        hr_pdp_in_progress_count = pdp_signals["moving_plans"] or 0
+        hr_pdp_attention_count = pdp_signals["overdue_plans"] or 0
 
 
     # =====================================
@@ -2569,6 +2738,8 @@ def dashboard():
 
             review_actions.id,
 
+            review_actions.review_cycle_id,
+
             review_actions.employee_review_id,
 
             review_actions.action_type,
@@ -2607,7 +2778,8 @@ def dashboard():
 
         AND review_actions.status != 'Completed'
 
-        AND review_cycles.status = 'Active'
+        AND (review_cycles.status = 'Active'
+             OR (review_cycles.status = 'Closed' AND review_actions.action_type = 'PDP_PROGRESS'))
 
         ORDER BY
 
@@ -2673,6 +2845,14 @@ def dashboard():
         supervisor_active_reviews=supervisor_active_reviews,
 
         manager_pending_approvals=manager_pending_approvals,
+
+        hr_active_pdp_count=hr_active_pdp_count,
+
+        hr_pdp_attention_count=hr_pdp_attention_count,
+
+        hr_pdp_in_progress_count=hr_pdp_in_progress_count,
+
+        journey_stages=journey_stages,
 
         user_actions=user_actions,
 
@@ -3677,10 +3857,10 @@ def add_employee():
         )
 
 
-    if len(password) < 8:
+    if len(password) < 12:
 
         flash(
-            "Temporary password must contain at least 8 characters.",
+            "Temporary password must contain at least 12 characters.",
             "error"
         )
 
@@ -6173,13 +6353,16 @@ def review_cycle_workspace(cycle_id):
         if employee["employee_review_status"] == "Completed"
     )
 
+    post_review_pending = pending_post_review_count(connection, cycle_id)
     closure_readiness = {
         "completed": completed_review_count,
         "total": assigned_count,
+        "post_review_pending": post_review_pending,
         "can_close": (
             cycle["status"] == "Active"
             and assigned_count > 0
             and completed_review_count == assigned_count
+            and post_review_pending == 0
         )
     }
 
@@ -6915,6 +7098,22 @@ def activate_review_cycle(cycle_id):
     )
 
 
+def pending_post_review_count(connection, cycle_id):
+    """Closure retains completed PAR records; PDP activities may continue later."""
+    ensure_par_meeting_schema(connection)
+    ensure_pdp_schema(connection)
+    return connection.execute(
+        """SELECT COUNT(*) FROM employee_reviews AS review
+           LEFT JOIN par_meetings AS meeting ON meeting.id = (
+               SELECT id FROM par_meetings WHERE employee_review_id=review.id ORDER BY id DESC LIMIT 1)
+           LEFT JOIN par_meeting_outcomes AS outcome ON outcome.par_meeting_id=meeting.id
+           LEFT JOIN pdp_plans AS plan ON plan.employee_review_id=review.id
+           WHERE review.review_cycle_id=? AND (
+               meeting.id IS NULL OR meeting.status!='Held' OR outcome.id IS NULL
+               OR (outcome.outcome='PDP Required' AND plan.id IS NULL))""", (cycle_id,),
+    ).fetchone()[0]
+
+
 @app.route(
     "/review-cycles/<int:cycle_id>/close",
     methods=["POST"]
@@ -6975,6 +7174,10 @@ def close_review_cycle(cycle_id):
                 "review_cycle_workspace",
                 cycle_id=cycle_id
             ))
+
+        if pending_post_review_count(connection, cycle_id):
+            flash('Complete every PAR meeting and outcome, and create any required PDP before closing the cycle. Development activities can continue after closure.', 'error')
+            return redirect(url_for('review_cycle_workspace', cycle_id=cycle_id))
 
         updated = connection.execute(
             """
@@ -12794,6 +12997,137 @@ def ensure_pdp_schema(connection):
         connection.execute("ALTER TABLE pdp_activities ADD COLUMN employee_updated_at TIMESTAMP")
 
 
+def ensure_reminder_schema(connection):
+    """Keep PB16 reminder delivery safe and duplicate-free."""
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS workflow_reminder_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            review_action_id INTEGER,
+            pdp_activity_id INTEGER,
+            reminder_kind TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (review_action_id) REFERENCES review_actions(id),
+            FOREIGN KEY (pdp_activity_id) REFERENCES pdp_activities(id),
+            UNIQUE(user_id, review_action_id, pdp_activity_id, reminder_kind)
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_workflow_action_reminder_once
+        ON workflow_reminder_log(user_id, review_action_id, reminder_kind)
+        WHERE review_action_id IS NOT NULL
+        """
+    )
+    connection.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_pdp_activity_reminder_once
+        ON workflow_reminder_log(user_id, pdp_activity_id, reminder_kind)
+        WHERE pdp_activity_id IS NOT NULL
+        """
+    )
+
+
+def dispatch_workflow_reminders(connection):
+    """Create one useful in-app reminder per outstanding workflow signal.
+
+    This runs safely during normal use. The delivery log prevents duplicate
+    messages whenever a dashboard is refreshed.
+    """
+    ensure_pdp_schema(connection)
+    ensure_reminder_schema(connection)
+
+    pending_actions = connection.execute(
+        """
+        SELECT review_actions.id, review_actions.assigned_to,
+               review_actions.review_cycle_id, review_actions.employee_review_id,
+               review_actions.title, review_actions.due_date,
+               review_actions.created_at, review_cycles.cycle_name
+        FROM review_actions
+        JOIN review_cycles ON review_cycles.id = review_actions.review_cycle_id
+        WHERE review_actions.status = 'Pending'
+          AND review_cycles.status = 'Active'
+          AND (
+              (review_actions.due_date IS NOT NULL
+               AND date(review_actions.due_date) <= date('now', '+3 day'))
+              OR (review_actions.due_date IS NULL
+                  AND datetime(review_actions.created_at) <= datetime('now', '-1 day'))
+          )
+        """
+    ).fetchall()
+    for action in pending_actions:
+        is_overdue = action["due_date"] and action["due_date"] < datetime.now().date().isoformat()
+        reminder_kind = "ACTION_OVERDUE" if is_overdue else "ACTION_REMINDER"
+        inserted = connection.execute(
+            """
+            INSERT OR IGNORE INTO workflow_reminder_log
+                (user_id, review_action_id, pdp_activity_id, reminder_kind)
+            VALUES (?, ?, NULL, ?)
+            """,
+            (action["assigned_to"], action["id"], reminder_kind),
+        )
+        if inserted.rowcount:
+            timing = "is overdue" if is_overdue else "is ready for your attention"
+            connection.execute(
+                """
+                INSERT INTO notifications
+                    (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    action["assigned_to"], action["review_cycle_id"],
+                    action["employee_review_id"], reminder_kind,
+                    "Workflow reminder",
+                    f"{action['title']} {timing} in {action['cycle_name']}.",
+                ),
+            )
+
+    overdue_activities = connection.execute(
+        """
+        SELECT pdp_activities.id, pdp_activities.activity, pdp_activities.target_date,
+               pdp_plans.employee_review_id, employee_reviews.review_cycle_id,
+               employees.user_id AS employee_user_id, employee_reviews.supervisor_id
+        FROM pdp_activities
+        JOIN pdp_plans ON pdp_plans.id = pdp_activities.pdp_plan_id
+        JOIN employee_reviews ON employee_reviews.id = pdp_plans.employee_review_id
+        JOIN employees ON employees.id = employee_reviews.employee_id
+        JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+        WHERE pdp_activities.status != 'Completed'
+          AND date(pdp_activities.target_date) < date('now')
+          AND pdp_plans.status = 'Active'
+          AND review_cycles.status IN ('Active', 'Closed')
+        """
+    ).fetchall()
+    for activity in overdue_activities:
+        for user_id, recipient_label in (
+            (activity["employee_user_id"], "Your"),
+            (activity["supervisor_id"], "An employee's"),
+        ):
+            inserted = connection.execute(
+                """
+                INSERT OR IGNORE INTO workflow_reminder_log
+                    (user_id, review_action_id, pdp_activity_id, reminder_kind)
+                VALUES (?, NULL, ?, 'PDP_ACTIVITY_OVERDUE')
+                """,
+                (user_id, activity["id"]),
+            )
+            if inserted.rowcount:
+                connection.execute(
+                    """
+                    INSERT INTO notifications
+                        (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
+                    VALUES (?, ?, ?, 'PDP_ACTIVITY_OVERDUE', 'Development activity needs attention', ?)
+                    """,
+                    (
+                        user_id, activity["review_cycle_id"], activity["employee_review_id"],
+                        f"{recipient_label} PDP activity ‘{activity['activity']}’ was due on {activity['target_date']}.",
+                    ),
+                )
+
+
 def sync_par_workflow_actions(connection):
     """Make sure every held PAR meeting has its next supervisor action.
 
@@ -12850,9 +13184,10 @@ def sync_par_workflow_actions(connection):
         )
 
 
-def sync_pdp_progress_actions(connection):
+def sync_pdp_progress_actions(connection, initialize_schema=True):
     """Keep the employee progress task aligned with every active PDP."""
-    ensure_pdp_schema(connection)
+    if initialize_schema:
+        ensure_pdp_schema(connection)
     plans = connection.execute(
         """
         SELECT pdp_plans.id AS pdp_plan_id,
@@ -12869,7 +13204,7 @@ def sync_pdp_progress_actions(connection):
         JOIN employees ON employees.id = employee_reviews.employee_id
         JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
         WHERE pdp_plans.status = 'Active'
-          AND review_cycles.status = 'Active'
+          AND review_cycles.status IN ('Active', 'Closed')
         """
     ).fetchall()
     for plan in plans:
@@ -12895,8 +13230,9 @@ def sync_pdp_progress_actions(connection):
         )
 
 
-def get_par_meeting_context(connection, employee_review_id):
-    ensure_par_meeting_schema(connection)
+def get_par_meeting_context(connection, employee_review_id, initialize_schema=True):
+    if initialize_schema:
+        ensure_par_meeting_schema(connection)
     return connection.execute(
         """
         SELECT employee_reviews.id AS employee_review_id,
@@ -12963,6 +13299,11 @@ def par_attendees(review, include_manager):
     if include_manager:
         attendees.append((review["manager_id"], "Manager"))
     return attendees
+
+
+def par_now():
+    """Central clock for meeting validation and deterministic workflow tests."""
+    return datetime.now()
 
 
 def valid_par_slot(connection, attendee_ids, meeting_date, start_time, end_time,
@@ -14250,10 +14591,11 @@ def par_meeting_workspace(employee_review_id):
         return render_template(
             "par_meeting.html", review=review, attendees=attendees, outcome=outcome,
             manager_attending=manager_attending,
-            can_schedule=session["user_role"] == "Supervisor" and review["supervisor_id"] == session["user_id"],
+            can_schedule=(session["user_role"] == "Supervisor" and review["supervisor_id"] == session["user_id"] and review['cycle_status'] == 'Active'),
             is_follow_up=review["par_status"] in ("Held", "Cancelled"),
             can_record_outcome=(session["user_role"] == "Supervisor"
                                 and review["supervisor_id"] == session["user_id"]
+                                and review['cycle_status'] == 'Active'
                                 and review["par_status"] == "Held"),
             user_name=session["user_name"], user_role=session["user_role"]
         )
@@ -14290,7 +14632,7 @@ def par_meeting_availability(employee_review_id):
         closing = current.replace(hour=17)
         while current + timedelta(minutes=duration) <= closing:
             end = current + timedelta(minutes=duration)
-            if valid_par_slot(connection, attendee_ids, meeting_date, current.strftime("%H:%M"), end.strftime("%H:%M"), review["par_meeting_id"]):
+            if current > par_now() and valid_par_slot(connection, attendee_ids, meeting_date, current.strftime("%H:%M"), end.strftime("%H:%M"), review["par_meeting_id"]):
                 slots.append({"value": current.strftime("%H:%M"), "label": current.strftime("%I:%M %p").lstrip("0")})
             current += timedelta(minutes=30)
         return jsonify({"success": True, "slots": slots, "message": "" if slots else "No shared availability was found for this date."})
@@ -14313,20 +14655,24 @@ def schedule_par_meeting(employee_review_id):
     try:
         start = datetime.strptime(f"{meeting_date} {start_time}", "%Y-%m-%d %H:%M")
         duration = int(duration_raw)
-        if duration not in (30, 45, 60, 90) or start.weekday() >= 5 or start.hour < 9:
+        if duration not in (30, 45, 60, 90) or start.weekday() >= 5 or start.hour < 9 or start <= par_now():
             raise ValueError
         end = start + timedelta(minutes=duration)
         if end.hour > 17 or (end.hour == 17 and end.minute > 0):
             raise ValueError
     except ValueError:
-        flash("Choose a weekday time between 9:00 AM and 5:00 PM and a valid duration.", "error")
+        flash("Choose a future weekday time between 9:00 AM and 5:00 PM and a valid duration.", "error")
         return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
     if meeting_format not in ("In person", "Online", "Hybrid") or not location or len(location) > 300 or len(agenda) > 3000:
         flash("Provide a meeting format, location or link, and a concise agenda.", "error")
         return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
     connection = get_db_connection()
     try:
-        review = get_par_meeting_context(connection, employee_review_id)
+        ensure_par_meeting_schema(connection)
+        # Reserve the write lock before checking availability, so simultaneous
+        # requests cannot both book the same attendee into overlapping meetings.
+        connection.execute('BEGIN IMMEDIATE')
+        review = get_par_meeting_context(connection, employee_review_id, initialize_schema=False)
         if review is None or review["supervisor_id"] != session["user_id"]:
             flash("PAR meeting not found.", "error")
             return redirect(url_for("dashboard"))
@@ -14334,6 +14680,10 @@ def schedule_par_meeting(employee_review_id):
             flash("This review is not ready for a PAR meeting.", "error")
             return redirect(url_for("dashboard"))
         if review["par_status"] == "Held":
+            if not connection.execute('SELECT 1 FROM par_meeting_outcomes WHERE par_meeting_id=?',
+                                      (review['par_meeting_id'],)).fetchone():
+                flash('Record the current meeting outcome before arranging a follow-up.', 'error')
+                return redirect(url_for('par_meeting_workspace', employee_review_id=employee_review_id))
             # A held meeting is a permanent record; a later meeting is a new follow-up.
             review = dict(review)
             review["par_meeting_id"] = None
@@ -14362,7 +14712,7 @@ def schedule_par_meeting(employee_review_id):
             [(meeting_id, user_id, role) for user_id, role in attendees])
         connection.execute("""INSERT INTO review_actions (review_cycle_id, employee_review_id, assigned_to, action_type, title, description, status, priority)
             VALUES (?, ?, ?, 'PAR_MEETING', 'Hold PAR meeting', 'Lead the scheduled Performance Appraisal Review meeting and record its outcome.', 'Pending', 'High')
-            ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type) DO UPDATE SET status='Pending', completed_at=NULL""",
+            ON CONFLICT(review_cycle_id, employee_review_id, assigned_to, action_type) DO UPDATE SET title=excluded.title, description=excluded.description, status='Pending', completed_at=NULL""",
             (review["review_cycle_id"], employee_review_id, review["supervisor_id"]))
         for user_id, role in attendees:
             if user_id != session["user_id"]:
@@ -14394,9 +14744,12 @@ def mark_par_meeting_held(employee_review_id):
     connection = get_db_connection()
     try:
         review = get_par_meeting_context(connection, employee_review_id)
-        if review is None or review["supervisor_id"] != session["user_id"] or review["par_status"] not in ("Scheduled", "Rescheduled"):
+        if review is None or review["supervisor_id"] != session["user_id"] or review['cycle_status'] != 'Active' or review["par_status"] not in ("Scheduled", "Rescheduled"):
             flash("This meeting cannot be marked as held.", "error")
             return redirect(url_for("dashboard"))
+        if datetime.strptime(f"{review['meeting_date']} {review['start_time']}", '%Y-%m-%d %H:%M') > par_now():
+            flash('This meeting has not started yet. Mark it as held after the conversation.', 'error')
+            return redirect(url_for('par_meeting_workspace', employee_review_id=employee_review_id))
         connection.execute("UPDATE par_meetings SET status='Held', held_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (review["par_meeting_id"],))
         connection.execute("UPDATE review_actions SET status='Completed', completed_at=CURRENT_TIMESTAMP WHERE employee_review_id=? AND assigned_to=? AND action_type='PAR_MEETING'", (employee_review_id, session["user_id"]))
         connection.execute(
@@ -14411,7 +14764,7 @@ def mark_par_meeting_held(employee_review_id):
             (review["review_cycle_id"], employee_review_id, review["supervisor_id"])
         )
         connection.commit()
-        flash("PAR meeting marked as held. You can now record the outcome in PB12.", "success")
+        flash("PAR meeting marked as held. You can now record the outcome.", "success")
     finally:
         connection.close()
     return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
@@ -14441,7 +14794,7 @@ def record_par_meeting_outcome(employee_review_id):
     try:
         review = get_par_meeting_context(connection, employee_review_id)
         if (review is None or review["supervisor_id"] != session["user_id"]
-                or review["par_status"] != "Held"):
+                or review['cycle_status'] != 'Active' or review["par_status"] != "Held"):
             flash("The PAR meeting must be marked as held before recording its outcome.", "error")
             return redirect(url_for("dashboard"))
 
@@ -14512,8 +14865,9 @@ def record_par_meeting_outcome(employee_review_id):
     return redirect(url_for("par_meeting_workspace", employee_review_id=employee_review_id))
 
 
-def get_pdp_context(connection, employee_review_id):
-    ensure_pdp_schema(connection)
+def get_pdp_context(connection, employee_review_id, initialize_schema=True):
+    if initialize_schema:
+        ensure_pdp_schema(connection)
     return connection.execute(
         """
         SELECT employee_reviews.id AS employee_review_id,
@@ -14561,7 +14915,10 @@ def pdp_workspace(employee_review_id):
 
     connection = get_db_connection()
     try:
-        review = get_pdp_context(connection, employee_review_id)
+        ensure_pdp_schema(connection)
+        if request.method == 'POST':
+            connection.execute('BEGIN IMMEDIATE')
+        review = get_pdp_context(connection, employee_review_id, initialize_schema=False)
         can_manage = (
             review is not None
             and session["user_role"] == "Supervisor"
@@ -14578,6 +14935,9 @@ def pdp_workspace(employee_review_id):
             flash("This Personal Development Plan is not available to your account.", "error")
             return redirect(url_for("dashboard"))
 
+        if request.method == 'POST' and not can_manage:
+            return jsonify(success=False, message='Only the assigned supervisor can edit this plan.'), 403
+
         if request.method == "POST" and can_manage:
             plan_fields = {
                 "title": request.form.get("title", "").strip(),
@@ -14590,20 +14950,41 @@ def pdp_workspace(employee_review_id):
             raw_activities = request.form.getlist("activity")
             raw_support = request.form.getlist("support_needed")
             raw_dates = request.form.getlist("activity_target_date")
+            raw_ids = request.form.getlist('activity_id')
+            existing_ids = {
+                str(row['id']) for row in connection.execute(
+                    'SELECT id FROM pdp_activities WHERE pdp_plan_id=?', (review['pdp_plan_id'],)
+                ).fetchall()
+            }
+            posted_ids = [value for value in raw_ids if value]
+            if (set(posted_ids) != existing_ids or len(posted_ids) != len(set(posted_ids))):
+                flash('The plan activities changed. Reload the plan before editing it.', 'error')
+                return redirect(url_for('pdp_workspace', employee_review_id=employee_review_id))
             for index, activity in enumerate(raw_activities):
                 activity = activity.strip()
                 support = raw_support[index].strip() if index < len(raw_support) else ""
                 target_date = raw_dates[index].strip() if index < len(raw_dates) else ""
-                if activity or support or target_date:
-                    activities.append((activity, support, target_date))
+                activity_id = raw_ids[index] if index < len(raw_ids) else ''
+                if activity or support or target_date or activity_id:
+                    activities.append((activity_id, activity, support, target_date))
 
             if (not all(plan_fields.values())
                     or any(len(value) > 3000 for value in plan_fields.values())
+                    or len(plan_fields['title']) > 180 or len(plan_fields['focus_area']) > 300
                     or not activities
                     or any(not activity or not target_date or len(activity) > 1000 or len(support) > 1000
-                           for activity, support, target_date in activities)):
+                           for _, activity, support, target_date in activities)):
                 flash("Complete the PDP summary and add at least one development activity with a target date.", "error")
                 return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
+
+            try:
+                plan_date = datetime.strptime(plan_fields['target_date'], '%Y-%m-%d').date()
+                for _, _, _, target_date in activities:
+                    if datetime.strptime(target_date, '%Y-%m-%d').date() > plan_date:
+                        raise ValueError
+            except ValueError:
+                flash('Use valid target dates. Each activity must be due on or before the plan target date.', 'error')
+                return redirect(url_for('pdp_workspace', employee_review_id=employee_review_id))
 
             connection.execute(
                 """
@@ -14612,7 +14993,6 @@ def pdp_workspace(employee_review_id):
                      success_measure, target_date, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')
                 ON CONFLICT(employee_review_id) DO UPDATE SET
-                    created_by=excluded.created_by,
                     title=excluded.title,
                     focus_area=excluded.focus_area,
                     overall_goal=excluded.overall_goal,
@@ -14629,16 +15009,19 @@ def pdp_workspace(employee_review_id):
                 "SELECT id FROM pdp_plans WHERE employee_review_id = ?",
                 (employee_review_id,),
             ).fetchone()
-            connection.execute("DELETE FROM pdp_activities WHERE pdp_plan_id = ?", (plan["id"],))
-            connection.executemany(
-                """
-                INSERT INTO pdp_activities
-                    (pdp_plan_id, activity, support_needed, target_date, sort_order)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                [(plan["id"], activity, support, target_date, position)
-                 for position, (activity, support, target_date) in enumerate(activities, start=1)],
-            )
+            # Stable IDs preserve employee notes, progress and reminder history.
+            for position, (activity_id, activity, support, target_date) in enumerate(activities, start=1):
+                if activity_id:
+                    connection.execute(
+                        """UPDATE pdp_activities SET activity=?, support_needed=?, target_date=?,
+                           sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND pdp_plan_id=?""",
+                        (activity, support, target_date, position, activity_id, plan['id']),
+                    )
+                else:
+                    connection.execute(
+                        """INSERT INTO pdp_activities (pdp_plan_id, activity, support_needed, target_date, sort_order)
+                           VALUES (?, ?, ?, ?, ?)""", (plan['id'], activity, support, target_date, position),
+                    )
             connection.execute(
                 """
                 UPDATE review_actions
@@ -14651,10 +15034,12 @@ def pdp_workspace(employee_review_id):
                 """
                 INSERT INTO notifications
                     (user_id, review_cycle_id, employee_review_id, notification_type, title, message)
-                VALUES (?, ?, ?, 'PDP_CREATED', 'Your development plan is ready', ?)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (review["employee_user_id"], review["review_cycle_id"], employee_review_id,
-                 "Your supervisor has created a Personal Development Plan from your PAR meeting."),
+                 'PDP_UPDATED' if review['pdp_plan_id'] else 'PDP_CREATED',
+                 'Your development plan was updated' if review['pdp_plan_id'] else 'Your development plan is ready',
+                 'Your supervisor has saved your development plan. Open it to review the activities.'),
             )
             connection.execute(
                 """
@@ -14669,6 +15054,7 @@ def pdp_workspace(employee_review_id):
                 """,
                 (review["review_cycle_id"], employee_review_id, review["employee_user_id"]),
             )
+            sync_pdp_progress_actions(connection, initialize_schema=False)
             connection.commit()
             flash("Personal Development Plan saved and shared with the employee.", "success")
             return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
@@ -14686,6 +15072,11 @@ def pdp_workspace(employee_review_id):
             can_monitor=can_monitor,
             user_name=session["user_name"], user_role=session["user_role"],
         )
+    except sqlite3.Error:
+        connection.rollback()
+        app.logger.exception('PDP save failed')
+        flash('The plan could not be saved. Please reload and try again.', 'error')
+        return redirect(url_for('pdp_workspace', employee_review_id=employee_review_id))
     finally:
         connection.close()
 
@@ -14698,7 +15089,9 @@ def update_pdp_progress(employee_review_id):
 
     connection = get_db_connection()
     try:
-        review = get_pdp_context(connection, employee_review_id)
+        ensure_pdp_schema(connection)
+        connection.execute('BEGIN IMMEDIATE')
+        review = get_pdp_context(connection, employee_review_id, initialize_schema=False)
         if (review is None or review["pdp_plan_id"] is None
                 or review["employee_user_id"] != session["user_id"]):
             flash("This Personal Development Plan is not available to your account.", "error")
@@ -14722,7 +15115,7 @@ def update_pdp_progress(employee_review_id):
                 (review["pdp_plan_id"],),
             ).fetchall()
         }
-        if set(activity_ids) != permitted_ids:
+        if set(activity_ids) != permitted_ids or len(activity_ids) != len(permitted_ids):
             flash("One or more PDP activities could not be verified.", "error")
             return redirect(url_for("pdp_workspace", employee_review_id=employee_review_id))
 
@@ -14768,8 +15161,8 @@ def update_pdp_progress(employee_review_id):
 
 @app.route("/development-pulse")
 def development_pulse():
-    if "user_id" not in session or session["user_role"] not in ("Supervisor", "HR"):
-        flash("Development Pulse is available to supervisors and HR.", "error")
+    if "user_id" not in session or session["user_role"] not in ("Supervisor", "HR", "Employee"):
+        flash("Development Pulse is available to employees, supervisors and HR.", "error")
         return redirect(url_for("dashboard"))
 
     connection = get_db_connection()
@@ -14780,6 +15173,9 @@ def development_pulse():
         if session["user_role"] == "Supervisor":
             scope_condition = "AND employee_reviews.supervisor_id = ?"
             parameters.append(session["user_id"])
+        elif session['user_role'] == 'Employee':
+            scope_condition = 'AND employees.user_id = ?'
+            parameters.append(session['user_id'])
         plans = connection.execute(
             f"""
             SELECT pdp_plans.id AS pdp_plan_id,
@@ -14797,11 +15193,12 @@ def development_pulse():
                    MAX(pdp_activities.employee_updated_at) AS last_employee_update
             FROM pdp_plans
             JOIN employee_reviews ON employee_reviews.id = pdp_plans.employee_review_id
+            JOIN employees ON employees.id = employee_reviews.employee_id
             JOIN users ON users.id = employee_reviews.supervisor_id
             JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
             LEFT JOIN pdp_activities ON pdp_activities.pdp_plan_id = pdp_plans.id
             WHERE pdp_plans.status = 'Active'
-              AND review_cycles.status = 'Active'
+              AND review_cycles.status IN ('Active', 'Closed')
               {scope_condition}
             GROUP BY pdp_plans.id
             ORDER BY overdue_total DESC, last_employee_update DESC, pdp_plans.target_date ASC
@@ -14854,7 +15251,7 @@ def cancel_par_meeting(employee_review_id):
     try:
         review = get_par_meeting_context(connection, employee_review_id)
         if (review is None or review["supervisor_id"] != session["user_id"]
-                or review["par_status"] not in ("Scheduled", "Rescheduled")):
+                or review['cycle_status'] != 'Active' or review["par_status"] not in ("Scheduled", "Rescheduled")):
             flash("This meeting cannot be cancelled.", "error")
             return redirect(url_for("dashboard"))
         attendee_ids = connection.execute(
@@ -14892,6 +15289,8 @@ def availability():
             try:
                 start = datetime.fromisoformat(start_at)
                 end = datetime.fromisoformat(end_at)
+                if start.tzinfo is not None or end.tzinfo is not None:
+                    raise ValueError
                 if end <= start or len(reason) > 300:
                     raise ValueError
             except ValueError:
@@ -15529,6 +15928,71 @@ def review_history():
             user_role=role
         )
 
+    finally:
+        connection.close()
+
+
+@app.route("/review-records")
+def review_records():
+    """HR's read-only, searchable register of every review case."""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    if session["user_role"] != "HR":
+        flash("The Records Vault is available to HR only.", "error")
+        return redirect(url_for("dashboard"))
+
+    query = request.args.get("q", "").strip()
+    selected_status = request.args.get("status", "").strip()
+    selected_cycle = request.args.get("cycle", "").strip()
+    connection = get_db_connection()
+    try:
+        cycles = connection.execute(
+            "SELECT id, cycle_name, cycle_year, status FROM review_cycles ORDER BY cycle_year DESC, cycle_number DESC"
+        ).fetchall()
+        conditions, parameters = ["1 = 1"], []
+        if query:
+            conditions.append("(employee_reviews.employee_name_snapshot LIKE ? OR employee_reviews.employee_code_snapshot LIKE ? OR employee_reviews.department_snapshot LIKE ? OR review_cycles.cycle_name LIKE ?)")
+            wildcard = f"%{query}%"
+            parameters.extend([wildcard, wildcard, wildcard, wildcard])
+        if selected_status:
+            conditions.append("employee_reviews.status = ?")
+            parameters.append(selected_status)
+        if selected_cycle.isdigit():
+            conditions.append("employee_reviews.review_cycle_id = ?")
+            parameters.append(int(selected_cycle))
+
+        records = connection.execute(
+            f"""
+            SELECT employee_reviews.id AS employee_review_id, employee_reviews.review_cycle_id,
+                   employee_reviews.employee_name_snapshot, employee_reviews.employee_code_snapshot,
+                   employee_reviews.department_snapshot, employee_reviews.job_title_snapshot,
+                   employee_reviews.status AS review_status, employee_reviews.updated_at,
+                   review_cycles.cycle_name, review_cycles.cycle_year, review_cycles.status AS cycle_status,
+                   supervisor_users.full_name AS supervisor_name, manager_users.full_name AS manager_name,
+                   manager_approvals.status AS manager_status
+            FROM employee_reviews
+            JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+            JOIN users AS supervisor_users ON supervisor_users.id = employee_reviews.supervisor_id
+            LEFT JOIN manager_approvals ON manager_approvals.employee_review_id = employee_reviews.id
+            LEFT JOIN users AS manager_users ON manager_users.id = manager_approvals.manager_id
+            WHERE {' AND '.join(conditions)}
+            ORDER BY CASE review_cycles.status WHEN 'Active' THEN 0 ELSE 1 END,
+                     employee_reviews.updated_at DESC, employee_reviews.employee_name_snapshot
+            LIMIT 250
+            """, parameters
+        ).fetchall()
+        totals = connection.execute(
+            """
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN review_cycles.status = 'Active' THEN 1 ELSE 0 END) AS active,
+                   SUM(CASE WHEN employee_reviews.status = 'Completed' THEN 1 ELSE 0 END) AS completed,
+                   SUM(CASE WHEN employee_reviews.status NOT IN ('Approved', 'Completed') THEN 1 ELSE 0 END) AS in_progress
+            FROM employee_reviews JOIN review_cycles ON review_cycles.id = employee_reviews.review_cycle_id
+            """
+        ).fetchone()
+        return render_template("review_records.html", records=records, cycles=cycles, totals=totals,
+                               query=query, selected_status=selected_status, selected_cycle=selected_cycle,
+                               user_name=session["user_name"], user_role=session["user_role"])
     finally:
         connection.close()
 

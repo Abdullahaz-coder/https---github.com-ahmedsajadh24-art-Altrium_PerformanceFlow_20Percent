@@ -320,13 +320,15 @@ function renderSignals(notifications) {
                             </p>
 
 
-                            <span class="signal-time">
+                            <div class="signal-footer">
+                                <span class="signal-time">
+                                    ${formatSignalTime(
+                                        notification.created_at
+                                    )}
+                                </span>
 
-                                ${formatSignalTime(
-                                    notification.created_at
-                                )}
-
-                            </span>
+                                <a class="signal-open-link" href="${escapeSignalText(notification.target_url || '/dashboard')}">Open workspace <span aria-hidden="true">→</span></a>
+                            </div>
 
 
                         </div>
@@ -426,7 +428,9 @@ function connectSignalClicks() {
 
             item.addEventListener(
                 "click",
-                async function () {
+                async function (event) {
+
+                    if (event.target.closest('a')) return;
 
                     if (
                         !item.classList.contains(

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Personal Development Plan | Altrium PerformanceFlow{% endblock %}
+
+{% block content %}
+<section class="manager-approval-header pdp-header">
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Flowboard</a>
+        <span class="eyebrow">PERSONAL DEVELOPMENT PLAN</span>
+        <h1>{% if can_manage %}{{ 'Update' if review['pdp_plan_id'] else 'Create' }} {{ review['employee_name_snapshot'] }}’s PDP{% elif can_monitor %}{{ review['employee_name_snapshot'] }}’s development plan{% else %}My Personal Development Plan{% endif %}</h1>
+        <p>{% if can_manage %}Turn the agreed PAR actions into a focused plan that can be followed until the next review cycle.{% elif can_monitor %}Review development activities and progress shared with HR.{% else %}Use this plan to keep your development actions clear and share progress with your supervisor.{% endif %}</p>
+    </div>
+    <div class="manager-approval-state approved">
+        <span>PLAN STATUS</span>
+        <strong>{{ review['pdp_status'] or 'Ready to create' }}</strong>
+        <small>{{ review['cycle_name'] }}</small>
+    </div>
+</section>
+
+<section class="manager-review-context">
+    <div><span>EMPLOYEE</span><strong>{{ review['employee_name_snapshot'] }}</strong><small>{{ review['employee_code_snapshot'] }}</small></div>
+    <div><span>DEPARTMENT</span><strong>{{ review['department_snapshot'] }}</strong><small>Development plan owner</small></div>
+    <div><span>REVIEW PERIOD</span><strong>{{ review['cycle_name'] }}</strong><small>{{ review['cycle_status'] }} review cycle · Development continues between reviews</small></div>
+</section>
+
+{% if can_manage %}
+<section class="manager-decision-console pdp-console">
+    <div class="manager-decision-copy">
+        <span class="eyebrow">DEVELOPMENT BLUEPRINT</span>
+        <h2>Make the next steps clear</h2>
+        <p>Set one clear development goal, how progress will be measured, and the practical activities that support it.</p>
+    </div>
+    <form class="manager-decision-form pdp-form pdp-editor-form" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="par-form-grid">
+            <label>Plan title<input name="title" maxlength="180" required value="{{ review['title'] or '' }}" placeholder="e.g. Finance reporting capability"></label>
+            <label>Development focus<input name="focus_area" maxlength="300" required value="{{ review['focus_area'] or '' }}" placeholder="e.g. Analysis and stakeholder communication"></label>
+        </div>
+        <label>Overall development goal<textarea name="overall_goal" maxlength="3000" required placeholder="Describe the capability or outcome the employee will build...">{{ review['overall_goal'] or '' }}</textarea></label>
+        <div class="par-form-grid">
+            <label>How success will be measured<textarea name="success_measure" maxlength="3000" required placeholder="What evidence will show the plan is working?">{{ review['success_measure'] or '' }}</textarea></label>
+            <label>Plan target date<input name="target_date" type="date" required value="{{ review['target_date'] or '' }}"></label>
+        </div>
+
+        <div class="pdp-activities-heading"><span class="eyebrow">DEVELOPMENT ACTIVITIES</span><p>Add the concrete actions agreed during the PAR meeting. At least one is required.</p></div>
+        {% set activity_rows = activities|list %}
+        {% for position in range([3, activity_rows|length + 1]|max) %}
+            {% set item = activity_rows[position] if position < activity_rows|length else none %}
+            <fieldset class="pdp-activity-row">
+                <input type="hidden" name="activity_id" value="{{ item['id'] if item else '' }}">
+                <legend>Action {{ '%02d'|format(position + 1) }}{% if position == 0 %} <span>Required</span>{% else %} <span>Optional</span>{% endif %}</legend>
+                <label>Activity<input name="activity" maxlength="1000" value="{{ item['activity'] if item else '' }}" placeholder="e.g. Complete advanced reporting workshop"></label>
+                <label>Support needed<input name="support_needed" maxlength="1000" value="{{ item['support_needed'] if item else '' }}" placeholder="e.g. Weekly coaching from supervisor"></label>
+                <label>Target date<input name="activity_target_date" type="date" value="{{ item['target_date'] if item else '' }}"></label>
+                {% if item %}<div class="pdp-activity-progress"><strong>{{ item['status'] }}</strong><p>{{ item['employee_progress_note'] or 'No employee progress note yet.' }}</p></div>{% endif %}
+            </fieldset>
+        {% endfor %}
+        <div class="manager-decision-footer"><span>The employee will receive a private notification once this plan is saved.</span><button class="manager-approve-button" type="submit">{{ 'Save PDP changes' if review['pdp_plan_id'] else 'Create PDP' }}</button></div>
+    </form>
+</section>
+{% elif can_update_progress %}
+<section class="manager-decision-console pdp-console">
+    <div class="manager-decision-copy">
+        <span class="eyebrow">YOUR DEVELOPMENT FOCUS</span>
+        <h2>{{ review['title'] }}</h2>
+        <p>{{ review['focus_area'] }}</p>
+    </div>
+    <div class="pdp-plan-summary">
+        <div><span>OVERALL GOAL</span><p>{{ review['overall_goal'] }}</p></div>
+        <div><span>SUCCESS MEASURE</span><p>{{ review['success_measure'] }}</p></div>
+        <div><span>PLAN TARGET</span><p>{{ review['target_date'] }}</p></div>
+    </div>
+    <form class="manager-decision-form pdp-form pdp-progress-form" method="post" action="{{ url_for('update_pdp_progress', employee_review_id=review['employee_review_id']) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="pdp-activities-heading"><span class="eyebrow">MY ACTIVITY PROGRESS</span><p>Update each action with your current status and a concise progress note for your supervisor.</p></div>
+        {% for activity in activities %}
+        <fieldset class="pdp-progress-row">
+            <legend>Action {{ '%02d'|format(loop.index) }}</legend>
+            <input type="hidden" name="activity_id" value="{{ activity['id'] }}">
+            <div class="pdp-activity-title"><strong>{{ activity['activity'] }}</strong><span>Target: {{ activity['target_date'] }}</span></div>
+            <p><span>SUPPORT</span>{{ activity['support_needed'] or 'No additional support recorded.' }}</p>
+            <label>Current status<select name="activity_status"><option value="Not Started" {% if activity['status'] == 'Not Started' %}selected{% endif %}>Not started</option><option value="In Progress" {% if activity['status'] == 'In Progress' %}selected{% endif %}>In progress</option><option value="Completed" {% if activity['status'] == 'Completed' %}selected{% endif %}>Completed</option></select></label>
+            <label>Progress update<textarea name="employee_progress_note" maxlength="3000" placeholder="What have you done, learned, or need help with?">{{ activity['employee_progress_note'] or '' }}</textarea></label>
+        </fieldset>
+        {% endfor %}
+        <div class="manager-decision-footer"><span>Your supervisor will receive a private update when you save.</span><button class="manager-approve-button" type="submit">Save my progress</button></div>
+    </form>
+</section>
+{% elif can_monitor %}
+<section class="manager-decision-console pdp-console">
+    <div class="manager-decision-copy"><span class="eyebrow">DEVELOPMENT PLAN VIEW</span><h2>{{ review['title'] }}</h2><p>{{ review['focus_area'] }}</p></div>
+    <div class="pdp-plan-summary"><div><span>OVERALL GOAL</span><p>{{ review['overall_goal'] }}</p></div><div><span>SUCCESS MEASURE</span><p>{{ review['success_measure'] }}</p></div><div><span>PLAN TARGET</span><p>{{ review['target_date'] }}</p></div></div>
+    <div class="pdp-activities-heading"><span class="eyebrow">ACTIVITY STATUS</span><p>Read-only monitoring view for HR.</p></div>
+    {% for activity in activities %}
+    <article class="pdp-monitor-row"><div><strong>{{ activity['activity'] }}</strong><small>Target: {{ activity['target_date'] }} · Support: {{ activity['support_needed'] or 'Not recorded' }}</small></div><span class="pdp-status {{ activity['status']|lower|replace(' ', '-') }}">{{ activity['status'] }}</span><p>{{ activity['employee_progress_note'] or 'No employee progress note yet.' }}</p></article>
+    {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

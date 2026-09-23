@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}PAR Meeting | Altrium PerformanceFlow{% endblock %}
+
+{% block content %}
+<div id="parMeetingWorkspace" data-review-id="{{ review['employee_review_id'] }}" data-csrf-token="{{ csrf_token }}"></div>
+
+<section class="manager-approval-header">
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Flowboard</a>
+        <span class="eyebrow">PERFORMANCE APPRAISAL REVIEW</span>
+        <h1>{{ 'Arrange the PAR meeting' if can_schedule else 'PAR meeting details' }}</h1>
+        <p>{{ 'Schedule' if can_schedule else 'View' }} the review conversation with {{ review['employee_name_snapshot'] }}.</p>
+    </div>
+    <div class="manager-approval-state {{ 'approved' if review['par_status'] == 'Held' else '' }}">
+        <span>MEETING STATUS</span>
+        <strong>{{ review['par_status'] or 'Not scheduled' }}</strong>
+        <small>{{ review['cycle_name'] }}</small>
+    </div>
+</section>
+
+<section class="manager-review-context">
+    <div><span>EMPLOYEE</span><strong>{{ review['employee_name_snapshot'] }}</strong><small>{{ review['employee_code_snapshot'] }}</small></div>
+    <div><span>DEPARTMENT</span><strong>{{ review['department_snapshot'] }}</strong><small>Review participant</small></div>
+    <div><span>SUPERVISOR</span><strong>{{ review['supervisor_name'] }}</strong><small>Meeting owner</small></div>
+    <div><span>MANAGER</span><strong>{{ review['manager_name'] }}</strong><small>Optional attendee</small></div>
+</section>
+
+{% if review['par_meeting_id'] %}
+<section class="par-detail-card">
+    <div class="manager-section-heading">
+        <div><span class="eyebrow">MEETING PLAN</span><h2>{{ review['meeting_date'] }} · {{ review['start_time'] }}–{{ review['end_time'] }}</h2><p>{{ review['meeting_format'] }} · {{ review['location'] }}</p></div>
+        <span class="par-status-chip {{ review['par_status']|lower }}">{{ review['par_status'] }}</span>
+    </div>
+    <div class="par-detail-grid">
+        <div><span>ATTENDEES</span>{% for attendee in attendees %}<p><strong>{{ attendee['full_name'] }}</strong> · {{ attendee['attendee_role'] }}</p>{% endfor %}</div>
+        <div><span>AGENDA</span><p>{{ review['agenda'] or 'No agenda was added.' }}</p></div>
+    </div>
+    {% if can_schedule and review['par_status'] in ('Scheduled', 'Rescheduled') %}
+    <form method="post" action="{{ url_for('mark_par_meeting_held', employee_review_id=review['employee_review_id']) }}" class="par-held-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="manager-approve-button" type="submit">Mark meeting as held</button>
+        <button class="flow-secondary-link par-cancel-button" type="submit" form="cancelParMeeting">Cancel meeting</button>
+        <span>After the meeting, record the discussion and agreed development actions.</span>
+    </form>
+    <form id="cancelParMeeting" method="post" action="{{ url_for('cancel_par_meeting', employee_review_id=review['employee_review_id']) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    </form>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if review['par_status'] == 'Held' %}
+    {% if can_record_outcome %}
+    <section class="manager-decision-console par-outcome-console">
+        <div class="manager-decision-copy">
+            <span class="eyebrow">PAR OUTCOME</span>
+            <h2>{{ 'Update the meeting record' if outcome else 'Record the meeting outcome' }}</h2>
+            <p>Document the agreed discussion points and actions while the conversation is still clear. This creates the handoff for the employee PDP.</p>
+        </div>
+        <form class="manager-decision-form par-outcome-form" method="post" action="{{ url_for('record_par_meeting_outcome', employee_review_id=review['employee_review_id']) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label>Discussion summary<textarea name="discussion_summary" maxlength="3000" required placeholder="Summarise the key points discussed during the meeting...">{{ outcome['discussion_summary'] if outcome else '' }}</textarea></label>
+            <div class="par-form-grid">
+                <label>Confirmed strengths<textarea name="confirmed_strengths" maxlength="3000" placeholder="Strengths recognised in the meeting...">{{ outcome['confirmed_strengths'] if outcome else '' }}</textarea></label>
+                <label>Development priorities<textarea name="development_priorities" maxlength="3000" placeholder="Skills, behaviours or results to develop...">{{ outcome['development_priorities'] if outcome else '' }}</textarea></label>
+            </div>
+            <label>Employee comments <span>Optional</span><textarea name="employee_comments" maxlength="3000" placeholder="Record any comments the employee chose to make...">{{ outcome['employee_comments'] if outcome else '' }}</textarea></label>
+            <label>Agreed actions<textarea name="agreed_actions" maxlength="3000" required placeholder="List the development actions agreed by the employee and supervisor...">{{ outcome['agreed_actions'] if outcome else '' }}</textarea></label>
+            <label>Meeting outcome<select name="outcome" required><option value="">Select the outcome</option><option value="PDP Required" {% if outcome and outcome['outcome'] == 'PDP Required' %}selected{% endif %}>PDP required</option><option value="No PDP Required" {% if outcome and outcome['outcome'] == 'No PDP Required' %}selected{% endif %}>No PDP required</option></select></label>
+            <div class="manager-decision-footer"><span>Only meeting attendees can view this record.</span><button class="manager-approve-button" type="submit">{{ 'Update outcome' if outcome else 'Record PAR outcome' }}</button></div>
+        </form>
+    </section>
+    {% elif outcome %}
+    <section class="par-detail-card par-outcome-record">
+        <div class="manager-section-heading"><div><span class="eyebrow">PAR OUTCOME</span><h2>Meeting record</h2><p>Recorded by {{ outcome['recorded_by_name'] }} on {{ outcome['recorded_at'] }}</p></div><span class="par-status-chip held">{{ outcome['outcome'] }}</span></div>
+        <div class="par-outcome-summary"><span>DISCUSSION SUMMARY</span><p>{{ outcome['discussion_summary'] }}</p></div>
+        <div class="par-detail-grid"><div><span>CONFIRMED STRENGTHS</span><p>{{ outcome['confirmed_strengths'] or 'No strengths recorded.' }}</p></div><div><span>DEVELOPMENT PRIORITIES</span><p>{{ outcome['development_priorities'] or 'No priorities recorded.' }}</p></div><div><span>AGREED ACTIONS</span><p>{{ outcome['agreed_actions'] }}</p></div><div><span>EMPLOYEE COMMENTS</span><p>{{ outcome['employee_comments'] or 'No employee comments recorded.' }}</p></div></div>
+    </section>
+    {% else %}
+    <section class="manager-readonly-banner"><span>PAR OUTCOME</span><strong>The supervisor is preparing the meeting record.</strong><p>The discussion and agreed actions will appear here when they are recorded.</p></section>
+    {% endif %}
+{% endif %}
+
+{% if can_schedule %}
+<section class="manager-decision-console par-scheduler">
+    <div class="manager-decision-copy"><span class="eyebrow">SHARED AVAILABILITY</span><h2>{{ 'Arrange a follow-up PAR meeting' if is_follow_up else 'Find a time that works' }}</h2><p>{% if is_follow_up %}The previous meeting remains in the record. Schedule a new conversation when a follow-up is needed.{% else %}The employee and supervisor are required. Include the manager only when they need to attend. Availability is checked against PAR meetings and personal unavailable time.{% endif %}</p><a href="{{ url_for('availability') }}" class="flow-secondary-link">Manage my availability →</a></div>
+    <form class="manager-decision-form par-schedule-form" method="post" action="{{ url_for('schedule_par_meeting', employee_review_id=review['employee_review_id']) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="par-form-grid">
+            <label>Meeting date<input id="parMeetingDate" name="meeting_date" type="date" required></label>
+            <label>Duration<select id="parMeetingDuration" name="duration"><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60" selected>60 minutes</option><option value="90">90 minutes</option></select></label>
+        </div>
+        <label class="final-confirmation-check"><input id="parManagerAttends" name="manager_attends" type="checkbox" {% if manager_attending %}checked{% endif %}><span>Include {{ review['manager_name'] }} (manager)</span></label>
+        <button id="checkParAvailability" class="flow-secondary-link par-check-button" type="button">Check shared availability</button>
+        <label>Available start time<select id="parStartTime" name="start_time" required disabled><option value="">Choose a date and check availability</option></select></label>
+        <div class="par-form-grid">
+            <label>Format<select name="meeting_format" required><option value="In person">In person</option><option value="Online">Online</option><option value="Hybrid">Hybrid</option></select></label>
+            <label>Location or meeting link<input name="location" maxlength="300" required placeholder="e.g. Meeting Room 2 or Teams link"></label>
+        </div>
+        <label>Agenda <span>Optional</span><textarea name="agenda" maxlength="3000" placeholder="Topics to discuss, feedback themes and development focus..."></textarea></label>
+        <p id="parAvailabilityMessage" class="par-availability-message">Select a weekday to find shared available times.</p>
+        <div class="manager-decision-footer"><span>Working hours: Monday–Friday, 9:00 AM–5:00 PM</span><button class="manager-approve-button" type="submit">{{ 'Schedule follow-up PAR' if is_follow_up else ('Save revised meeting' if review['par_meeting_id'] else 'Schedule PAR meeting') }}</button></div>
+    </form>
+</section>
+{% elif not can_schedule %}
+<section class="manager-readonly-banner"><span>MEETING VIEW</span><strong>{{ 'Meeting details are available here.' if review['par_meeting_id'] else 'The supervisor has not scheduled the PAR meeting yet.' }}</strong><p>Only the assigned supervisor can arrange or change the meeting.</p></section>
+{% endif %}
+<script src="{{ url_for('static', filename='js/par_meeting.js') }}"></script>
+{% endblock %}

@@ -1370,6 +1370,44 @@ connection.execute(
     """
 )
 
+
+# ==========================================
+# PB16 - WORKFLOW REMINDER DELIVERY LOG
+# ==========================================
+
+connection.execute(
+    """
+    CREATE TABLE IF NOT EXISTS workflow_reminder_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        review_action_id INTEGER,
+        pdp_activity_id INTEGER,
+        reminder_kind TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (review_action_id) REFERENCES review_actions(id),
+        FOREIGN KEY (pdp_activity_id) REFERENCES pdp_activities(id),
+        UNIQUE(user_id, review_action_id, pdp_activity_id, reminder_kind)
+    )
+    """
+)
+
+connection.execute(
+    """
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_workflow_action_reminder_once
+    ON workflow_reminder_log(user_id, review_action_id, reminder_kind)
+    WHERE review_action_id IS NOT NULL
+    """
+)
+
+connection.execute(
+    """
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pdp_activity_reminder_once
+    ON workflow_reminder_log(user_id, pdp_activity_id, reminder_kind)
+    WHERE pdp_activity_id IS NOT NULL
+    """
+)
+
 # ==========================================
 # PB10 BACKFILL FOR SUBMITTED EVALUATIONS
 # ==========================================

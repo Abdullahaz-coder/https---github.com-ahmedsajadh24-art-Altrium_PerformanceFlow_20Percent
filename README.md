@@ -65,3 +65,27 @@ public repository.
 Before starting new work, pull the latest changes from GitHub. Create a separate branch for each feature or fix, commit focused changes, push the branch, and open a pull request for teammate review before merging into `main`.
 
 Do not commit local databases, uploaded evidence, passwords, environment files, or virtual-environment folders.
+
+## Automated browser tests with Playwright
+
+The `tests/e2e` suite runs in a real browser and can be launched from the
+official **Playwright Test for VS Code** extension. It starts a disposable copy
+of the application and a fresh test database on `127.0.0.1:5107`; it never
+opens or changes the project's `database.db` or demo evidence files.
+
+1. Open this project folder in VS Code and install the recommended Microsoft
+   Playwright extension if VS Code prompts you. Install Node.js and the Python
+   dependencies in `.venv` using the local setup above.
+2. On a fresh checkout, run `npm install` and `npx playwright install chromium`
+   in the VS Code terminal. These steps are already prepared in this workspace.
+3. Open the Testing sidebar, select the **chromium** Playwright project, and
+   click **Run Tests** (or the play button beside one test). To watch the
+   browser, turn on **Show Browsers** in the Playwright panel.
+
+The same suite runs from a terminal with `npm run test:e2e`. Failed runs save a
+trace and screenshot in `test-results`; `npm run test:e2e:report` opens the HTML
+report. The initial browser suite covers sign-in validation, password visibility,
+the HR/Supervisor/Manager/Employee workspaces, role access, Signal Center, and
+logout. The existing Python regression suite covers deeper review, PAR, PDP,
+privacy, and closure rules. Do not treat this smoke suite alone as proof that
+the entire product workflow is browser-tested.

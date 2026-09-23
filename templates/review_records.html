@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Records Vault | Altrium PerformanceFlow{% endblock %}
+
+{% block content %}
+<section class="records-vault-hero">
+    <div>
+        <span class="eyebrow">CENTRALISED REVIEW RECORDS</span>
+        <h1>Records Vault</h1>
+        <p>A protected register of review progress, ownership and retained outcomes.</p>
+    </div>
+    <div class="records-vault-trust"><span>●</span><div><strong>HR only</strong><small>Read-only operational access</small></div></div>
+</section>
+
+<section class="records-summary" aria-label="Review record summary">
+    <article><span>ALL RECORDS</span><strong>{{ totals['total'] or 0 }}</strong><small>Across every cycle</small></article>
+    <article><span>LIVE CYCLE CASES</span><strong>{{ totals['active'] or 0 }}</strong><small>Currently in progress</small></article>
+    <article><span>COMPLETED OUTCOMES</span><strong>{{ totals['completed'] or 0 }}</strong><small>Retained and accessible</small></article>
+    <article><span>WORKFLOW IN FLIGHT</span><strong>{{ totals['in_progress'] or 0 }}</strong><small>Awaiting a next step</small></article>
+</section>
+
+<section class="records-vault-panel">
+    <div class="records-panel-heading"><div><span class="eyebrow">OPERATIONS REGISTER</span><h2>Find a review record</h2></div><p>{{ records|length }} matching record{{ '' if records|length == 1 else 's' }}</p></div>
+    <form class="records-filter-bar" method="get">
+        <label><span>Search</span><input name="q" value="{{ query }}" placeholder="Employee, ID, department or cycle"></label>
+        <label><span>Workflow status</span><select name="status"><option value="">All statuses</option>{% for status in ['Not Started', 'Self Assessment In Progress', 'Self Assessment Submitted', 'Peer Review In Progress', 'Peer Review Completed', 'Supervisor Evaluation In Progress', 'Supervisor Evaluation Submitted', 'Manager Approval Pending', 'Approved', 'Completed'] %}<option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select></label>
+        <label><span>Review cycle</span><select name="cycle"><option value="">All cycles</option>{% for cycle in cycles %}<option value="{{ cycle['id'] }}" {% if selected_cycle == cycle['id']|string %}selected{% endif %}>{{ cycle['cycle_name'] }} · {{ cycle['cycle_year'] }}</option>{% endfor %}</select></label>
+        <button type="submit" class="records-filter-submit">Apply filters <span>→</span></button>
+        {% if query or selected_status or selected_cycle %}<a class="records-filter-reset" href="{{ url_for('review_records') }}">Reset</a>{% endif %}
+    </form>
+    <div class="records-table-shell"><table class="records-table"><thead><tr><th>Employee</th><th>Cycle</th><th>Workflow</th><th>Ownership</th><th>Last updated</th><th></th></tr></thead><tbody>
+    {% for record in records %}<tr>
+        <td><strong>{{ record['employee_name_snapshot'] }}</strong><small>{{ record['employee_code_snapshot'] }} · {{ record['department_snapshot'] }}</small></td>
+        <td><strong>{{ record['cycle_name'] }}</strong><small>{{ record['cycle_year'] }} · {{ record['cycle_status'] }}</small></td>
+        <td><span class="record-status status-{{ record['review_status']|lower|replace(' ', '-') }}">{{ record['review_status'] }}</span>{% if record['manager_status'] %}<small>Manager: {{ record['manager_status'] }}</small>{% endif %}</td>
+        <td><strong>{{ record['supervisor_name'] }}</strong><small>Supervisor{% if record['manager_name'] %} · {{ record['manager_name'] }}{% endif %}</small></td>
+        <td><small>{{ record['updated_at'] or '—' }}</small></td>
+        <td>{% if record['review_status'] == 'Completed' %}<a href="{{ url_for('final_review_outcome', employee_review_id=record['employee_review_id']) }}">Outcome →</a>{% else %}<a href="{{ url_for('review_cycle_workspace', cycle_id=record['review_cycle_id']) }}">Open cycle →</a>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="6" class="records-empty"><strong>No records match these filters.</strong><span>Try clearing a filter or searching by employee name.</span></td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{% endblock %}

@@ -626,7 +626,7 @@ body.app-body::before {
     display: block;
     padding: 8px 10px 7px;
     color: #7b8190;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.17em;
 }
@@ -665,19 +665,19 @@ body.app-body::before {
 }
 
 .quick-navigation a strong {
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .quick-navigation a small {
     color: #98a2b3;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 .quick-navigation-empty {
     display: block;
     padding: 22px 10px;
     color: #98a2b3;
-    font-size: 10px;
+    font-size: 12px;
     text-align: center;
 }
 
@@ -1238,6 +1238,130 @@ body.page-exiting .workspace-content {
     }
 }
 
+/* Records Vault: restrained operational workspace for HR. */
+.records-vault-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2.25rem 2.5rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid #e2e6f0;
+    border-radius: 1.5rem;
+    background: radial-gradient(circle at 92% 12%, rgba(93, 63, 232, .12), transparent 24%), linear-gradient(135deg, #fff 0%, #f8f8ff 100%);
+}
+.records-vault-hero h1 { margin: .35rem 0 .55rem; font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -.055em; color: #172235; }
+.records-vault-hero p { margin: 0; color: #68758d; }
+.records-vault-trust { display: flex; align-items: center; gap: .75rem; padding: 1rem 1.15rem; min-width: 190px; border: 1px solid #e2e6f0; border-radius: 1rem; background: rgba(255,255,255,.82); }
+.records-vault-trust > span { color: #16b96a; font-size: 1.25rem; }
+.records-vault-trust strong, .records-vault-trust small { display: block; }
+.records-vault-trust strong { color: #1b2739; font-size: .88rem; }.records-vault-trust small { margin-top: .18rem; color: #748097; font-size: .72rem; }
+.records-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.records-summary article { min-height: 130px; padding: 1.25rem; border: 1px solid #e2e6f0; border-radius: 1.1rem; background: #fff; box-shadow: 0 12px 28px rgba(22, 34, 53, .045); }
+.records-summary span, .records-summary small { display: block; color: #718099; font-size: .75rem; font-weight: 800; letter-spacing: .1em; }.records-summary strong { display: block; margin: .6rem 0 .25rem; color: #172235; font-size: 1.9rem; line-height: 1; }.records-summary small { letter-spacing: 0; font-weight: 500; }
+.records-vault-panel { padding: 2rem; border: 1px solid #e2e6f0; border-radius: 1.5rem; background: #fff; box-shadow: 0 18px 44px rgba(22, 34, 53, .055); }
+.records-panel-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }.records-panel-heading h2 { margin: .35rem 0 0; color: #172235; font-size: 1.55rem; letter-spacing: -.035em; }.records-panel-heading p { margin: 0; color: #718099; font-size: .84rem; }
+.records-filter-bar { display: grid; grid-template-columns: minmax(220px, 1.5fr) minmax(160px, 1fr) minmax(160px, 1fr) auto auto; align-items: end; gap: .8rem; padding: 1.25rem 0; margin-top: 1.2rem; border-top: 1px solid #edf0f5; }
+.records-filter-bar label { display: grid; gap: .38rem; }.records-filter-bar label > span { color: #67758e; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }.records-filter-bar input, .records-filter-bar select { width: 100%; min-height: 42px; padding: 0 .8rem; border: 1px solid #dce2ec; border-radius: .65rem; background: #fbfcff; color: #243146; font: inherit; font-size: .84rem; }.records-filter-bar input:focus, .records-filter-bar select:focus { outline: 0; border-color: #6650ef; box-shadow: 0 0 0 3px rgba(102,80,239,.12); }
+.records-filter-submit { min-height: 42px; padding: 0 1rem; border: 0; border-radius: .65rem; background: linear-gradient(135deg, #4934dd, #7047ed); color: #fff; font-weight: 800; cursor: pointer; }.records-filter-submit span { margin-left: .4rem; }.records-filter-reset { padding: .65rem .2rem; color: #5b3de5; font-size: .8rem; font-weight: 800; text-decoration: none; }
+.records-table-shell { overflow-x: auto; border: 1px solid #e4e8f0; border-radius: 1rem; }.records-table { width: 100%; min-width: 930px; border-collapse: collapse; }.records-table th { padding: .85rem 1rem; background: #f7f8fc; color: #718099; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-align: left; }.records-table td { padding: 1rem; border-top: 1px solid #edf0f5; color: #243146; vertical-align: middle; font-size: .83rem; }.records-table td strong, .records-table td small { display: block; }.records-table td small { margin-top: .28rem; color: #758198; font-size: .72rem; }.records-table td > a { color: #543bd8; font-size: .78rem; font-weight: 800; text-decoration: none; white-space: nowrap; }.records-table tr:hover td { background: #fbfbff; }
+.record-status { display: inline-flex; padding: .34rem .58rem; border-radius: 999px; background: #f0f1f6; color: #5f6c82; font-size: .75rem; font-weight: 800; }.record-status.status-completed { background: #e8f8ef; color: #14864d; }.record-status.status-approved { background: #edf0ff; color: #4e43c5; }.record-status.status-manager-approval-pending { background: #fff4df; color: #af6a05; }.record-status.status-supervisor-evaluation-in-progress, .record-status.status-supervisor-evaluation-submitted { background: #eaf6fb; color: #197192; }.record-status.status-peer-review-in-progress, .record-status.status-peer-review-completed { background: #f2edff; color: #7351c9; }.record-status.status-self-assessment-in-progress, .record-status.status-self-assessment-submitted { background: #eef4ff; color: #3768b1; }
+.records-empty { padding: 3rem !important; text-align: center; }.records-empty strong, .records-empty span { display: block; }.records-empty span { margin-top: .45rem; color: #758198; }
+@media (max-width: 980px) { .records-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }.records-filter-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }.records-filter-submit, .records-filter-reset { justify-self: start; } }
+@media (max-width: 640px) { .records-vault-hero, .records-panel-heading { align-items: flex-start; flex-direction: column; }.records-vault-hero, .records-vault-panel { padding: 1.3rem; }.records-summary, .records-filter-bar { grid-template-columns: 1fr; }.records-vault-trust { width: 100%; }.records-filter-submit { width: 100%; }.records-filter-reset { justify-self: center; } }
+
+/* =========================================================
+   FINAL WORKSPACE ALIGNMENT GUARDRAILS
+   Applied last so shared geometry stays consistent across pages.
+========================================================= */
+
+.workspace-content > section { box-sizing: border-box; min-width: 0; }
+
+.manager-approval-header,
+.manager-review-context,
+.manager-decision-console,
+.par-detail-card,
+.pulse-hero,
+.pulse-board,
+.security-page,
+.review-history-section { max-width: 100%; box-sizing: border-box; }
+
+.manager-review-context > div,
+.par-detail-grid > div,
+.pdp-plan-summary > div,
+.pulse-plan-card,
+.hr-development-metrics > div { min-width: 0; }
+
+.manager-review-context strong,
+.manager-review-context small,
+.par-detail-grid p,
+.pdp-plan-summary p,
+.pulse-plan-top small,
+.pulse-plan-title,
+.pulse-plan-meta span { overflow-wrap: anywhere; }
+
+.manager-decision-console,
+.par-detail-card,
+.pulse-board,
+.security-form-card,
+.security-note-card { border-radius: 22px; }
+
+.manager-decision-form input,
+.manager-decision-form select,
+.manager-decision-form textarea,
+.pdp-form input,
+.pdp-form select,
+.pdp-form textarea { box-sizing: border-box; max-width: 100%; }
+
+/* Replace legacy green-tinted manager panels with the shared navy–indigo system. */
+.manager-review-context > div,
+.manager-outcome-panel,
+.manager-evidence-section,
+.manager-decision-console,
+.manager-decision-record,
+.manager-readonly-banner {
+    border-color: #dfe4ee;
+    background: linear-gradient(135deg, #ffffff, #fbfbff);
+}
+
+.manager-review-context strong,
+.manager-outcome-heading h2,
+.manager-section-heading h2,
+.manager-decision-record strong { color: #1f2b40; }
+
+.manager-review-context small,
+.manager-section-heading p,
+.manager-decision-record p { color: #68758c; }
+
+@media (max-width: 980px) {
+    .manager-review-context,
+    .par-detail-grid,
+    .par-form-grid,
+    .pdp-plan-summary,
+    .pulse-plan-grid,
+    .hr-development-snapshot { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+    .workspace-content { padding-inline: 16px; }
+
+    .manager-approval-header,
+    .manager-decision-console,
+    .par-detail-card,
+    .pulse-hero,
+    .pulse-board,
+    .security-form-card,
+    .security-note-card { padding: 22px; border-radius: 18px; }
+
+    .manager-review-context,
+    .par-detail-grid,
+    .par-form-grid,
+    .pdp-plan-summary,
+    .pulse-plan-grid,
+    .hr-development-snapshot,
+    .hr-development-metrics { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* =========================================================
    ALIGNMENT CORRECTIONS
    Shared content geometry and page-specific grid repairs.
@@ -1555,7 +1679,7 @@ body.page-exiting .workspace-content {
 .review-history-heading p {
     margin-top: 7px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.55;
 }
 
@@ -1594,7 +1718,7 @@ body.page-exiting .workspace-content {
 
 .review-history-cycle {
     color: #818ba0;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -1610,7 +1734,7 @@ body.page-exiting .workspace-content {
 .review-history-card-header p {
     margin-top: 5px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.5;
 }
 
@@ -1625,7 +1749,7 @@ body.page-exiting .workspace-content {
     border-radius: 9px;
     color: var(--indigo);
     background: #ffffff;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
     text-decoration: none;
     transition:
@@ -1673,7 +1797,7 @@ body.page-exiting .workspace-content {
 
 .review-history-metrics span {
     color: #8a93a5;
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.11em;
 }

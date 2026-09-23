@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Development Pulse | Altrium PerformanceFlow{% endblock %}
+
+{% block content %}
+<section class="pulse-hero">
+    <div>
+        <span class="eyebrow">DEVELOPMENT PULSE</span>
+        <h1>Turn development plans into visible momentum.</h1>
+        <p>{% if user_role == 'HR' %}A live view of every active PDP across the organisation.{% elif user_role == 'Employee' %}Follow your development activities and keep progress visible between reviews.{% else %}A focused view of the development commitments across your team.{% endif %}</p>
+    </div>
+    <div class="pulse-hero-signal"><i></i><span>LIVE PDP SIGNALS</span><strong>{{ total_plans }} active</strong></div>
+</section>
+
+<section class="pulse-stat-grid">
+    <a href="{{ url_for('development_pulse', view='all') }}" class="pulse-stat-card {{ 'active' if view == 'all' else '' }}"><span>ACTIVE PLANS</span><strong>{{ total_plans }}</strong><small>Development continues between cycles</small></a>
+    <a href="{{ url_for('development_pulse', view='moving') }}" class="pulse-stat-card {{ 'active' if view == 'moving' else '' }}"><span>MOVING FORWARD</span><strong>{{ moving_plans }}</strong><small>Plans with activity in progress</small></a>
+    <a href="{{ url_for('development_pulse', view='attention') }}" class="pulse-stat-card attention {{ 'active' if view == 'attention' else '' }}"><span>NEEDS ATTENTION</span><strong>{{ attention_plans }}</strong><small>Overdue or not yet started</small></a>
+</section>
+
+<section class="pulse-board">
+    <div class="pulse-board-heading"><div><span class="eyebrow">{% if view == 'attention' %}ATTENTION QUEUE{% elif view == 'moving' %}MOMENTUM VIEW{% else %}ALL ACTIVE PLANS{% endif %}</span><h2>{% if plans %}Development at a glance{% else %}Nothing in this view right now{% endif %}</h2></div><p>Open a plan to review its activities, employee notes and target dates.</p></div>
+    {% if plans %}
+    <div class="pulse-plan-grid">
+        {% for plan in plans %}
+        <article class="pulse-plan-card {{ 'needs-attention' if plan['needs_attention'] else '' }}">
+            <div class="pulse-plan-top"><div><span>{{ plan['department_snapshot'] }}</span><h3>{{ plan['employee_name_snapshot'] }}</h3><small>{{ plan['employee_code_snapshot'] }} · {{ plan['focus_area'] }}</small></div>{% if plan['activity_total'] and plan['completed_total'] == plan['activity_total'] %}<b class="pulse-moving pulse-completed">Completed</b>{% elif plan['overdue_total'] %}<b class="pulse-alert">{{ plan['overdue_total'] }} overdue</b>{% elif plan['in_progress_total'] or plan['completed_total'] %}<b class="pulse-moving">In progress</b>{% else %}<b class="pulse-quiet">Not started</b>{% endif %}</div>
+            <p class="pulse-plan-title">{{ plan['title'] }}</p>
+            <div class="pulse-progress"><div><span>ACTIVITY PROGRESS</span><strong>{{ plan['completed_total'] }}/{{ plan['activity_total'] }}</strong></div><div class="pulse-progress-track"><i style="width: {{ plan['progress_percent'] }}%"></i></div><small>{{ plan['progress_percent'] }}% complete</small></div>
+            <div class="pulse-plan-meta"><span>Target <strong>{{ plan['target_date'] }}</strong></span><span>{% if plan['last_employee_update'] %}Updated <strong>{{ plan['last_employee_update'] }}</strong>{% else %}Awaiting <strong>employee update</strong>{% endif %}</span></div>
+            <a href="{{ url_for('pdp_workspace', employee_review_id=plan['employee_review_id']) }}" class="action-open-link">Open development plan →</a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="pulse-empty"><strong>No plans match this view.</strong><p>{% if view == 'attention' %}Good news—there are no plans needing attention right now.{% elif view == 'moving' %}Employee progress will appear here after an activity is marked in progress.{% else %}PDPs will appear here after supervisors create them from a PAR outcome.{% endif %}</p></div>
+    {% endif %}
+</section>
+{% endblock %}

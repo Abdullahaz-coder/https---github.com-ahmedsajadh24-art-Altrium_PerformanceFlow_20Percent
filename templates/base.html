@@ -40,6 +40,7 @@
         href="{{ url_for('static', filename='css/polish.css') }}"
     >
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/usability.css') }}">
 </head>
 
 
@@ -76,302 +77,34 @@
 
             <!-- NAVIGATION -->
 
-            <nav class="navigation">
-
-
-                <!-- DASHBOARD -->
-
-                <a
-                    href="{{ url_for('dashboard') }}"
-                    class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
-                >
-
-                    <span class="nav-icon">
-                        ⌂
-                    </span>
-
-                    <span class="nav-label">
-                        Dashboard
-                    </span>
-
+            {% macro nav_item(endpoint, label, icon, active_routes) %}
+                {% set selected = request.endpoint in active_routes %}
+                <a href="{{ url_for(endpoint) }}" class="nav-link {{ 'active' if selected else '' }}"
+                   title="{{ label }}" aria-label="{{ label }}" {% if selected %}aria-current="page"{% endif %}>
+                    <span class="nav-icon" aria-hidden="true">{{ icon }}</span>
+                    <span class="nav-label">{{ label }}</span>
                 </a>
-
-
-
-                <!-- =====================================
-                     HR NAVIGATION
-                ====================================== -->
-
-                {% if user_role == "HR" %}
-
-
-                    <a
-                        href="{{ url_for('employees') }}"
-                        class="nav-link {% if request.endpoint == 'employees' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ♙
-                        </span>
-
-                        <span class="nav-label">
-                            Employees
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('review_cycles') }}"
-                        class="nav-link {% if request.endpoint == 'review_cycles' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ↻
-                        </span>
-
-                        <span class="nav-label">
-                            Review Cycles
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('review_history') }}"
-                        class="nav-link {% if request.endpoint == 'review_history' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ✓
-                        </span>
-
-                        <span class="nav-label">
-                            Reviews
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('review_cycles') }}"
-                        class="nav-link {% if request.endpoint in ('peer_matchboard', 'review_cycle_workspace') %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ⇄
-                        </span>
-
-                        <span class="nav-label">
-                            Peer Assignments
-                        </span>
-
-                    </a>
-
-
-
-                <!-- =====================================
-                     SUPERVISOR NAVIGATION
-                ====================================== -->
-
-                {% elif user_role == "Supervisor" %}
-
-                    <a
-                        href="{{ url_for('availability') }}"
-                        class="nav-link {% if request.endpoint == 'availability' %}active{% endif %}"
-                    >
-                        <span class="nav-icon">◷</span>
-                        <span class="nav-label">Availability</span>
-                    </a>
-
-                    <a
-                        href="{{ url_for('development_pulse') }}"
-                        class="nav-link {% if request.endpoint in ('development_pulse', 'pdp_workspace') %}active{% endif %}"
-                    >
-                        <span class="nav-icon">◌</span>
-                        <span class="nav-label">Development</span>
-                    </a>
-
-
-                    <a
-                        href="{{ url_for('my_team') }}"
-                        class="nav-link {% if request.endpoint == 'my_team' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ♙
-                        </span>
-
-                        <span class="nav-label">
-                            My Team
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('my_team') }}"
-                        class="nav-link {% if request.endpoint == 'my_team' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ◎
-                        </span>
-
-                        <span class="nav-label">
-                            Goals & KPIs
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('review_history') }}"
-                        class="nav-link {% if request.endpoint in ('supervisor_evaluation_workspace', 'review_history') %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ✓
-                        </span>
-
-                        <span class="nav-label">
-                            Evaluations
-                        </span>
-
-                    </a>
-
-
-
-                <!-- =====================================
-                     EMPLOYEE NAVIGATION
-                ====================================== -->
-
-                {% elif user_role == "Employee" %}
-
-                    <a
-                        href="{{ url_for('availability') }}"
-                        class="nav-link {% if request.endpoint == 'availability' %}active{% endif %}"
-                    >
-                        <span class="nav-icon">◷</span>
-                        <span class="nav-label">Availability</span>
-                    </a>
-
-                    <a
-                        href="{{ url_for('development_pulse') }}"
-                        class="nav-link {% if request.endpoint in ('development_pulse', 'pdp_workspace') %}active{% endif %}"
-                    >
-                        <span class="nav-icon">◌</span>
-                        <span class="nav-label">Development</span>
-                    </a>
-
-
-                    <a
-                        href="{{ url_for('dashboard') }}"
-                        class="nav-link {% if request.endpoint in ('dashboard', 'final_review_outcome') %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ◎
-                        </span>
-
-                        <span class="nav-label">
-                            My Review
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('dashboard') }}"
-                        class="nav-link {% if request.endpoint == 'self_assessment_studio' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ✎
-                        </span>
-
-                        <span class="nav-label">
-                            Self Assessment
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('dashboard') }}"
-                        class="nav-link {% if request.endpoint == 'peer_review_workspace' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ⇄
-                        </span>
-
-                        <span class="nav-label">
-                            Peer Reviews
-                        </span>
-
-                    </a>
-
-
-
-                <!-- =====================================
-                     MANAGER NAVIGATION
-                ====================================== -->
-
-                {% elif user_role == "Manager" %}
-
-                    <a
-                        href="{{ url_for('availability') }}"
-                        class="nav-link {% if request.endpoint == 'availability' %}active{% endif %}"
-                    >
-                        <span class="nav-icon">◷</span>
-                        <span class="nav-label">Availability</span>
-                    </a>
-
-
-                    <a
-                        href="{{ url_for('dashboard') }}"
-                        class="nav-link active"
-                    >
-
-                        <span class="nav-icon">
-                            ✓
-                        </span>
-
-                        <span class="nav-label">
-                            Approvals
-                        </span>
-
-                    </a>
-
-
-
-                    <a
-                        href="{{ url_for('review_history') }}"
-                        class="nav-link {% if request.endpoint == 'review_history' %}active{% endif %}"
-                    >
-
-                        <span class="nav-icon">
-                            ◷
-                        </span>
-
-                        <span class="nav-label">
-                            Review History
-                        </span>
-
-                    </a>
-
-
+            {% endmacro %}
+            <nav class="navigation" aria-label="Main navigation">
+                {{ nav_item('dashboard', 'Dashboard', '⌂', ['dashboard', 'self_assessment_studio', 'peer_review_studio', 'supervisor_evaluation_workspace', 'manager_approval_workspace', 'par_meeting_workspace']) }}
+                {% if user_role == 'HR' %}
+                    {{ nav_item('employees', 'Employees', '♙', ['employees', 'employee_profile']) }}
+                    {{ nav_item('review_cycles', 'Review Cycles', '↻', ['review_cycles', 'review_cycle_workspace', 'peer_matchboard']) }}
+                    {{ nav_item('review_records', 'Records', '✓', ['review_records', 'review_history', 'final_review_outcome']) }}
+                    {{ nav_item('development_pulse', 'Development', '◌', ['development_pulse', 'pdp_workspace']) }}
+                {% elif user_role == 'Supervisor' %}
+                    {{ nav_item('my_team', 'My Team', '♙', ['my_team', 'manage_performance']) }}
+                    {{ nav_item('development_pulse', 'Development', '◌', ['development_pulse', 'pdp_workspace']) }}
+                    {{ nav_item('availability', 'Availability', '◷', ['availability']) }}
+                    {{ nav_item('review_history', 'Review History', '✓', ['review_history', 'final_review_outcome']) }}
+                {% elif user_role == 'Employee' %}
+                    {{ nav_item('development_pulse', 'Development', '◌', ['development_pulse', 'pdp_workspace']) }}
+                    {{ nav_item('availability', 'Availability', '◷', ['availability']) }}
+                    {{ nav_item('review_history', 'Review History', '✓', ['review_history', 'final_review_outcome']) }}
+                {% elif user_role == 'Manager' %}
+                    {{ nav_item('availability', 'Availability', '◷', ['availability']) }}
+                    {{ nav_item('review_history', 'Review History', '✓', ['review_history', 'final_review_outcome']) }}
                 {% endif %}
-
-
             </nav>
 
 
@@ -633,6 +366,7 @@
             type="button"
             class="signal-center-close"
             id="closeSignalCenter"
+            aria-label="Close Signal Center"
         >
             ×
         </button>
@@ -704,6 +438,7 @@
 ></script>
 
 <script src="{{ url_for('static', filename='js/motion.js') }}"></script>
+<script src="{{ url_for('static', filename='js/usability.js') }}"></script>
 
 {% block scripts %}{% endblock %}
 

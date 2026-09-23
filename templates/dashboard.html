@@ -252,119 +252,24 @@ Flowboard | Altrium PerformanceFlow
 
 
 
-                <article class="journey-stage live">
-
-                    <span class="journey-number">
-                        02
-                    </span>
-
-                    <div>
-
-                        <small>
-                            CURRENT
-                        </small>
-
-                        <strong>
-                            Self Assessment
-                        </strong>
-
-                        <p>
-                            Employee reviews are underway
-                        </p>
-
-                    </div>
-
-                </article>
-
-
-
-                <div class="journey-connector"></div>
-
-
-
-                <article class="journey-stage queued">
-
-                    <span class="journey-number">
-                        03
-                    </span>
-
-                    <div>
-
-                        <small>
-                            NEXT
-                        </small>
-
-                        <strong>
-                            Peer Review
-                        </strong>
-
-                        <p>
-                            Waiting for peer assignments
-                        </p>
-
-                    </div>
-
-                </article>
-
-
-
-                <div class="journey-connector"></div>
-
-
-
-                <article class="journey-stage queued">
-
-                    <span class="journey-number">
-                        04
-                    </span>
-
-                    <div>
-
-                        <small>
-                            LATER
-                        </small>
-
-                        <strong>
-                            Supervisor
-                        </strong>
-
-                        <p>
-                            Evaluation stage
-                        </p>
-
-                    </div>
-
-                </article>
-
-
-
-                <div class="journey-connector"></div>
-
-
-
-                <article class="journey-stage queued">
-
-                    <span class="journey-number">
-                        05
-                    </span>
-
-                    <div>
-
-                        <small>
-                            FINAL
-                        </small>
-
-                        <strong>
-                            Approval
-                        </strong>
-
-                        <p>
-                            Manager decision
-                        </p>
-
-                    </div>
-
-                </article>
+                {% for stage in journey_stages %}
+                    <article class="journey-stage {{ stage.state }}">
+                        <span class="journey-number">
+                            {% if stage.state == 'complete' %}✓{% else %}{{ stage.number }}{% endif %}
+                        </span>
+                        <div>
+                            <div class="journey-stage-meta">
+                                <small>{{ stage.state_label }}</small>
+                                <span class="journey-stage-metric"><b>{{ stage.metric }}</b> {{ stage.metric_label }}</span>
+                            </div>
+                            <strong>{{ stage.title }}</strong>
+                            <p>{{ stage.detail }}</p>
+                        </div>
+                    </article>
+                    {% if not loop.last %}
+                        <div class="journey-connector {% if stage.state == 'complete' %}complete{% endif %}"></div>
+                    {% endif %}
+                {% endfor %}
 
 
             </div>
@@ -504,6 +409,29 @@ Flowboard | Altrium PerformanceFlow
 
         </div>
 
+
+    </section>
+
+
+
+    <!-- =====================================
+         DEVELOPMENT PULSE SNAPSHOT
+    ====================================== -->
+
+    <section class="hr-development-snapshot">
+
+        <div class="hr-development-copy">
+            <span class="section-label">DEVELOPMENT PULSE</span>
+            <h2>What happens after the review matters.</h2>
+            <p>Track active employee development plans directly from the HR flowboard, then open the detailed monitoring view when something needs attention.</p>
+            <a href="{{ url_for('development_pulse') }}" class="flow-primary-link">Open Development Pulse <span>→</span></a>
+        </div>
+
+        <div class="hr-development-metrics">
+            <div><span>ACTIVE PDPs</span><strong>{{ hr_active_pdp_count }}</strong><small>Plans currently being followed</small></div>
+            <div><span>IN PROGRESS</span><strong>{{ hr_pdp_in_progress_count }}</strong><small>Plans with employee activity</small></div>
+            <div class="{{ 'attention' if hr_pdp_attention_count else '' }}"><span>OVERDUE</span><strong>{{ hr_pdp_attention_count }}</strong><small>Plans needing a closer look</small></div>
+        </div>
 
     </section>
 
@@ -1920,6 +1848,28 @@ Flowboard | Altrium PerformanceFlow
                                 class="action-open-link"
                             >
                                 Open Studio →
+                            </a>
+
+                        {% elif action["action_type"] == "CYCLE_MONITORING"
+                                and action["review_cycle_id"] %}
+
+                            <a
+                                href="{{ url_for(
+                                    'review_cycle_workspace',
+                                    cycle_id=action['review_cycle_id']
+                                ) }}"
+                                class="action-open-link"
+                            >
+                                Open cycle →
+                            </a>
+
+                        {% elif action["action_type"] == "SUPERVISOR_MONITORING" %}
+
+                            <a
+                                href="{{ url_for('my_team') }}"
+                                class="action-open-link"
+                            >
+                                Open My Team →
                             </a>
 
 

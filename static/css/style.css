@@ -100,7 +100,7 @@ input {
 
 .login-brand-product {
     color: #9ca9c6;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -108,7 +108,7 @@ input {
 
 .brand-eyebrow {
     color: #b9b7ff;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.2em;
 }
@@ -147,13 +147,13 @@ input {
 }
 
 .flow-preview-heading strong {
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .flow-preview-heading small {
     margin-left: auto;
     color: #b8b5ff;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
 }
@@ -182,7 +182,7 @@ input {
     border-radius: 8px;
     color: #8895af;
     background: rgba(255, 255, 255, 0.045);
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 850;
 }
 
@@ -213,7 +213,7 @@ input {
 }
 
 .preview-labels small {
-    font-size: 8px;
+    font-size: 12px;
 }
 
 .brand-trust {
@@ -222,7 +222,7 @@ input {
     gap: 18px;
     margin-top: 25px;
     color: #8f9cb5;
-    font-size: 9px;
+    font-size: 12px;
 }
 
 .brand-trust span::before {
@@ -254,7 +254,7 @@ input {
 
 .login-card-heading > span {
     color: var(--login-indigo);
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.18em;
 }
@@ -326,7 +326,7 @@ form input:focus {
     border: 0;
     color: var(--login-indigo);
     background: transparent;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 800;
     cursor: pointer;
 }
@@ -371,7 +371,7 @@ form input:focus {
     min-height: 15px;
     margin-top: 5px;
     color: #c4322a;
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .input-error {
@@ -389,13 +389,13 @@ form input:focus {
     border-radius: 9px;
     color: #a82e27;
     background: #fff2f1;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .login-support {
     margin-top: 23px;
     color: #98a2b3;
-    font-size: 9px;
+    font-size: 12px;
     text-align: center;
 }
 
@@ -468,7 +468,7 @@ form input:focus {
     }
 
     .preview-labels small {
-        font-size: 7px;
+        font-size: 12px;
     }
 
     .login-card {
@@ -759,14 +759,14 @@ form input:focus {
 
 .loop-preview-heading strong {
     color: #ffffff;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.08em;
 }
 
 .loop-preview-heading small {
     color: #9da8c0;
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.12em;
 }
@@ -821,7 +821,7 @@ form input:focus {
     border-radius: 8px;
     color: #c7d2fe;
     background: rgba(79, 70, 229, 0.13);
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 850;
 }
 
@@ -835,7 +835,7 @@ form input:focus {
 
 .performance-loop-stages article > small {
     color: #8f9bb4;
-    font-size: 6px;
+    font-size: 12px;
     font-weight: 850;
     letter-spacing: 0.13em;
 }
@@ -843,7 +843,7 @@ form input:focus {
 .performance-loop-stages article > strong {
     margin-top: 4px;
     color: #e9edf6;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 .performance-loop-note {
@@ -865,7 +865,7 @@ form input:focus {
 
 .performance-loop-note p {
     color: #9ba8bf;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 @media (max-width: 520px) {

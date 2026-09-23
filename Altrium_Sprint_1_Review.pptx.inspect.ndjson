@@ -1,0 +1,332 @@
+{"kind":"deck","id":"pr/hjizuw","name":"Deck"}
+{"kind":"layout","layoutId":"3727e5f9-ec4d-4d5f-8d57-b83dd9212b9a","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"f3006fbb-a7db-4bd3-8925-b2e641a24744","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/8g673k","slide":1,"title":"TEAM & SPRINT DIRECTION","textShapes":24}
+{"kind":"shape","id":"sh/et0n6h8f","slide":1,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/1wbmhwr6","slide":1,"name":"eyebrow","text":"TEAM & SPRINT DIRECTION","textPreview":"TEAM & SPRINT DIRECTION","textChars":23,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/gv258rql","slide":1,"name":"slide-title","text":"A complete, governed review journey","textPreview":"A complete, governed review journey","textChars":35,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/3it4jm9w","slide":1,"name":"subtitle","text":"Sprint 1 established the working foundation for Altrium’s performance-review process.","textPreview":"Sprint 1 established the working foundation for Altrium’s performance-review process.","textChars":85,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/2xknah8r","slide":1,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/pkbmlwr2","slide":1,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/oj25crqh","slide":1,"name":"slide-number","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/j2p4729s","slide":1,"name":"section-label","text":"AGILE ROLES","textPreview":"AGILE ROLES","textChars":11,"textLines":1,"bbox":[58,178,300,20]}
+{"kind":"shape","id":"sh/i1g3yx87","slide":1,"bbox":[68,210,58,58]}
+{"kind":"textbox","id":"sh/87i94f61","slide":1,"name":"initials","text":"AA","textPreview":"AA","textChars":2,"textLines":1,"bbox":[68,210,58,58]}
+{"kind":"textbox","id":"sh/98rqxkn6","slide":1,"name":"member-name","text":"Abdullah Aroos","textPreview":"Abdullah Aroos","textChars":14,"textLines":1,"bbox":[146,208,330,28]}
+{"kind":"textbox","id":"sh/m50r25ov","slide":1,"name":"member-roles","text":"Scrum Master  →  Developer","textPreview":"Scrum Master  →  Developer","textChars":26,"textLines":1,"bbox":[146,237,360,24]}
+{"kind":"textbox","id":"sh/n698va5g","slide":1,"name":"member-contribution","text":"Backlog coordination, meeting records, GitHub setup, UI completion and system handover.","textPreview":"Backlog coordination, meeting records, GitHub setup, UI completion and system handover.","textChars":87,"textLines":1,"bbox":[520,209,650,52]}
+{"kind":"shape","id":"sh/wvi98f6x","slide":1,"bbox":[146,276,1024,1]}
+{"kind":"shape","id":"sh/xwba1kni","slide":1,"bbox":[68,286,58,58]}
+{"kind":"textbox","id":"sh/at0r6por","slide":1,"name":"initials","text":"AR","textPreview":"AR","textChars":2,"textLines":1,"bbox":[68,286,58,58]}
+{"kind":"textbox","id":"sh/vu9sza5c","slide":1,"name":"member-name","text":"Abdur Rahman","textPreview":"Abdur Rahman","textChars":12,"textLines":1,"bbox":[146,284,330,28]}
+{"kind":"textbox","id":"sh/czy9wv6t","slide":1,"name":"member-roles","text":"Quality Assurance  →  Business Analyst","textPreview":"Quality Assurance  →  Business Analyst","textChars":38,"textLines":1,"bbox":[146,313,360,24]}
+{"kind":"textbox","id":"sh/d07qp0ne","slide":1,"name":"member-contribution","text":"Manual testing, issue review and activity diagrams aligned to the implemented workflow.","textPreview":"Manual testing, issue review and activity diagrams aligned to the implemented workflow.","textChars":87,"textLines":1,"bbox":[520,285,650,52]}
+{"kind":"shape","id":"sh/dwz6tcz2","slide":1,"bbox":[146,352,1024,1]}
+{"kind":"shape","id":"sh/svqpk7yh","slide":1,"bbox":[68,362,58,58]}
+{"kind":"textbox","id":"sh/ruhormhw","slide":1,"name":"initials","text":"MA","textPreview":"MA","textChars":2,"textLines":1,"bbox":[68,362,58,58]}
+{"kind":"textbox","id":"sh/qto7ihgb","slide":1,"name":"member-name","text":"Muhammed Akram","textPreview":"Muhammed Akram","textChars":14,"textLines":1,"bbox":[146,360,330,28]}
+{"kind":"textbox","id":"sh/10z6xwzy","slide":1,"name":"member-roles","text":"Business Analyst  →  Quality Assurance","textPreview":"Business Analyst  →  Quality Assurance","textChars":38,"textLines":1,"bbox":[146,389,360,24]}
+{"kind":"textbox","id":"sh/0zqporyd","slide":1,"name":"member-contribution","text":"Requirements, user stories, use-case modelling and consistency checks across Sprint 1.","textPreview":"Requirements, user stories, use-case modelling and consistency checks across Sprint 1.","textChars":86,"textLines":1,"bbox":[520,361,650,52]}
+{"kind":"shape","id":"sh/fyhovmh8","slide":1,"bbox":[146,428,1024,1]}
+{"kind":"shape","id":"sh/ex87mhgn","slide":1,"bbox":[68,438,58,58]}
+{"kind":"textbox","id":"sh/pojq1wza","slide":1,"name":"initials","text":"SA","textPreview":"SA","textChars":2,"textLines":1,"bbox":[68,438,58,58]}
+{"kind":"textbox","id":"sh/onapsbyp","slide":1,"name":"member-name","text":"Sajadh Ahmed","textPreview":"Sajadh Ahmed","textChars":12,"textLines":1,"bbox":[146,436,330,28]}
+{"kind":"textbox","id":"sh/m9k3mtw7","slide":1,"name":"member-roles","text":"Lead Developer","textPreview":"Lead Developer","textChars":14,"textLines":1,"bbox":[146,465,360,24]}
+{"kind":"textbox","id":"sh/7ad4vyxs","slide":1,"name":"member-contribution","text":"Flask architecture, database design, RBAC and end-to-end workflow integration.","textPreview":"Flask architecture, database design, RBAC and end-to-end workflow integration.","textChars":78,"textLines":1,"bbox":[520,437,650,52]}
+{"kind":"shape","id":"sh/8bmlo3ed","slide":1,"bbox":[146,504,1024,1]}
+{"kind":"shape","id":"sh/9wvmx8fi","slide":1,"name":"sprint-goal","bbox":[58,540,1112,112]}
+{"kind":"textbox","id":"sh/ux43qdw3","slide":1,"name":"section-label","text":"SPRINT GOAL","textPreview":"SPRINT GOAL","textChars":11,"textLines":1,"bbox":[86,558,220,20]}
+{"kind":"textbox","id":"sh/vyd4zixo","slide":1,"name":"goal-copy","text":"Deliver a secure, role-based performance review system that guides every review from cycle setup and employee reflection through peer input, supervisor evaluation, manager approval and final acknowledgement.","textPreview":"Deliver a secure, role-based performance review system that guides every review from cycle setup and employee reflection through peer inp...","textChars":207,"textLines":1,"bbox":[86,582,1030,54]}
+{"kind":"notes","id":"nt/8g673k","slide":1,"text":"Introduce the team, mention that roles were rotated during the sprint, then state the goal in one sentence.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/v9h6oo","slide":2,"title":"ORDERED SPRINT 1 BACKLOG","textShapes":28}
+{"kind":"shape","id":"sh/5wryhwvm","slide":2,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/i9gf61cb","slide":2,"name":"eyebrow","text":"ORDERED SPRINT 1 BACKLOG","textPreview":"ORDERED SPRINT 1 BACKLOG","textChars":24,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/japgf6dw","slide":2,"name":"slide-title","text":"The backlog builds the review journey in dependency order","textPreview":"The backlog builds the review journey in dependency order","textChars":57,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/szixcbud","slide":2,"name":"subtitle","text":"Must-have workflow stages come first; visibility and task guidance support the completed journey.","textPreview":"Must-have workflow stages come first; visibility and task guidance support the completed journey.","textChars":97,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/t0rylgvy","slide":2,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/6x0fa1c7","slide":2,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/ry9gj6ds","slide":2,"name":"slide-number","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/g32xgvu9","slide":2,"name":"backlog-id","text":"PB01","textPreview":"PB01","textChars":4,"textLines":1,"bbox":[72,190,66,34]}
+{"kind":"shape","id":"sh/14bypgvu","slide":2,"bbox":[72,190,66,34]}
+{"kind":"textbox","id":"sh/183ydg3i","slide":2,"name":"backlog-name","text":"Login / Logout","textPreview":"Login / Logout","textChars":14,"textLines":1,"bbox":[154,189,450,36]}
+{"kind":"shape","id":"sh/07uh4bmd","slide":2,"bbox":[72,241,500,1]}
+{"kind":"textbox","id":"sh/f6lgb6ls","slide":2,"name":"backlog-id","text":"PB02","textPreview":"PB02","textChars":4,"textLines":1,"bbox":[72,259,66,34]}
+{"kind":"shape","id":"sh/e5cz2147","slide":2,"bbox":[72,259,66,34]}
+{"kind":"textbox","id":"sh/pwnih03u","slide":2,"name":"backlog-name","text":"Create Employee Performance Profile","textPreview":"Create Employee Performance Profile","textChars":35,"textLines":1,"bbox":[154,258,450,36]}
+{"kind":"shape","id":"sh/ovuh8v29","slide":2,"bbox":[72,310,500,1]}
+{"kind":"textbox","id":"sh/nul0fqlo","slide":2,"name":"backlog-id","text":"PB03","textPreview":"PB03","textChars":4,"textLines":1,"bbox":[72,328,66,34]}
+{"kind":"shape","id":"sh/2tcz6l43","slide":2,"bbox":[72,328,66,34]}
+{"kind":"textbox","id":"sh/50jy5w3q","slide":2,"name":"backlog-name","text":"Manage Responsibilities, KPIs & Goals","textPreview":"Manage Responsibilities, KPIs & Goals","textChars":37,"textLines":1,"bbox":[154,327,450,36]}
+{"kind":"shape","id":"sh/4zahwrm5","slide":2,"bbox":[72,379,500,1]}
+{"kind":"textbox","id":"sh/gvy98vyx","slide":2,"name":"backlog-id","text":"PB04","textPreview":"PB04","textChars":4,"textLines":1,"bbox":[72,397,66,34]}
+{"kind":"shape","id":"sh/hw7q10fi","slide":2,"bbox":[72,397,66,34]}
+{"kind":"textbox","id":"sh/utw76lg7","slide":2,"name":"backlog-name","text":"Manage Performance Review Cycles","textPreview":"Manage Performance Review Cycles","textChars":32,"textLines":1,"bbox":[154,396,450,36]}
+{"kind":"shape","id":"sh/vu58zqxc","slide":2,"bbox":[72,448,500,1]}
+{"kind":"textbox","id":"sh/4zy9cvy9","slide":2,"name":"backlog-id","text":"PB06","textPreview":"PB06","textChars":4,"textLines":1,"bbox":[72,466,66,34]}
+{"kind":"shape","id":"sh/5k7q50fu","slide":2,"bbox":[72,466,66,34]}
+{"kind":"textbox","id":"sh/ixgra5g3","slide":2,"name":"backlog-name","text":"Complete Self-Assessment","textPreview":"Complete Self-Assessment","textChars":24,"textLines":1,"bbox":[154,465,450,36]}
+{"kind":"shape","id":"sh/3yp83axo","slide":2,"bbox":[72,517,500,1]}
+{"kind":"textbox","id":"sh/sni9gfy5","slide":2,"name":"backlog-id","text":"PB07","textPreview":"PB07","textChars":4,"textLines":1,"bbox":[72,535,66,34]}
+{"kind":"shape","id":"sh/dorq9kfq","slide":2,"bbox":[72,535,66,34]}
+{"kind":"textbox","id":"sh/nitsfehs","slide":2,"name":"backlog-name","text":"Assign Peer Reviewers","textPreview":"Assign Peer Reviewers","textChars":21,"textLines":1,"bbox":[154,534,450,36]}
+{"kind":"shape","id":"sh/2hkb6907","slide":2,"bbox":[72,586,500,1]}
+{"kind":"textbox","id":"sh/pkbuhozy","slide":2,"name":"backlog-id","text":"PB08","textPreview":"PB08","textChars":4,"textLines":1,"bbox":[650,190,66,34]}
+{"kind":"shape","id":"sh/oj2t8jid","slide":2,"bbox":[650,190,66,34]}
+{"kind":"textbox","id":"sh/fetsbuhw","slide":2,"name":"backlog-name","text":"Provide Peer Feedback","textPreview":"Provide Peer Feedback","textChars":21,"textLines":1,"bbox":[732,189,450,36]}
+{"kind":"shape","id":"sh/et0b290b","slide":2,"bbox":[650,241,500,1]}
+{"kind":"textbox","id":"sh/1gbad4z2","slide":2,"name":"backlog-id","text":"PB09","textPreview":"PB09","textChars":4,"textLines":1,"bbox":[650,259,66,34]}
+{"kind":"shape","id":"sh/0f2t4zih","slide":2,"bbox":[650,259,66,34]}
+{"kind":"textbox","id":"sh/jadcnyh0","slide":2,"name":"backlog-name","text":"Complete Supervisor Evaluation","textPreview":"Complete Supervisor Evaluation","textChars":30,"textLines":1,"bbox":[732,258,450,36]}
+{"kind":"textbox","id":"sh/yp4bet0f","slide":2,"name":"selected-feature","text":"SELECTED CORE FEATURE","textPreview":"SELECTED CORE FEATURE","textChars":21,"textLines":1,"bbox":[732,290,230,18]}
+{"kind":"shape","id":"sh/6xkf2xwz","slide":2,"bbox":[650,310,500,1]}
+{"kind":"textbox","id":"sh/7ytwb2dk","slide":2,"name":"backlog-id","text":"PB10","textPreview":"PB10","textChars":4,"textLines":1,"bbox":[650,328,66,34]}
+{"kind":"shape","id":"sh/sz2x4nep","slide":2,"bbox":[650,328,66,34]}
+{"kind":"textbox","id":"sh/t0vedsva","slide":2,"name":"backlog-name","text":"Manager Approval / Revision","textPreview":"Manager Approval / Revision","textChars":27,"textLines":1,"bbox":[732,327,450,36]}
+{"kind":"shape","id":"sh/itkfydwn","slide":2,"bbox":[650,379,500,1]}
+{"kind":"textbox","id":"sh/jutw7id8","slide":2,"name":"backlog-id","text":"PB18","textPreview":"PB18","textChars":4,"textLines":1,"bbox":[650,397,66,34]}
+{"kind":"shape","id":"sh/kv2x0net","slide":2,"bbox":[650,397,66,34]}
+{"kind":"textbox","id":"sh/5wbe9sve","slide":2,"name":"backlog-name","text":"Track Review Status","textPreview":"Track Review Status","textChars":19,"textLines":1,"bbox":[732,396,450,36]}
+{"kind":"shape","id":"sh/2p4fahw7","slide":2,"bbox":[650,448,500,1]}
+{"kind":"textbox","id":"sh/3qdgjmdc","slide":2,"name":"backlog-id","text":"PB19","textPreview":"PB19","textChars":4,"textLines":1,"bbox":[650,466,66,34]}
+{"kind":"shape","id":"sh/dkzi9gfu","slide":2,"bbox":[650,466,66,34]}
+{"kind":"textbox","id":"sh/cj6h0by9","slide":2,"name":"backlog-name","text":"View Assigned Tasks","textPreview":"View Assigned Tasks","textChars":19,"textLines":1,"bbox":[732,465,450,36]}
+{"kind":"shape","id":"sh/rix076xo","slide":2,"bbox":[650,517,500,1]}
+{"kind":"notes","id":"nt/v9h6oo","slide":2,"text":"Explain that each item enables the next stage. Highlight PB09 as the feature used for the remaining diagrams and demo.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/5zo9ag","slide":3,"title":"CORE FEATURE USE CASE","textShapes":19}
+{"kind":"shape","id":"sh/nq1k361s","slide":3,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/8bu1wbid","slide":3,"name":"eyebrow","text":"CORE FEATURE USE CASE","textPreview":"CORE FEATURE USE CASE","textChars":21,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/9c325wjy","slide":3,"name":"slide-title","text":"One authorised supervisor turns scattered evidence into one evaluation","textPreview":"One authorised supervisor turns scattered evidence into one evaluation","textChars":70,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/ylsjqh0b","slide":3,"name":"subtitle","text":"PB09 — Complete Supervisor Evaluation","textPreview":"PB09 — Complete Supervisor Evaluation","textChars":37,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/zm1kzm1g","slide":3,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/0na1sri1","slide":3,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/loj21wjm","slide":3,"name":"slide-number","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"shape","id":"sh/qh8jmh0z","slide":3,"name":"supervisor-actor","bbox":[60,287,150,105]}
+{"kind":"textbox","id":"sh/bihkvm1k","slide":3,"name":"actor-label","text":"SUPERVISOR","textPreview":"SUPERVISOR","textChars":10,"textLines":1,"bbox":[75,309,120,24]}
+{"kind":"textbox","id":"sh/jexsrypw","slide":3,"name":"actor-name","text":"Assigned evaluator","textPreview":"Assigned evaluator","textChars":18,"textLines":1,"bbox":[75,341,120,26]}
+{"kind":"shape","id":"sh/itobytob","slide":3,"name":"system-boundary","bbox":[274,184,700,434]}
+{"kind":"textbox","id":"sh/5gfat872","slide":3,"name":"section-label","text":"ALTRIUM PERFORMANCE TRACKER","textPreview":"ALTRIUM PERFORMANCE TRACKER","textChars":27,"textLines":1,"bbox":[300,202,400,20]}
+{"kind":"shape","id":"sh/kf6t036h","slide":3,"name":"main-use-case","bbox":[458,273,338,82]}
+{"kind":"textbox","id":"sh/7ihsvip8","slide":3,"name":"main-use-case-text","text":"Complete Supervisor Evaluation","textPreview":"Complete Supervisor Evaluation","textChars":30,"textLines":1,"bbox":[478,287,298,52]}
+{"kind":"shape","id":"sh/6h8b2don","slide":3,"name":"view-evidence","bbox":[310,228,250,52]}
+{"kind":"textbox","id":"sh/tkzax87e","slide":3,"name":"uc1","text":"View consolidated evidence","textPreview":"View consolidated evidence","textChars":26,"textLines":1,"bbox":[326,238,218,30]}
+{"kind":"shape","id":"sh/sjqt436t","slide":3,"name":"enter-judgement","bbox":[686,228,250,52]}
+{"kind":"textbox","id":"sh/nmdsjepo","slide":3,"name":"uc2","text":"Enter ratings & comments","textPreview":"Enter ratings & comments","textChars":24,"textLines":1,"bbox":[702,238,218,30]}
+{"kind":"shape","id":"sh/ml4rq9oj","slide":3,"name":"save-draft","bbox":[310,390,250,52]}
+{"kind":"textbox","id":"sh/atcnelc3","slide":3,"name":"uc3","text":"Save evaluation draft","textPreview":"Save evaluation draft","textChars":21,"textLines":1,"bbox":[326,400,218,30]}
+{"kind":"shape","id":"sh/bu54nqdo","slide":3,"name":"submit-eval","bbox":[686,390,250,52]}
+{"kind":"textbox","id":"sh/cfe5gbu9","slide":3,"name":"uc4","text":"Submit evaluation","textPreview":"Submit evaluation","textChars":17,"textLines":1,"bbox":[702,400,218,30]}
+{"kind":"shape","id":"sh/xgnmpgvu","slide":3,"name":"validate","bbox":[392,493,272,50]}
+{"kind":"textbox","id":"sh/2pcna1c7","slide":3,"name":"uc5","text":"Validate required details","textPreview":"Validate required details","textChars":25,"textLines":1,"bbox":[408,503,240,30]}
+{"kind":"shape","id":"sh/nql4j6ds","slide":3,"name":"create-task","bbox":[694,493,242,50]}
+{"kind":"textbox","id":"sh/oru5cbux","slide":3,"name":"uc6","text":"Create approval task","textPreview":"Create approval task","textChars":20,"textLines":1,"bbox":[710,503,210,30]}
+{"kind":"shape","id":"sh/ps3mlgvi","slide":3,"bbox":[210,314,248,25.5]}
+{"kind":"shape","id":"sh/els361cv","slide":3,"bbox":[435,280,23,34]}
+{"kind":"shape","id":"sh/fml4f6dg","slide":3,"bbox":[796,280,15,34]}
+{"kind":"shape","id":"sh/hgrql4vy","slide":3,"bbox":[435,314,23,76]}
+{"kind":"shape","id":"sh/wfipczed","slide":3,"bbox":[796,314,15,76]}
+{"kind":"shape","id":"sh/ve98juxs","slide":3,"bbox":[664,416,22,102]}
+{"kind":"shape","id":"sh/ud07apwn","slide":3,"bbox":[664,518,30,0]}
+{"kind":"shape","id":"sh/9c7qhkf2","slide":3,"name":"manager-actor","bbox":[1026,480,170,84]}
+{"kind":"textbox","id":"sh/8byp8feh","slide":3,"name":"manager-label","text":"MANAGER","textPreview":"MANAGER","textChars":7,"textLines":1,"bbox":[1042,494,138,22]}
+{"kind":"textbox","id":"sh/7apofaxw","slide":3,"name":"manager-name","text":"Receives task","textPreview":"Receives task","textChars":13,"textLines":1,"bbox":[1042,523,138,24]}
+{"kind":"shape","id":"sh/m9g76pwb","slide":3,"bbox":[936,518,90,4]}
+{"kind":"textbox","id":"sh/lo76dkfq","slide":3,"name":"include1","text":"«include»","textPreview":"«include»","textChars":9,"textLines":1,"bbox":[540,236,80,18]}
+{"kind":"textbox","id":"sh/knyp4fe5","slide":3,"name":"include2","text":"«include»","textPreview":"«include»","textChars":9,"textLines":1,"bbox":[610,430,80,18]}
+{"kind":"notes","id":"nt/5zo9ag","slide":3,"text":"The supervisor is the primary actor. The manager is downstream and only receives a task after successful submission.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/ploe0z","slide":4,"title":"ACTIVITY FLOW","textShapes":18}
+{"kind":"shape","id":"sh/4ba50fid","slide":4,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/3a1o7a1s","slide":4,"name":"eyebrow","text":"ACTIVITY FLOW","textPreview":"ACTIVITY FLOW","textChars":13,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/ipsny507","slide":4,"name":"slide-title","text":"Validation prevents incomplete evaluations from entering approval","textPreview":"Validation prevents incomplete evaluations from entering approval","textChars":65,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/hoz65kjm","slide":4,"name":"subtitle","text":"Two swimlanes separate supervisor decisions from system controls.","textPreview":"Two swimlanes separate supervisor decisions from system controls.","textChars":65,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/gnq5wfih","slide":4,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/vmho3a1w","slide":4,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/ul8nu50b","slide":4,"name":"slide-number","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/tkz610jq","slide":4,"name":"section-label","text":"SUPERVISOR","textPreview":"SUPERVISOR","textChars":10,"textLines":1,"bbox":[82,181,260,20]}
+{"kind":"textbox","id":"sh/8jq5svi5","slide":4,"name":"section-label","text":"ALTRIUM SYSTEM","textPreview":"ALTRIUM SYSTEM","textChars":14,"textLines":1,"bbox":[668,181,300,20]}
+{"kind":"shape","id":"sh/et07mhsj","slide":4,"bbox":[626,178,2,468]}
+{"kind":"shape","id":"sh/fu98fmt4","slide":4,"bbox":[312,184,28,28]}
+{"kind":"shape","id":"sh/0viporap","slide":4,"name":"activity-node","bbox":[154,228,342,52]}
+{"kind":"textbox","id":"sh/1grqhwba","slide":4,"name":"activity-text","text":"Open assigned evaluation task","textPreview":"Open assigned evaluation task","textChars":29,"textLines":1,"bbox":[168,233,314,42]}
+{"kind":"shape","id":"sh/qpg7ihs7","slide":4,"name":"activity-node","bbox":[740,228,350,52]}
+{"kind":"textbox","id":"sh/rq9obmts","slide":4,"name":"activity-text","text":"Verify role and employee assignment","textPreview":"Verify role and employee assignment","textChars":35,"textLines":1,"bbox":[754,233,322,42]}
+{"kind":"shape","id":"sh/sripk7ad","slide":4,"name":"activity-node","bbox":[740,309,350,62]}
+{"kind":"textbox","id":"sh/dsr6dcby","slide":4,"name":"activity-text","text":"Load goals, self-assessment, evidence\nand anonymous peer feedback","textPreview":"Load goals, self-assessment, evidence | and anonymous peer feedback","textChars":65,"textLines":2,"bbox":[754,314,322,52]}
+{"kind":"shape","id":"sh/ilg7exsb","slide":4,"name":"activity-node","bbox":[154,309,342,62]}
+{"kind":"textbox","id":"sh/3mpo72tw","slide":4,"name":"activity-text","text":"Review evidence and enter ratings\nand evaluation comments","textPreview":"Review evidence and enter ratings | and evaluation comments","textChars":57,"textLines":2,"bbox":[168,314,314,52]}
+{"kind":"shape","id":"sh/76l4fy9o","slide":4,"name":"activity-node","bbox":[154,400,342,52]}
+{"kind":"textbox","id":"sh/65c3mt83","slide":4,"name":"activity-text","text":"Save draft or select Submit","textPreview":"Save draft or select Submit","textChars":27,"textLines":1,"bbox":[168,405,314,42]}
+{"kind":"shape","id":"sh/tsnmh8ru","slide":4,"name":"activity-node","bbox":[740,400,350,52]}
+{"kind":"textbox","id":"sh/8re5o3q9","slide":4,"name":"activity-text","text":"Validate all required fields","textPreview":"Validate all required fields","textChars":28,"textLines":1,"bbox":[754,405,322,42]}
+{"kind":"shape","id":"sh/vu54ji9k","slide":4,"bbox":[883,477,68,68]}
+{"kind":"textbox","id":"sh/utwnqd8z","slide":4,"name":"decision-text","text":"Valid?","textPreview":"Valid?","textChars":6,"textLines":1,"bbox":[889,493,56,28]}
+{"kind":"shape","id":"sh/hwnml8rq","slide":4,"name":"activity-node","bbox":[154,492,342,52]}
+{"kind":"textbox","id":"sh/gve5snq5","slide":4,"name":"activity-text","text":"Correct highlighted fields","textPreview":"Correct highlighted fields","textChars":26,"textLines":1,"bbox":[168,497,314,42]}
+{"kind":"shape","id":"sh/by147e9g","slide":4,"name":"activity-node","bbox":[724,569,382,58]}
+{"kind":"textbox","id":"sh/axs3e98v","slide":4,"name":"activity-text","text":"Lock evaluation • Update review status\nCreate manager task and notification","textPreview":"Lock evaluation • Update review status | Create manager task and notification","textChars":75,"textLines":2,"bbox":[738,574,354,48]}
+{"kind":"shape","id":"sh/03q18f6t","slide":4,"bbox":[900,640,26,26]}
+{"kind":"shape","id":"sh/14z2hk7e","slide":4,"bbox":[325,212,1,16]}
+{"kind":"shape","id":"sh/e18j65on","slide":4,"bbox":[496,254,244,404]}
+{"kind":"shape","id":"sh/f2h0fap8","slide":4,"bbox":[915,280,0,29]}
+{"kind":"shape","id":"sh/sf61kf6h","slide":4,"bbox":[496,340,244,318]}
+{"kind":"shape","id":"sh/dgfid072","slide":4,"bbox":[325,371,0,29]}
+{"kind":"shape","id":"sh/qdoji58r","slide":4,"bbox":[496,426,244,232]}
+{"kind":"shape","id":"sh/rex0bapc","slide":4,"bbox":[915,452,2,25]}
+{"kind":"shape","id":"sh/cba1gz61","slide":4,"bbox":[915,545,2,24]}
+{"kind":"shape","id":"sh/xcj2p47m","slide":4,"bbox":[496,511,387,147]}
+{"kind":"shape","id":"sh/tgbyhwny","slide":4,"bbox":[325,452,0,40]}
+{"kind":"shape","id":"sh/8f2x8r6d","slide":4,"bbox":[913,627,2,13]}
+{"kind":"textbox","id":"sh/7etgfm5s","slide":4,"name":"no-label","text":"NO","textPreview":"NO","textChars":2,"textLines":1,"bbox":[638,500,40,20]}
+{"kind":"textbox","id":"sh/6dkf6ho7","slide":4,"name":"yes-label","text":"YES","textPreview":"YES","textChars":3,"textLines":1,"bbox":[951,548,44,20]}
+{"kind":"notes","id":"nt/ploe0z","slide":4,"text":"Walk through the happy path first, then point out the validation loop. Saving a draft never advances the workflow.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/ng5fs2","slide":5,"title":"SEQUENCE OF RESPONSIBILITY","textShapes":22}
+{"kind":"shape","id":"sh/tgn25sfm","slide":5,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/6twjaxwv","slide":5,"name":"eyebrow","text":"SEQUENCE OF RESPONSIBILITY","textPreview":"SEQUENCE OF RESPONSIBILITY","textChars":26,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/7e5k32xg","slide":5,"name":"slide-title","text":"Every state change is authorised, validated and recorded","textPreview":"Every state change is authorised, validated and recorded","textChars":56,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/kru18ne5","slide":5,"name":"subtitle","text":"After this slide, pause the presentation and perform the product demonstration.","textPreview":"After this slide, pause the presentation and perform the product demonstration.","textChars":79,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/5s321sfa","slide":5,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/ipcj6dwz","slide":5,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/jql0zixk","slide":5,"name":"slide-number","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"shape","id":"sh/4ny1k7e9","slide":5,"name":"sequence-participant","bbox":[92,184,138,44]}
+{"kind":"textbox","id":"sh/po72dcvu","slide":5,"name":"participant-text","text":"Supervisor","textPreview":"Supervisor","textChars":10,"textLines":1,"bbox":[100,191,122,28]}
+{"kind":"shape","id":"sh/hgf6hwz2","slide":5,"bbox":[160,228,2,410]}
+{"kind":"shape","id":"sh/gf658rih","slide":5,"name":"sequence-participant","bbox":[330,184,138,44]}
+{"kind":"textbox","id":"sh/vuxofmhw","slide":5,"name":"participant-text","text":"Evaluation UI","textPreview":"Evaluation UI","textChars":13,"textLines":1,"bbox":[338,191,122,28]}
+{"kind":"shape","id":"sh/uton6h0b","slide":5,"bbox":[398,228,2,410]}
+{"kind":"shape","id":"sh/tsv6dczq","slide":5,"name":"sequence-participant","bbox":[570,184,138,44]}
+{"kind":"textbox","id":"sh/8rm54ril","slide":5,"name":"participant-text","text":"Flask App","textPreview":"Flask App","textChars":9,"textLines":1,"bbox":[578,191,122,28]}
+{"kind":"shape","id":"sh/7qdobmh0","slide":5,"bbox":[638,228,2,410]}
+{"kind":"shape","id":"sh/6p4n2h0f","slide":5,"name":"sequence-participant","bbox":[810,184,138,44]}
+{"kind":"textbox","id":"sh/doz6pgza","slide":5,"name":"participant-text","text":"Database","textPreview":"Database","textChars":8,"textLines":1,"bbox":[818,191,122,28]}
+{"kind":"shape","id":"sh/snqpgbip","slide":5,"bbox":[878,228,2,410]}
+{"kind":"shape","id":"sh/crypcf61","slide":5,"name":"sequence-participant","bbox":[1050,184,138,44]}
+{"kind":"textbox","id":"sh/ds7qlk76","slide":5,"name":"participant-text","text":"Manager","textPreview":"Manager","textChars":7,"textLines":1,"bbox":[1058,191,122,28]}
+{"kind":"shape","id":"sh/qpg7apov","slide":5,"bbox":[1118,228,2,410]}
+{"kind":"shape","id":"sh/bqp8japg","slide":5,"name":"sequence-message-arrow","bbox":[161,267,238,7]}
+{"kind":"textbox","id":"sh/onep8f6p","slide":5,"name":"sequence-label","text":"1  Open assigned evaluation","textPreview":"1  Open assigned evaluation","textChars":27,"textLines":1,"bbox":[167,244,226,24]}
+{"kind":"shape","id":"sh/ponqhk7a","slide":5,"name":"sequence-message-arrow","bbox":[399,304,240,7]}
+{"kind":"textbox","id":"sh/2lw7658j","slide":5,"name":"sequence-label","text":"2  GET evaluation workspace","textPreview":"2  GET evaluation workspace","textChars":27,"textLines":1,"bbox":[405,281,228,24]}
+{"kind":"shape","id":"sh/3m58fap4","slide":5,"name":"sequence-message-arrow","bbox":[639,341,240,7]}
+{"kind":"textbox","id":"sh/gzep4vqt","slide":5,"name":"sequence-label","text":"3  Load authorised evidence package","textPreview":"3  Load authorised evidence package","textChars":35,"textLines":1,"bbox":[645,318,228,24]}
+{"kind":"shape","id":"sh/10nqd07y","slide":5,"name":"sequence-message-arrow","bbox":[639,378,240,7]}
+{"kind":"textbox","id":"sh/jul8nq90","slide":5,"name":"sequence-label","text":"4  Return review data","textPreview":"4  Return review data","textChars":21,"textLines":1,"bbox":[645,355,228,24]}
+{"kind":"shape","id":"sh/itcrulsf","slide":5,"name":"sequence-message-arrow","bbox":[399,415,240,7]}
+{"kind":"textbox","id":"sh/5w3qp0r6","slide":5,"name":"sequence-label","text":"5  Display consolidated evidence","textPreview":"5  Display consolidated evidence","textChars":32,"textLines":1,"bbox":[405,392,228,24]}
+{"kind":"shape","id":"sh/4vu9wval","slide":5,"name":"sequence-message-arrow","bbox":[161,452,238,7]}
+{"kind":"textbox","id":"sh/ry58ra9w","slide":5,"name":"sequence-label","text":"6  Enter ratings and comments","textPreview":"6  Enter ratings and comments","textChars":29,"textLines":1,"bbox":[167,429,226,24]}
+{"kind":"shape","id":"sh/6xcry5sr","slide":5,"name":"sequence-message-arrow","bbox":[399,489,240,7]}
+{"kind":"textbox","id":"sh/tknatkr2","slide":5,"name":"sequence-label","text":"7  Save draft / submit","textPreview":"7  Save draft / submit","textChars":22,"textLines":1,"bbox":[405,466,228,24]}
+{"kind":"shape","id":"sh/sze90fah","slide":5,"name":"sequence-message-arrow","bbox":[639,526,240,7]}
+{"kind":"textbox","id":"sh/fm5sva98","slide":5,"name":"sequence-label","text":"8  Validate, save and lock","textPreview":"8  Validate, save and lock","textChars":26,"textLines":1,"bbox":[645,503,228,24]}
+{"kind":"shape","id":"sh/elwr25sn","slide":5,"name":"sequence-message-arrow","bbox":[639,563,240,7]}
+{"kind":"textbox","id":"sh/yhojed4v","slide":5,"name":"sequence-label","text":"9  Update status + create approval task","textPreview":"9  Update status + create approval task","textChars":39,"textLines":1,"bbox":[645,540,228,24]}
+{"kind":"shape","id":"sh/z2xknilg","slide":5,"name":"sequence-message-arrow","bbox":[639,600,480,7]}
+{"kind":"textbox","id":"sh/k36lgnm1","slide":5,"name":"sequence-label","text":"10  Notify manager","textPreview":"10  Notify manager","textChars":18,"textLines":1,"bbox":[645,577,468,24]}
+{"kind":"shape","id":"sh/l4f2ps3m","slide":5,"name":"sequence-message-arrow","bbox":[399,637,240,7]}
+{"kind":"textbox","id":"sh/m5o3ix47","slide":5,"name":"sequence-label","text":"11  Confirm successful submission","textPreview":"11  Confirm successful submission","textChars":33,"textLines":1,"bbox":[405,614,228,24]}
+{"kind":"shape","id":"sh/76hkr2ls","slide":5,"name":"demo-cue","bbox":[914,132,276,38]}
+{"kind":"textbox","id":"sh/87qlkn2d","slide":5,"name":"demo-cue-text","text":"DEMO BEGINS AFTER THIS SLIDE","textPreview":"DEMO BEGINS AFTER THIS SLIDE","textChars":28,"textLines":1,"bbox":[928,139,248,24]}
+{"kind":"notes","id":"nt/ng5fs2","slide":5,"text":"Product demonstration follows this slide. Demo: supervisor login → open task → inspect evidence → save draft → submit → manager task appears.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/z19pqg","slide":6,"title":"EVIDENCE OF QUALITY","textShapes":6}
+{"kind":"shape","id":"sh/65cn6t0f","slide":6,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/t83mhoz6","slide":6,"name":"eyebrow","text":"EVIDENCE OF QUALITY","textPreview":"EVIDENCE OF QUALITY","textChars":19,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/s7u58jil","slide":6,"name":"slide-title","text":"Four tests cover success, misuse, validation and performance","textPreview":"Four tests cover success, misuse, validation and performance","textChars":60,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/fulojyhc","slide":6,"name":"subtitle","text":"PB09 — Complete Supervisor Evaluation","textPreview":"PB09 — Complete Supervisor Evaluation","textChars":37,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/e9cnat0r","slide":6,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/1wn6l8z2","slide":6,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/gve5c3ix","slide":6,"name":"slide-number","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"shape","id":"sh/udsny90n","slide":6,"name":"evidence-note","bbox":[58,636,1164,34]}
+{"kind":"textbox","id":"sh/s761gz61","slide":6,"name":"evidence-note-text","text":"DEMO EVIDENCE  ·  capture the submitted form, success message, new status and manager task","textPreview":"DEMO EVIDENCE  ·  capture the submitted form, success message, new status and manager task","textChars":90,"textLines":1,"bbox":[74,642,1132,22]}
+{"kind":"table","id":"tb/al8v6h83","slide":6,"name":"","rows":5,"cols":4,"preview":"TEST TYPE | SCENARIO | ACTUAL DATA / ACTION | EXPECTED RESULT","bbox":[58,190,1164,430]}
+{"kind":"notes","id":"nt/z19pqg","slide":6,"text":"Use the valid case during the demo. The other three cases demonstrate access control, form validation and a measurable non-functional expectation.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/k0myzl","slide":7,"title":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textShapes":15}
+{"kind":"shape","id":"sh/bih8juhw","slide":7,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/cja9szih","slide":7,"name":"eyebrow","text":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textPreview":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textChars":33,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/dkjql4z2","slide":7,"name":"slide-title","text":"Abdur Rahman: learning through two Agile perspectives","textPreview":"Abdur Rahman: learning through two Agile perspectives","textChars":53,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/ylsru9gn","slide":7,"name":"subtitle","text":"Quality Assurance  →  Business Analyst","textPreview":"Quality Assurance  →  Business Analyst","textChars":38,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/zm18neh8","slide":7,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/0na9wjyt","slide":7,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/lojqpoze","slide":7,"name":"slide-number","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/mpsri9gj","slide":7,"name":"quote-mark","text":"“","textPreview":"“","textChars":1,"textLines":1,"bbox":[64,188,62,78]}
+{"kind":"textbox","id":"sh/nql8reh4","slide":7,"name":"retro-quote","text":"Continuous alignment matters as much as final verification.","textPreview":"Continuous alignment matters as much as final verification.","textChars":59,"textLines":1,"bbox":[126,190,1000,74]}
+{"kind":"shape","id":"sh/nypobqhs","slide":7,"bbox":[126,274,1000,3]}
+{"kind":"textbox","id":"sh/mxgn2l07","slide":7,"name":"section-label","text":"CONTRIBUTION","textPreview":"CONTRIBUTION","textChars":12,"textLines":1,"bbox":[72,316,480,20]}
+{"kind":"textbox","id":"sh/9k76dgzy","slide":7,"name":"retro-body","text":"Prepared and executed manual tests, identified inconsistencies, and modelled activity flows against the final implementation.","textPreview":"Prepared and executed manual tests, identified inconsistencies, and modelled activity flows against the final implementation.","textChars":125,"textLines":1,"bbox":[72,347,500,112]}
+{"kind":"textbox","id":"sh/8jy54bid","slide":7,"name":"section-label","text":"WHAT WORKED","textPreview":"WHAT WORKED","textChars":11,"textLines":1,"bbox":[654,316,480,20]}
+{"kind":"textbox","id":"sh/zu5o76hw","slide":7,"name":"retro-body","text":"Testing and workflow modelling gave the team a clearer, shared view of how the system should behave.","textPreview":"Testing and workflow modelling gave the team a clearer, shared view of how the system should behave.","textChars":100,"textLines":1,"bbox":[654,347,500,112]}
+{"kind":"textbox","id":"sh/ytwny10b","slide":7,"name":"section-label","text":"CHALLENGE","textPreview":"CHALLENGE","textChars":9,"textLines":1,"bbox":[72,486,480,20]}
+{"kind":"textbox","id":"sh/lw769gzm","slide":7,"name":"retro-body","text":"Workflow changes during development caused rework in diagrams and supporting documentation.","textPreview":"Workflow changes during development caused rework in diagrams and supporting documentation.","textChars":91,"textLines":1,"bbox":[72,517,500,112]}
+{"kind":"textbox","id":"sh/0ve50bih","slide":7,"name":"section-label","text":"SPRINT 2 COMMITMENT","textPreview":"SPRINT 2 COMMITMENT","textChars":19,"textLines":1,"bbox":[654,486,480,20]}
+{"kind":"textbox","id":"sh/jq9ojah0","slide":7,"name":"retro-body","text":"Review system changes continuously and align requirements, diagrams and tests earlier with the developer.","textPreview":"Review system changes continuously and align requirements, diagrams and tests earlier with the developer.","textChars":105,"textLines":1,"bbox":[654,517,500,112]}
+{"kind":"notes","id":"nt/k0myzl","slide":7,"text":"Present this reflection in first person. Focus on one contribution, one lesson and one specific improvement for Sprint 2.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/5998nf","slide":8,"title":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textShapes":15}
+{"kind":"shape","id":"sh/3mdwvqhw","slide":8,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/4nmd4vih","slide":8,"name":"eyebrow","text":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textPreview":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textChars":33,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/5ovex0z2","slide":8,"name":"slide-title","text":"Muhammed Akram: learning through two Agile perspectives","textPreview":"Muhammed Akram: learning through two Agile perspectives","textChars":55,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/uxkvyl0f","slide":8,"name":"subtitle","text":"Business Analyst  →  Quality Assurance","textPreview":"Business Analyst  →  Quality Assurance","textChars":38,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/vytwr6h0","slide":8,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/gz2d0bil","slide":8,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/h0vetgzq","slide":8,"name":"slide-number","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/6tkvu103","slide":8,"name":"quote-mark","text":"“","textPreview":"“","textChars":1,"textLines":1,"bbox":[64,188,62,78]}
+{"kind":"textbox","id":"sh/7utcn6ho","slide":8,"name":"retro-quote","text":"Clarity at the start reduces rework at the end.","textPreview":"Clarity at the start reduces rework at the end.","textChars":47,"textLines":1,"bbox":[126,190,1000,74]}
+{"kind":"shape","id":"sh/761gf6x0","slide":8,"bbox":[126,274,1000,3]}
+{"kind":"textbox","id":"sh/m5sfm1wf","slide":8,"name":"section-label","text":"CONTRIBUTION","textPreview":"CONTRIBUTION","textChars":12,"textLines":1,"bbox":[72,316,480,20]}
+{"kind":"textbox","id":"sh/98jyhgf6","slide":8,"name":"retro-body","text":"Clarified requirements, wrote user stories, created use cases and reviewed whether delivered features matched the agreed scope.","textPreview":"Clarified requirements, wrote user stories, created use cases and reviewed whether delivered features matched the agreed scope.","textChars":127,"textLines":1,"bbox":[72,347,500,112]}
+{"kind":"textbox","id":"sh/87axobel","slide":8,"name":"section-label","text":"WHAT WORKED","textPreview":"WHAT WORKED","textChars":11,"textLines":1,"bbox":[654,316,480,20]}
+{"kind":"textbox","id":"sh/va1gj6xc","slide":8,"name":"retro-body","text":"Clear user stories and diagrams gave development a stronger path from client need to implementation.","textPreview":"Clear user stories and diagrams gave development a stronger path from client need to implementation.","textChars":100,"textLines":1,"bbox":[654,347,500,112]}
+{"kind":"textbox","id":"sh/u9sfqlwr","slide":8,"name":"section-label","text":"CHALLENGE","textPreview":"CHALLENGE","textChars":9,"textLines":1,"bbox":[72,486,480,20]}
+{"kind":"textbox","id":"sh/hc3ylgf2","slide":8,"name":"retro-body","text":"The team initially needed more time to understand the client problem and translate it into precise requirements.","textPreview":"The team initially needed more time to understand the client problem and translate it into precise requirements.","textChars":112,"textLines":1,"bbox":[72,517,500,112]}
+{"kind":"textbox","id":"sh/wbaxsbex","slide":8,"name":"section-label","text":"SPRINT 2 COMMITMENT","textPreview":"SPRINT 2 COMMITMENT","textChars":19,"textLines":1,"bbox":[654,486,480,20]}
+{"kind":"textbox","id":"sh/behg7mxs","slide":8,"name":"retro-body","text":"Validate requirements earlier and communicate uncertainty before detailed development and documentation begin.","textPreview":"Validate requirements earlier and communicate uncertainty before detailed development and documentation begin.","textChars":110,"textLines":1,"bbox":[654,517,500,112]}
+{"kind":"notes","id":"nt/5998nf","slide":8,"text":"Present this reflection in first person. Focus on one contribution, one lesson and one specific improvement for Sprint 2.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/nq69w7","slide":9,"title":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textShapes":15}
+{"kind":"shape","id":"sh/gnqpov6p","slide":9,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/vmhovqp4","slide":9,"name":"eyebrow","text":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textPreview":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textChars":33,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/ul87mloj","slide":9,"name":"slide-title","text":"Abdullah Aroos: learning through two Agile perspectives","textPreview":"Abdullah Aroos: learning through two Agile perspectives","textChars":55,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/tkz6tg7y","slide":9,"name":"subtitle","text":"Scrum Master  →  Developer","textPreview":"Scrum Master  →  Developer","textChars":26,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/8jqpkbqd","slide":9,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/7ixor6ps","slide":9,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/mhoni18n","slide":9,"name":"slide-number","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/dgjq5072","slide":9,"name":"quote-mark","text":"“","textPreview":"“","textChars":1,"textLines":1,"bbox":[64,188,62,78]}
+{"kind":"textbox","id":"sh/sfapwf6x","slide":9,"name":"retro-quote","text":"Communication is the bridge between working code and accurate documentation.","textPreview":"Communication is the bridge between working code and accurate documentation.","textChars":76,"textLines":1,"bbox":[126,190,1000,74]}
+{"kind":"shape","id":"sh/qxsn2xkz","slide":9,"bbox":[126,274,1000,3]}
+{"kind":"textbox","id":"sh/ry14vi1k","slide":9,"name":"section-label","text":"CONTRIBUTION","textPreview":"CONTRIBUTION","textChars":12,"textLines":1,"bbox":[72,316,480,20]}
+{"kind":"textbox","id":"sh/sza54n25","slide":9,"name":"retro-body","text":"Prioritised the backlog, coordinated meetings and the Scrum board, set up GitHub, then completed and refined the working interface.","textPreview":"Prioritised the backlog, coordinated meetings and the Scrum board, set up GitHub, then completed and refined the working interface.","textChars":131,"textLines":1,"bbox":[72,347,500,112]}
+{"kind":"textbox","id":"sh/d0j6xsjq","slide":9,"name":"section-label","text":"WHAT WORKED","textPreview":"WHAT WORKED","textChars":11,"textLines":1,"bbox":[654,316,480,20]}
+{"kind":"textbox","id":"sh/i9snydk3","slide":9,"name":"retro-body","text":"The prioritised backlog gave the team direction, and the partially built system was successfully completed and explained to the team.","textPreview":"The prioritised backlog gave the team direction, and the partially built system was successfully completed and explained to the team.","textChars":133,"textLines":1,"bbox":[654,347,500,112]}
+{"kind":"textbox","id":"sh/3a14ri1o","slide":9,"name":"section-label","text":"CHALLENGE","textPreview":"CHALLENGE","textChars":9,"textLines":1,"bbox":[72,486,480,20]}
+{"kind":"textbox","id":"sh/4ba50n2t","slide":9,"name":"retro-body","text":"Taking over existing code and changing workflows required extra time to understand structure and realign documentation.","textPreview":"Taking over existing code and changing workflows required extra time to understand structure and realign documentation.","textChars":119,"textLines":1,"bbox":[72,517,500,112]}
+{"kind":"textbox","id":"sh/5cjmtsje","slide":9,"name":"section-label","text":"SPRINT 2 COMMITMENT","textPreview":"SPRINT 2 COMMITMENT","textChars":19,"textLines":1,"bbox":[654,486,480,20]}
+{"kind":"textbox","id":"sh/25cnahk7","slide":9,"name":"retro-body","text":"Share development changes earlier and test features throughout implementation instead of waiting until the end.","textPreview":"Share development changes earlier and test features throughout implementation instead of waiting until the end.","textChars":111,"textLines":1,"bbox":[654,517,500,112]}
+{"kind":"notes","id":"nt/nq69w7","slide":9,"text":"Present this reflection in first person. Focus on one contribution, one lesson and one specific improvement for Sprint 2.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/or1jm2","slide":10,"title":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textShapes":15}
+{"kind":"shape","id":"sh/lkzmpo3m","slide":10,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/yh83u94v","slide":10,"name":"eyebrow","text":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textPreview":"INDIVIDUAL SPRINT 1 RETROSPECTIVE","textChars":33,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/jih4nelg","slide":10,"name":"slide-title","text":"Sajadh Ahmed: learning through two Agile perspectives","textPreview":"Sajadh Ahmed: learning through two Agile perspectives","textChars":53,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/87ql0jmx","slide":10,"name":"subtitle","text":"Lead Developer","textPreview":"Lead Developer","textChars":14,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/t8jmto3i","slide":10,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/6l83yt4r","slide":10,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/7mh4rylc","slide":10,"name":"slide-number","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"textbox","id":"sh/gbal43m9","slide":10,"name":"quote-mark","text":"“","textPreview":"“","textChars":1,"textLines":1,"bbox":[64,188,62,78]}
+{"kind":"textbox","id":"sh/hcjmx83e","slide":10,"name":"retro-quote","text":"Stable contracts let the whole team move faster.","textPreview":"Stable contracts let the whole team move faster.","textChars":48,"textLines":1,"bbox":[126,190,1000,74]}
+{"kind":"shape","id":"sh/d8zaxoni","slide":10,"bbox":[126,274,1000,3]}
+{"kind":"textbox","id":"sh/c7q9oj6x","slide":10,"name":"section-label","text":"CONTRIBUTION","textPreview":"CONTRIBUTION","textChars":12,"textLines":1,"bbox":[72,316,480,20]}
+{"kind":"textbox","id":"sh/r6hsve5c","slide":10,"name":"retro-body","text":"Designed the Flask architecture, database transactions, session controls, RBAC and the end-to-end appraisal workflow.","textPreview":"Designed the Flask architecture, database transactions, session controls, RBAC and the end-to-end appraisal workflow.","textChars":117,"textLines":1,"bbox":[72,347,500,112]}
+{"kind":"textbox","id":"sh/q58rm9or","slide":10,"name":"section-label","text":"WHAT WORKED","textPreview":"WHAT WORKED","textChars":11,"textLines":1,"bbox":[654,316,480,20]}
+{"kind":"textbox","id":"sh/1wja18ne","slide":10,"name":"retro-body","text":"Early authentication guards and clear UML flows made complex workflow implementation and debugging more reliable.","textPreview":"Early authentication guards and clear UML flows made complex workflow implementation and debugging more reliable.","textChars":113,"textLines":1,"bbox":[654,347,500,112]}
+{"kind":"textbox","id":"sh/0ba9s36t","slide":10,"name":"section-label","text":"CHALLENGE","textPreview":"CHALLENGE","textChars":9,"textLines":1,"bbox":[72,486,480,20]}
+{"kind":"textbox","id":"sh/zahszy5o","slide":10,"name":"retro-body","text":"Turning high-level requirements into database constraints and validation rules required architectural refactoring under time pressure.","textPreview":"Turning high-level requirements into database constraints and validation rules required architectural refactoring under time pressure.","textChars":134,"textLines":1,"bbox":[72,517,500,112]}
+{"kind":"textbox","id":"sh/e98rqto3","slide":10,"name":"section-label","text":"SPRINT 2 COMMITMENT","textPreview":"SPRINT 2 COMMITMENT","textChars":19,"textLines":1,"bbox":[654,486,480,20]}
+{"kind":"textbox","id":"sh/h0fqp47a","slide":10,"name":"retro-body","text":"Freeze backend contracts and migrations earlier, then add automated integration tests so development and QA can proceed in parallel.","textPreview":"Freeze backend contracts and migrations earlier, then add automated integration tests so development and QA can proceed in parallel.","textChars":132,"textLines":1,"bbox":[654,517,500,112]}
+{"kind":"notes","id":"nt/or1jm2","slide":10,"text":"Present this reflection in first person. Focus on one contribution, one lesson and one specific improvement for Sprint 2.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}
+{"kind":"slide","id":"sl/qbv3dh","slide":11,"title":"OPTIONAL WORKLOAD MATRIX","textShapes":6}
+{"kind":"shape","id":"sh/6dsju5sz","slide":11,"bbox":[0,0,14,720]}
+{"kind":"textbox","id":"sh/t0jipkra","slide":11,"name":"eyebrow","text":"OPTIONAL WORKLOAD MATRIX","textPreview":"OPTIONAL WORKLOAD MATRIX","textChars":24,"textLines":1,"bbox":[58,34,680,24]}
+{"kind":"textbox","id":"sh/sfa1wfa5","slide":11,"name":"slide-title","text":"Sprint 1 contributions are shown as completed work—not percentages","textPreview":"Sprint 1 contributions are shown as completed work—not percentages","textChars":66,"textLines":1,"bbox":[58,63,1120,55]}
+{"kind":"textbox","id":"sh/f2lkra9g","slide":11,"name":"subtitle","text":"A transparent record of concrete outputs across coordination, analysis, quality and development.","textPreview":"A transparent record of concrete outputs across coordination, analysis, quality and development.","textChars":96,"textLines":1,"bbox":[58,119,1110,34]}
+{"kind":"shape","id":"sh/u1sjy5sv","slide":11,"bbox":[58,159,1164,1]}
+{"kind":"textbox","id":"sh/1432tkrm","slide":11,"name":"footer","text":"ALTRIUM  /  SPRINT 1 REVIEW","textPreview":"ALTRIUM  /  SPRINT 1 REVIEW","textChars":27,"textLines":1,"bbox":[58,686,320,18]}
+{"kind":"textbox","id":"sh/g3u10fa1","slide":11,"name":"slide-number","text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1168,681,54,24]}
+{"kind":"shape","id":"sh/25cj2ps7","slide":11,"name":"closing-line","bbox":[58,635,1164,38]}
+{"kind":"textbox","id":"sh/wj2tk7y5","slide":11,"name":"closing-text","text":"SPRINT 1 RESULT  ·  a secure, demonstrable review workflow ready for stakeholder feedback","textPreview":"SPRINT 1 RESULT  ·  a secure, demonstrable review workflow ready for stakeholder feedback","textChars":89,"textLines":1,"bbox":[74,642,1132,24]}
+{"kind":"table","id":"tb/qlw36tcn","slide":11,"name":"","rows":5,"cols":5,"preview":"TEAM MEMBER | COORDINATION | ANALYSIS & UML | QUALITY ASSURANCE | DEVELOPMENT","bbox":[58,190,1164,422]}
+{"kind":"notes","id":"nt/qbv3dh","slide":11,"text":"Use this slide only if time permits or if the Product Owner asks how work was distributed.\n\n[Sources]\n- Report final 4.20.docx (team Sprint 1 report)\n- Altrium Sprint 1 application implementation"}

@@ -16,8 +16,14 @@ instance/
 !.env.example
 
 # Editor and operating-system files
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 .idea/
 .DS_Store
 Thumbs.db
 
+# Playwright output
+node_modules/
+playwright-report/
+test-results/
+debug.log

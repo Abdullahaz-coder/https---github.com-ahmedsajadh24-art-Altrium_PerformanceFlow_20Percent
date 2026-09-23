@@ -2,6 +2,8 @@ import shutil
 import sqlite3
 import tempfile
 import unittest
+from datetime import datetime
+from unittest.mock import patch
 from pathlib import Path
 
 import app as application
@@ -77,10 +79,16 @@ class WorkflowRegressionTests(unittest.TestCase):
         return connection
 
     def sign_in_as(self, user_id, role, name="Test User"):
+        connection = self.get_test_connection()
+        try:
+            password_hash = connection.execute('SELECT password FROM users WHERE id=?', (user_id,)).fetchone()[0]
+        finally:
+            connection.close()
         with self.client.session_transaction() as session:
             session["user_id"] = user_id
             session["user_role"] = role
             session["user_name"] = name
+            session['_credential_version'] = application.credential_version(password_hash)
 
     def reset_test_data(self):
         connection = sqlite3.connect(self.database_path)
@@ -234,6 +242,146 @@ class WorkflowRegressionTests(unittest.TestCase):
             )
         finally:
             connection.close()
+
+    def test_hr_records_vault_is_searchable_and_not_available_to_other_roles(self):
+        workflow = self.create_cycle_review(
+            cycle_status="Active",
+            review_status="Supervisor Evaluation In Progress",
+        )
+        self.sign_in_as(workflow["hr_id"], "HR", "Regression HR")
+        response = self.client.get("/review-records?q=Regression+Subject")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Records Vault", response.data)
+        self.assertIn(b"Regression Subject", response.data)
+
+        self.sign_in_as(
+            workflow["employee_user_id"], "Employee", "Regression Subject"
+        )
+        response = self.client.get("/review-records", follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+
+    def test_workflow_reminders_are_delivered_once_per_outstanding_action(self):
+        workflow = self.create_cycle_review(cycle_status="Active")
+        connection = self.get_test_connection()
+        try:
+            connection.execute(
+                """INSERT INTO review_actions
+                   (review_cycle_id, employee_review_id, assigned_to, action_type,
+                    title, description, status, created_at)
+                   VALUES (?, ?, ?, 'REMINDER_TEST', 'Complete review task',
+                           'Regression reminder task.', 'Pending',
+                           datetime('now', '-2 day'))""",
+                (workflow["cycle_id"], workflow["review_id"], workflow["employee_user_id"]),
+            )
+            application.dispatch_workflow_reminders(connection)
+            application.dispatch_workflow_reminders(connection)
+            connection.commit()
+            reminder_count = connection.execute(
+                """SELECT COUNT(*) FROM notifications
+                   WHERE user_id = ? AND notification_type = 'ACTION_REMINDER'""",
+                (workflow["employee_user_id"],),
+            ).fetchone()[0]
+            self.assertEqual(reminder_count, 1)
+        finally:
+            connection.close()
+
+    def test_pdp_creation_progress_and_monitoring_workflow(self):
+        workflow = self.create_cycle_review(review_status="Completed")
+        connection = self.get_test_connection()
+        try:
+            application.ensure_par_meeting_schema(connection)
+            application.ensure_pdp_schema(connection)
+            meeting_id = connection.execute(
+                """INSERT INTO par_meetings
+                    (employee_review_id, scheduled_by, meeting_date, start_time,
+                     end_time, meeting_format, location, status)
+                    VALUES (?, ?, '2026-09-24', '10:00', '11:00',
+                            'Online', 'https://meet.altrium.test/pdp', 'Held')""",
+                (workflow["review_id"], self.supervisor_user_id),
+            ).lastrowid
+            connection.execute(
+                """INSERT INTO par_meeting_outcomes
+                    (par_meeting_id, recorded_by, discussion_summary, agreed_actions, outcome)
+                    VALUES (?, ?, 'Development priorities agreed.', 'Create a practical plan.', 'PDP Required')""",
+                (meeting_id, self.supervisor_user_id),
+            )
+            connection.execute(
+                """INSERT INTO review_actions
+                    (review_cycle_id, employee_review_id, assigned_to, action_type, title, status)
+                    VALUES (?, ?, ?, 'PDP_CREATION', 'Create employee PDP', 'Pending')""",
+                (workflow["cycle_id"], workflow["review_id"], self.supervisor_user_id),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+        self.sign_in_as(self.supervisor_user_id, "Supervisor", "Regression Supervisor")
+        response = self.client.post(
+            f"/reviews/{workflow['review_id']}/pdp",
+            data={
+                "title": "Reporting confidence plan",
+                "focus_area": "Reporting and stakeholder communication",
+                "overall_goal": "Deliver a clear monthly report independently.",
+                "success_measure": "Present two accurate reports to stakeholders.",
+                "target_date": "2026-11-30",
+                "activity": ["Complete an advanced reporting workshop", ""],
+                "support_needed": ["Weekly supervisor feedback", ""],
+                "activity_target_date": ["2026-10-31", ""],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+
+        connection = self.get_test_connection()
+        try:
+            plan = connection.execute(
+                "SELECT id FROM pdp_plans WHERE employee_review_id = ?",
+                (workflow["review_id"],),
+            ).fetchone()
+            activity = connection.execute(
+                "SELECT id FROM pdp_activities WHERE pdp_plan_id = ?",
+                (plan["id"],),
+            ).fetchone()
+            progress_action = connection.execute(
+                """SELECT status FROM review_actions
+                   WHERE employee_review_id = ? AND assigned_to = ? AND action_type = 'PDP_PROGRESS'""",
+                (workflow["review_id"], workflow["employee_user_id"]),
+            ).fetchone()
+            self.assertEqual(progress_action["status"], "Pending")
+        finally:
+            connection.close()
+
+        self.sign_in_as(workflow["employee_user_id"], "Employee", "Regression Subject")
+        self.assertEqual(self.client.get(f"/reviews/{workflow['review_id']}/pdp").status_code, 200)
+        response = self.client.post(
+            f"/reviews/{workflow['review_id']}/pdp/progress",
+            data={
+                "activity_id": [str(activity["id"])],
+                "activity_status": ["Completed"],
+                "employee_progress_note": ["Completed the workshop and applied the learning."],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+
+        connection = self.get_test_connection()
+        try:
+            self.assertEqual(
+                connection.execute("SELECT status FROM pdp_activities WHERE id = ?", (activity["id"],)).fetchone()["status"],
+                "Completed",
+            )
+            self.assertEqual(
+                connection.execute(
+                    """SELECT status FROM review_actions
+                       WHERE employee_review_id = ? AND assigned_to = ? AND action_type = 'PDP_PROGRESS'""",
+                    (workflow["review_id"], workflow["employee_user_id"]),
+                ).fetchone()["status"],
+                "Completed",
+            )
+        finally:
+            connection.close()
+
+        self.sign_in_as(workflow["hr_id"], "HR", "Regression HR")
+        self.assertEqual(self.client.get("/development-pulse").status_code, 200)
+        self.assertEqual(self.client.get(f"/reviews/{workflow['review_id']}/pdp").status_code, 200)
 
     def test_cycle_activation_creates_one_action_per_stage(self):
         employee_user_id, employee_id = self.create_employee("Activation")
@@ -514,7 +662,7 @@ class WorkflowRegressionTests(unittest.TestCase):
         finally:
             connection.close()
 
-    def test_cycle_closure_requires_completed_reviews(self):
+    def test_cycle_closure_requires_par_outcomes_as_well_as_acknowledgement(self):
         fixture = self.create_cycle_review(
             review_status="Completed",
             cycle_status="Active",
@@ -532,7 +680,7 @@ class WorkflowRegressionTests(unittest.TestCase):
                 "SELECT status FROM review_cycles WHERE id = ?",
                 (fixture["cycle_id"],),
             ).fetchone()
-            self.assertEqual(cycle["status"], "Closed")
+            self.assertEqual(cycle["status"], "Active")
         finally:
             connection.close()
 
@@ -824,6 +972,9 @@ class WorkflowRegressionTests(unittest.TestCase):
         self.assertIn("inactive-blueprint-status", html)
 
     def test_complete_workflow_from_setup_to_closed_cycle(self):
+        clock_patch = patch('app.par_now', return_value=datetime(2026, 6, 15, 9))
+        meeting_clock = clock_patch.start()
+        self.addCleanup(clock_patch.stop)
         subject_user_id, subject_employee_id = self.create_employee("E2ESubject")
         peer_user_id, _ = self.create_employee("E2EPeer")
         manager_user_id = self.create_user("Manager", "E2EManager")
@@ -1148,6 +1299,7 @@ class WorkflowRegressionTests(unittest.TestCase):
         # The current meeting is intentionally kept selectable during a reschedule.
         self.assertNotIn("11:00", unavailable_slots)
 
+        meeting_clock.return_value = datetime(2026, 6, 15, 12)
         response = self.client.post(
             f"/reviews/{review_id}/par-meeting/held"
         )
@@ -1197,6 +1349,7 @@ class WorkflowRegressionTests(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 302)
+        meeting_clock.return_value = datetime(2026, 6, 16, 14)
         self.assertEqual(self.client.post(f"/reviews/{review_id}/par-meeting/held").status_code, 302)
         self.assertEqual(
             self.client.post(

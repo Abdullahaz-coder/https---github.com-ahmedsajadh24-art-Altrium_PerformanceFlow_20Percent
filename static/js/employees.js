@@ -242,12 +242,12 @@ employeeForm.addEventListener(
         }
 
 
-        if (password.length < 8) {
+        if (password.length < 12) {
 
             event.preventDefault();
 
             alert(
-                "Temporary password must contain at least 8 characters."
+                "Temporary password must contain at least 12 characters."
             );
 
             return;

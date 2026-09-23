@@ -695,6 +695,9 @@
                     Close Review Cycle
                     <span>→</span>
                 </button>
+                {% if closure_readiness['post_review_pending'] %}
+                <p class="closure-help">{{ closure_readiness['post_review_pending'] }} review(s) still need a PAR outcome or required PDP. Development activities can continue after closure.</p>
+                {% endif %}
             </form>
 
 
