@@ -41,6 +41,7 @@
     >
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/usability.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/review_guide.css') }}">
 </head>
 
 
@@ -426,6 +427,46 @@
 
 </aside>
 
+<div class="review-guide" id="reviewGuide" data-page="{{ request.endpoint }}">
+    <button type="button" class="review-guide-launcher" id="reviewGuideLauncher"
+            aria-label="Open Review Guide" aria-controls="reviewGuidePanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-5 3v-3.5a2 2 0 0 1-2-2v-7.5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            <path d="M8 11.5h8M8 14h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <span>Help</span>
+    </button>
+
+    <section class="review-guide-panel" id="reviewGuidePanel" role="dialog"
+             aria-modal="false" aria-labelledby="reviewGuideTitle" hidden>
+        <header class="review-guide-header">
+            <div class="review-guide-header-icon" aria-hidden="true">✦</div>
+            <div>
+                <span>ALTRIUM ASSISTANCE</span>
+                <h2 id="reviewGuideTitle">Review Guide</h2>
+                <p>Clear answers for your review journey.</p>
+            </div>
+            <button type="button" class="review-guide-close" id="reviewGuideClose"
+                    aria-label="Close Review Guide">×</button>
+        </header>
+        <div class="review-guide-messages" id="reviewGuideMessages" role="log"
+             aria-live="polite" aria-relevant="additions"></div>
+        <div class="review-guide-prompts" aria-label="Suggested questions">
+            <button type="button" data-guide-topic="next">What should I do next?</button>
+            <button type="button" data-guide-topic="workflow">How does it work?</button>
+            <button type="button" data-guide-topic="privacy">Who can see feedback?</button>
+            <button type="button" data-guide-topic="writing">Help with feedback</button>
+        </div>
+        <form class="review-guide-form" id="reviewGuideForm">
+            <input id="reviewGuideInput" type="text" maxlength="180" autocomplete="off"
+                   aria-label="Ask the Review Guide a question"
+                   placeholder="Ask about reviews, PAR, PDP..." required>
+            <button type="submit" aria-label="Send question">→</button>
+        </form>
+        <p class="review-guide-footnote">Guidance uses your role and current actions.</p>
+    </section>
+</div>
+
 
 
 <script src="{{ url_for('static', filename='js/security.js') }}"></script>
@@ -439,6 +480,7 @@
 
 <script src="{{ url_for('static', filename='js/motion.js') }}"></script>
 <script src="{{ url_for('static', filename='js/usability.js') }}"></script>
+<script src="{{ url_for('static', filename='js/review_guide.js') }}" defer></script>
 
 {% block scripts %}{% endblock %}
 

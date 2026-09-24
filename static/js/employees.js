@@ -17,6 +17,35 @@ const closeDrawerButton =
 const cancelEmployeeButton =
     document.getElementById("cancelEmployeeButton");
 
+const employeeSearch = document.getElementById("employeeSearch");
+const employeeRows = Array.from(
+    document.querySelectorAll(".employee-table tbody tr")
+);
+const employeeTableWrapper = document.querySelector(".employee-table-wrapper");
+let employeeSearchEmpty = null;
+
+if (employeeSearch && employeeRows.length && employeeTableWrapper) {
+    employeeSearchEmpty = document.createElement("p");
+    employeeSearchEmpty.className = "employee-search-empty";
+    employeeSearchEmpty.setAttribute("role", "status");
+    employeeSearchEmpty.textContent = "No employee profiles match your search.";
+    employeeSearchEmpty.hidden = true;
+    employeeTableWrapper.after(employeeSearchEmpty);
+
+    employeeSearch.addEventListener("input", () => {
+        const query = employeeSearch.value.trim().toLocaleLowerCase();
+        let visibleCount = 0;
+
+        employeeRows.forEach((row) => {
+            const matches = row.textContent.toLocaleLowerCase().includes(query);
+            row.hidden = !matches;
+            if (matches) visibleCount += 1;
+        });
+
+        employeeSearchEmpty.hidden = visibleCount > 0;
+    });
+}
+
 const accountRole =
     document.getElementById("accountRole");
 

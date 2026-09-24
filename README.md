@@ -2,6 +2,12 @@
 
 Altrium PerformanceFlow is a Flask-based employee performance-review system. It supports HR review-cycle administration, employee self-assessments, performance blueprints, confidential peer reviews, supervisor evaluations, final management approvals, employee outcome acknowledgement, evidence uploads, workflow actions, and notifications.
 
+The floating **Review Guide** is available on signed-in pages. It shows the
+signed-in person's next assigned action and answers common questions about
+review stages, feedback, privacy, PAR meetings, and PDPs. Its responses come
+from the application's workflow and role rules; it does not send review text
+to an external AI service or decide performance ratings.
+
 ## Technology
 
 - Python and Flask
@@ -49,6 +55,20 @@ Altrium PerformanceFlow is a Flask-based employee performance-review system. It 
 
 6. Open `http://127.0.0.1:5000`.
 
+For a live demo that needs to move through a future-scheduled PAR immediately,
+enable the explicit demo-only shortcut in the same PowerShell window before
+starting the app:
+
+```powershell
+$env:PERFORMANCEFLOW_DEMO_MODE = "1"
+python app.py
+```
+
+With this switch on, the assigned supervisor can mark the PAR as held without
+waiting for its scheduled time. It does not change the normal weekday, working
+hours, attendee-availability, or booking-conflict checks. Leave the setting
+unset (or set it to `0`) for regular use; the shortcut is disabled by default.
+
 The database and uploaded evidence are intentionally excluded from Git. Every developer should create a separate local database with `init_db.py`.
 
 ## Deployment security
@@ -84,8 +104,13 @@ opens or changes the project's `database.db` or demo evidence files.
 
 The same suite runs from a terminal with `npm run test:e2e`. Failed runs save a
 trace and screenshot in `test-results`; `npm run test:e2e:report` opens the HTML
-report. The initial browser suite covers sign-in validation, password visibility,
-the HR/Supervisor/Manager/Employee workspaces, role access, Signal Center, and
-logout. The existing Python regression suite covers deeper review, PAR, PDP,
-privacy, and closure rules. Do not treat this smoke suite alone as proof that
-the entire product workflow is browser-tested.
+report. The browser checks are grouped into five feature suites: authentication
+and sessions, role access and employee setup, dashboard/workspace interactions,
+the floating Review Guide, and responsive layouts. Together they cover 28
+checks across HR, Supervisor, Manager, and Employee accounts, including profile
+search and creation, department-matched supervisors, availability blocks,
+notification controls, and mobile/tablet/desktop widths. Run `npx playwright test --list` to see every
+case separately in VS Code or the terminal. These browser checks complement the
+Python regression suite, which covers deeper review, PAR, PDP, privacy, and
+closure rules; they are not a substitute for manually exercising the complete
+workflow in a production-like environment.

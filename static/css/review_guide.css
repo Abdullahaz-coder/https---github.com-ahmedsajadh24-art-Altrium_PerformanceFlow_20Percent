@@ -1,0 +1,233 @@
+.review-guide {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 800;
+    width: 68px;
+    pointer-events: none;
+}
+
+.review-guide > * { pointer-events: auto; }
+
+.review-guide-launcher {
+    width: 68px;
+    height: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 22px;
+    background: linear-gradient(145deg, #4338ca, #6940e8);
+    color: #fff;
+    box-shadow: 0 15px 36px rgba(66, 52, 163, .32);
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.review-guide-launcher:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 19px 42px rgba(66, 52, 163, .39);
+}
+
+.review-guide-launcher svg { width: 25px; height: 25px; }
+.review-guide-launcher span { font-size: 11px; font-weight: 800; letter-spacing: .02em; }
+
+.review-guide-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 14px);
+    width: min(400px, calc(100vw - 32px));
+    height: min(560px, calc(100dvh - 125px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #dadff0;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 28px 75px rgba(21, 30, 55, .21);
+    animation: review-guide-enter .2s ease-out;
+}
+
+.review-guide-header {
+    display: grid;
+    grid-template-columns: 43px minmax(0, 1fr) 34px;
+    align-items: start;
+    gap: 11px;
+    padding: 19px 19px 17px;
+    border-bottom: 1px solid #e8eaf4;
+    background: radial-gradient(circle at 100% 0%, rgba(111, 82, 241, .13), transparent 44%), #fbfbff;
+}
+
+.review-guide-header-icon {
+    width: 43px;
+    height: 43px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #242e46;
+    color: #fff;
+    font-size: 21px;
+}
+
+.review-guide-header span {
+    color: #5b43d4;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .13em;
+}
+
+.review-guide-header h2 {
+    margin: 3px 0 2px;
+    color: #1d293c;
+    font-size: 22px;
+    line-height: 1.16;
+    letter-spacing: -.035em;
+}
+
+.review-guide-header p { color: #65718a; font-size: 12px; line-height: 1.45; }
+
+.review-guide-close {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 10px;
+    background: #eef0f8;
+    color: #485570;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.review-guide-close:hover { background: #e8e4ff; color: #4f36cc; }
+
+.review-guide-messages {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    overflow-y: auto;
+    padding: 19px;
+    background: #fff;
+    scrollbar-color: #c8cce0 transparent;
+}
+
+.review-guide-message {
+    max-width: 93%;
+    padding: 12px 14px;
+    border-radius: 15px;
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.review-guide-message.guide {
+    align-self: flex-start;
+    border: 1px solid #e8e9f3;
+    border-bottom-left-radius: 5px;
+    background: #f8f9fd;
+    color: #39465e;
+}
+
+.review-guide-message.person {
+    align-self: flex-end;
+    border-bottom-right-radius: 5px;
+    background: #5140d5;
+    color: #fff;
+}
+
+.review-guide-message strong { display: block; margin-bottom: 4px; color: #1e2940; font-size: 13px; }
+.review-guide-message a { display: inline-flex; margin-top: 9px; color: #4f38ce; font-weight: 800; text-decoration: none; }
+.review-guide-message a:hover { text-decoration: underline; }
+.review-guide-message .review-guide-link { white-space: normal; }
+
+.review-guide-prompts {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 12px 17px 8px;
+    border-top: 1px solid #eef0f6;
+    scrollbar-width: thin;
+}
+
+.review-guide-prompts button {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    border: 1px solid #dedcf6;
+    border-radius: 999px;
+    background: #f7f6ff;
+    color: #4e3ab9;
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.review-guide-prompts button:hover { background: #ece9ff; border-color: #bbb3f3; }
+
+.review-guide-form { display: flex; align-items: center; gap: 8px; padding: 5px 17px 6px; }
+.review-guide-form input {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    padding: 0 13px;
+    border: 1px solid #d9deeb;
+    border-radius: 12px;
+    background: #fff;
+    color: #263248;
+    font-size: 13px;
+}
+
+.review-guide-form input::placeholder { color: #8994a7; }
+.review-guide-form input:focus { border-color: #7562e9; outline: 3px solid rgba(117, 98, 233, .14); }
+.review-guide-form button {
+    flex: 0 0 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 12px;
+    background: #5140d5;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.review-guide-form button:hover { background: #402fbd; }
+.review-guide-footnote { padding: 0 18px 13px; color: #8b95a7; font-size: 10px; }
+
+.page-self-assessment-studio .review-guide,
+.page-peer-review-studio .review-guide,
+.page-supervisor-evaluation-workspace .review-guide { bottom: 112px; }
+
+.page-self-assessment-studio .review-guide-panel,
+.page-peer-review-studio .review-guide-panel,
+.page-supervisor-evaluation-workspace .review-guide-panel { height: min(510px, calc(100dvh - 210px)); }
+
+@keyframes review-guide-enter {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 780px) {
+    .review-guide { right: 15px; bottom: calc(94px + env(safe-area-inset-bottom)); }
+    .review-guide-panel { height: min(530px, calc(100dvh - 195px)); }
+    .page-self-assessment-studio .review-guide,
+    .page-peer-review-studio .review-guide,
+    .page-supervisor-evaluation-workspace .review-guide { bottom: calc(185px + env(safe-area-inset-bottom)); }
+    .page-self-assessment-studio .review-guide-panel,
+    .page-peer-review-studio .review-guide-panel,
+    .page-supervisor-evaluation-workspace .review-guide-panel { height: min(470px, calc(100dvh - 280px)); }
+}
+
+@media (max-width: 480px) {
+    .review-guide { right: 12px; }
+    .review-guide-panel { width: calc(100vw - 24px); border-radius: 19px; }
+    .review-guide-header { padding: 16px; }
+    .review-guide-messages { padding: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .review-guide-launcher { transition: none; }
+    .review-guide-panel { animation: none; }
+}

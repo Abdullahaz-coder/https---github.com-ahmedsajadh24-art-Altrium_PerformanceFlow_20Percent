@@ -37,6 +37,9 @@ app.secret_key = os.environ.get(
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
+    # Demo-only shortcut: permits the assigned supervisor to record a PAR as
+    # held without waiting for its scheduled date/time. Disabled by default.
+    DEMO_MODE=(os.environ.get("PERFORMANCEFLOW_DEMO_MODE", "0") == "1"),
     SESSION_COOKIE_SECURE=(
         os.environ.get("PERFORMANCEFLOW_SECURE_COOKIES", "0") == "1"
     )
@@ -2292,7 +2295,17 @@ def login():
 
     if request.method == "POST":
 
-        client_key = request.remote_addr or "unknown"
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        client_address = request.remote_addr or "unknown"
+
+        # A shared office network may place every role behind the same IP.
+        # Keep invalid-format attempts separate from valid account attempts so
+        # a typo or another user's failures cannot lock out this account.
+        client_key = (
+            client_address,
+            email if is_altrium_email(email) else "<invalid-email>",
+        )
 
         now = time.monotonic()
 
@@ -2312,10 +2325,6 @@ def login():
                     "Please wait 15 minutes and try again."
                 )
             ), 429
-
-        email = request.form.get("email", "").strip().lower()
-
-        password = request.form.get("password", "")
 
         if not is_altrium_email(email):
             error = "Please use your @altrium.com email address."
@@ -2862,6 +2871,122 @@ def dashboard():
 
         user_role=session["user_role"]
     )
+
+
+@app.route("/review-guide/context")
+def review_guide_context():
+    """Return only the signed-in person's next visible workflow action."""
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Please sign in."}), 401
+
+    role = session["user_role"]
+    shortcuts_by_role = {
+        "HR": [
+            ("Review cycles", "review_cycles"),
+            ("Employees", "employees"),
+            ("Review records", "review_records"),
+            ("Development", "development_pulse"),
+        ],
+        "Supervisor": [
+            ("My team", "my_team"),
+            ("Development", "development_pulse"),
+            ("Availability", "availability"),
+        ],
+        "Manager": [
+            ("Dashboard", "dashboard"),
+            ("Review history", "review_history"),
+            ("Availability", "availability"),
+        ],
+        "Employee": [
+            ("Dashboard", "dashboard"),
+            ("Development", "development_pulse"),
+            ("Availability", "availability"),
+            ("Review history", "review_history"),
+        ],
+    }
+    fallback_by_role = {
+        "HR": ("Set up the next review cycle", "Create a cycle and assign eligible employees to begin the review.", "review_cycles"),
+        "Supervisor": ("Check your team", "Your action stream is clear. Open My Team to review current responsibilities and baselines.", "my_team"),
+        "Manager": ("Check your approvals", "No approval is waiting in your action stream. Your dashboard will show a new approval when it is assigned.", "dashboard"),
+        "Employee": ("Check your dashboard", "Your action stream is clear. Your dashboard will show the next review task when it is ready.", "dashboard"),
+    }
+    allowed_action_types = {
+        "HR": {"CYCLE_MONITORING", "MANAGER_APPROVAL_COORDINATION"},
+        "Supervisor": {"SUPERVISOR_MONITORING", "SUPERVISOR_EVALUATION", "PAR_MEETING", "PAR_OUTCOME", "PDP_CREATION"},
+        "Manager": {"MANAGER_APPROVAL"},
+        "Employee": {"SELF_ASSESSMENT", "PEER_REVIEW", "FINAL_REVIEW_ACKNOWLEDGEMENT", "PDP_PROGRESS"},
+    }
+    review_endpoints = {
+        "SELF_ASSESSMENT": "self_assessment_studio",
+        "PEER_REVIEW": "peer_review_studio",
+        "SUPERVISOR_EVALUATION": "supervisor_evaluation_workspace",
+        "MANAGER_APPROVAL": "manager_approval_workspace",
+        "MANAGER_APPROVAL_COORDINATION": "manager_approval_workspace",
+        "FINAL_REVIEW_ACKNOWLEDGEMENT": "final_review_outcome",
+        "PAR_MEETING": "par_meeting_workspace",
+        "PAR_OUTCOME": "par_meeting_workspace",
+        "PDP_CREATION": "pdp_workspace",
+        "PDP_PROGRESS": "pdp_workspace",
+    }
+
+    fallback_title, fallback_description, fallback_endpoint = fallback_by_role[role]
+    next_step = {
+        "title": fallback_title,
+        "description": fallback_description,
+        "label": "Open workspace",
+        "url": url_for(fallback_endpoint),
+    }
+    connection = get_db_connection()
+    try:
+        actions = connection.execute(
+            """SELECT review_actions.action_type, review_actions.title,
+                      review_actions.description, review_actions.review_cycle_id,
+                      review_actions.employee_review_id
+               FROM review_actions
+               JOIN review_cycles ON review_cycles.id = review_actions.review_cycle_id
+               WHERE review_actions.assigned_to = ?
+                 AND review_actions.status != 'Completed'
+                 AND (review_cycles.status = 'Active'
+                      OR (review_cycles.status = 'Closed'
+                          AND review_actions.action_type = 'PDP_PROGRESS'))
+               ORDER BY CASE review_actions.priority
+                   WHEN 'High' THEN 1 WHEN 'Normal' THEN 2 ELSE 3 END,
+                   review_actions.created_at DESC
+               LIMIT 20""",
+            (session["user_id"],),
+        ).fetchall()
+        for action in actions:
+            action_type = action["action_type"]
+            if action_type not in allowed_action_types[role]:
+                continue
+            if action_type == "CYCLE_MONITORING" and action["review_cycle_id"]:
+                target = url_for("review_cycle_workspace", cycle_id=action["review_cycle_id"])
+            elif action_type == "SUPERVISOR_MONITORING":
+                target = url_for("my_team")
+            elif action_type in review_endpoints and action["employee_review_id"]:
+                target = url_for(review_endpoints[action_type], employee_review_id=action["employee_review_id"])
+            else:
+                continue
+            next_step = {
+                "title": action["title"],
+                "description": action["description"],
+                "label": "Open action",
+                "url": target,
+            }
+            break
+    finally:
+        connection.close()
+
+    return jsonify({
+        "success": True,
+        "role": role,
+        "first_name": session["user_name"].split()[0],
+        "next_step": next_step,
+        "shortcuts": [
+            {"label": label, "url": url_for(endpoint)}
+            for label, endpoint in shortcuts_by_role[role]
+        ],
+    })
 
 
 @app.route(
@@ -14597,6 +14722,7 @@ def par_meeting_workspace(employee_review_id):
                                 and review["supervisor_id"] == session["user_id"]
                                 and review['cycle_status'] == 'Active'
                                 and review["par_status"] == "Held"),
+            demo_mode=app.config.get("DEMO_MODE", False),
             user_name=session["user_name"], user_role=session["user_role"]
         )
     finally:
@@ -14747,7 +14873,8 @@ def mark_par_meeting_held(employee_review_id):
         if review is None or review["supervisor_id"] != session["user_id"] or review['cycle_status'] != 'Active' or review["par_status"] not in ("Scheduled", "Rescheduled"):
             flash("This meeting cannot be marked as held.", "error")
             return redirect(url_for("dashboard"))
-        if datetime.strptime(f"{review['meeting_date']} {review['start_time']}", '%Y-%m-%d %H:%M') > par_now():
+        if (not app.config.get("DEMO_MODE", False)
+                and datetime.strptime(f"{review['meeting_date']} {review['start_time']}", '%Y-%m-%d %H:%M') > par_now()):
             flash('This meeting has not started yet. Mark it as held after the conversation.', 'error')
             return redirect(url_for('par_meeting_workspace', employee_review_id=employee_review_id))
         connection.execute("UPDATE par_meetings SET status='Held', held_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=?", (review["par_meeting_id"],))

@@ -166,6 +166,21 @@ class RoleAuditTests(unittest.TestCase):
             slots = self.client.get(base + '/availability?date=2026-09-22&duration=60').get_json()['slots']
             self.assertNotIn('09:00', [slot['value'] for slot in slots])
 
+    def test_demo_mode_allows_supervisor_to_mark_future_par_held_immediately(self):
+        workflow = self.par_fixture()
+        self.sign_in_as(self.supervisor_user_id, 'Supervisor')
+        base = f"/reviews/{workflow['review_id']}/par-meeting"
+        payload = self.meeting_payload()
+        payload.update(meeting_date='2027-01-11', start_time='10:00')
+        with patch.dict(application.app.config, {'DEMO_MODE': True}):
+            self.client.post(base + '/schedule', data=payload)
+            page = self.client.get(base)
+            self.assertIn(b'Mark meeting as held now', page.data)
+            self.assertIn(b'Demo mode is on', page.data)
+            self.client.post(base + '/held')
+        with self.db() as connection:
+            self.assertEqual(connection.execute('SELECT status FROM par_meetings').fetchone()[0], 'Held')
+
     def test_meeting_rechecks_unavailability_and_sends_private_working_link(self):
         workflow = self.par_fixture()
         base = f"/reviews/{workflow['review_id']}/par-meeting"
@@ -215,6 +230,43 @@ class RoleAuditTests(unittest.TestCase):
                     current = NavigationLinks()
                     current.feed(response.get_data(as_text=True))
                     self.assertEqual(sum('active' in row.get('class', '').split() for row in current.links), 1)
+
+    def test_review_guide_only_returns_the_signed_in_users_actions(self):
+        workflow = self.create_cycle_review()
+        peer_user_id, _ = self.create_employee('GuidePeer')
+        with self.db() as connection:
+            connection.execute(
+                """INSERT INTO review_actions
+                   (review_cycle_id, employee_review_id, assigned_to, action_type,
+                    title, description, status, priority)
+                   VALUES (?, ?, ?, 'SELF_ASSESSMENT', 'Complete my assessment',
+                           'Write your own review.', 'Pending', 'High')""",
+                (workflow['cycle_id'], workflow['review_id'], workflow['employee_user_id']),
+            )
+            connection.execute(
+                """INSERT INTO review_actions
+                   (review_cycle_id, employee_review_id, assigned_to, action_type,
+                    title, description, status, priority)
+                   VALUES (?, ?, ?, 'PEER_REVIEW', 'Private peer assignment',
+                           'Give confidential feedback.', 'Pending', 'High')""",
+                (workflow['cycle_id'], workflow['review_id'], peer_user_id),
+            )
+        self.sign_in_as(workflow['employee_user_id'], 'Employee')
+        employee_guide = self.client.get('/review-guide/context').get_json()
+        self.assertEqual(employee_guide['next_step']['title'], 'Complete my assessment')
+        self.assertEqual(employee_guide['next_step']['url'], f"/reviews/{workflow['review_id']}/self-assessment")
+        self.assertNotIn('Private peer assignment', str(employee_guide))
+        self.assertNotIn('Employees', [item['label'] for item in employee_guide['shortcuts']])
+
+        self.sign_in_as(peer_user_id, 'Employee')
+        peer_guide = self.client.get('/review-guide/context').get_json()
+        self.assertEqual(peer_guide['next_step']['title'], 'Private peer assignment')
+        self.assertEqual(peer_guide['next_step']['url'], f"/reviews/{workflow['review_id']}/peer-review")
+        self.assertNotIn('Complete my assessment', str(peer_guide))
+
+        with self.client.session_transaction() as browser_session:
+            browser_session.clear()
+        self.assertEqual(self.client.get('/review-guide/context').status_code, 401)
 
     def test_real_csrf_flow_rejects_missing_token_and_accepts_correct_token(self):
         self.sign_in_as(self.supervisor_user_id, 'Supervisor')

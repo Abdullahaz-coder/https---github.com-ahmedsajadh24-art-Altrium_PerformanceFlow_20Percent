@@ -39,9 +39,9 @@
     {% if can_schedule and review['par_status'] in ('Scheduled', 'Rescheduled') %}
     <form method="post" action="{{ url_for('mark_par_meeting_held', employee_review_id=review['employee_review_id']) }}" class="par-held-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="manager-approve-button" type="submit">Mark meeting as held</button>
+        <button class="manager-approve-button" type="submit">{{ 'Mark meeting as held now' if demo_mode else 'Mark meeting as held' }}</button>
         <button class="flow-secondary-link par-cancel-button" type="submit" form="cancelParMeeting">Cancel meeting</button>
-        <span>After the meeting, record the discussion and agreed development actions.</span>
+        <span>{% if demo_mode %}Demo mode is on: you can move straight to the outcome without waiting for the scheduled time.{% else %}After the meeting, record the discussion and agreed development actions.{% endif %}</span>
     </form>
     <form id="cancelParMeeting" method="post" action="{{ url_for('cancel_par_meeting', employee_review_id=review['employee_review_id']) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
